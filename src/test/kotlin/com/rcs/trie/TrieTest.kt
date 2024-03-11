@@ -182,6 +182,21 @@ class TrieTest {
     }
 
     @Test
+    fun testMatchByExactSubstringWithLengthWholeWord() {
+        // Arrange
+        val trie = Trie<Int>()
+        trie.put("googl", 1)
+
+        // Act
+        val result = trie.matchBySubstring("google", 5)
+
+        // Assert
+        Assertions.assertThat(result).containsExactly(
+            Trie.SearchResult("googl", 1, 5, true)
+        )
+    }
+
+    @Test
     fun testConcurrency() {
         // Arrange
         val trie = Trie<Int>()
