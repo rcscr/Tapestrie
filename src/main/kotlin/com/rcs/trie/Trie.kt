@@ -179,7 +179,7 @@ class Trie<T> {
         return current
     }
 
-    fun findCompleteStringsBySubstring(
+    private fun findCompleteStringsBySubstring(
         current: Node<T>,
         leftOfFirstMatchingCharacter: Node<T>?,
         search: String,
@@ -227,7 +227,7 @@ class Trie<T> {
         }
     }
 
-    fun findCompleteStringsStartingAt(
+    private fun findCompleteStringsStartingAt(
         current: Node<T>,
         leftOfFirstMatchingCharacter: Node<T>?,
         rightOfLastMatchingCharacter: Node<T>?,
