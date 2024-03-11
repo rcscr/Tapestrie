@@ -97,9 +97,7 @@ class Trie<T> {
         // if it does not complete, input does not exist
         if (last.completes()) {
             var j = input.length - 1
-            last = deque.removeLast()
-            while (!isUsedForOtherStrings(last)) {
-                last = deque.removeLast()
+            while (!isUsedForOtherStrings(deque.removeLast().also { last = it })) {
                 j--
             }
             val charToUnlink = input[j].toString()
@@ -146,9 +144,9 @@ class Trie<T> {
     fun getExactly(string: String): T? {
         return prefixMatchUpTo(string)?.let {
             if (it.completes()) {
-                return it.value
+                it.value
             } else {
-                return null
+                null
             }
         }
     }
