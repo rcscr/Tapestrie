@@ -41,7 +41,7 @@ class Trie<T> {
             synchronized(current.next) {
                 val nextMatchingNode = current.next
                     .stream()
-                    .filter { node: Node<T>? -> node!!.string == currentCharacter }
+                    .filter { it.string == currentCharacter }
                     .findAny()
                     .orElse(null)
                 // we do not have a string going this far, so we create a new node,
@@ -82,7 +82,7 @@ class Trie<T> {
 
             synchronized(current.next) {
                 nextMatchingNode = current.next
-                    .firstOrNull { node: Node<T>? -> node!!.string == currentCharacter }
+                    .firstOrNull { it.string == currentCharacter }
             }
 
             // input does not exist
@@ -106,7 +106,7 @@ class Trie<T> {
             }
             val charToUnlink = input[j].toString()
             synchronized(last.next) {
-                last.next.removeIf { node: Node<T>? -> node!!.string == charToUnlink }
+                last.next.removeIf { it.string == charToUnlink }
             }
         }
     }
@@ -168,7 +168,7 @@ class Trie<T> {
             var nextSubstring: Node<T>? = null
 
             synchronized(current.next) {
-                nextSubstring = current.next.firstOrNull { node: Node<T>? -> node!!.string == currentCharacter }
+                nextSubstring = current.next.firstOrNull { it.string == currentCharacter }
             }
 
             if (nextSubstring == null) {
@@ -243,10 +243,7 @@ class Trie<T> {
             val matchUpToHereString = matchUpToHere.toString()
 
             if (!alreadySaved.contains(matchUpToHereString)) {
-                val matchedWholeWord = (
-                        (leftOfFirstMatchingCharacter === root || leftOfFirstMatchingCharacter!!.string.matches(wholeWordSeparator.toRegex()))
-                        &&
-                        (rightOfLastMatchingCharacter == null || rightOfLastMatchingCharacter.string.matches(wholeWordSeparator.toRegex())))
+                val matchedWholeWord = getMatchedWholeWord(leftOfFirstMatchingCharacter, rightOfLastMatchingCharacter)
 
                 val newSearchResult = SearchResult<T>(
                     matchUpToHereString,
@@ -293,12 +290,22 @@ class Trie<T> {
         }
     }
 
+    private fun isWordSeparator(node: Node<T>?): Boolean {
+        return node?.string?.matches(wholeWordSeparator.toRegex()) ?: false
+    }
+
+    private fun getMatchedWholeWord(leftOfFirstMatchingCharacter: Node<T>?, rightOfLastMatchingCharacter: Node<T>?): Boolean {
+        return (leftOfFirstMatchingCharacter == root || isWordSeparator(leftOfFirstMatchingCharacter))
+                &&
+                (rightOfLastMatchingCharacter == null || isWordSeparator(rightOfLastMatchingCharacter))
+    }
+
     private fun findCompleteStringsStartingAt(
-        current: Node<T>?,
+        current: Node<T>,
         matchUpToHere: String,
         accumulation: MutableMap<String, T>
     ) {
-        if (current!!.completes()) {
+        if (current.completes()) {
             accumulation[matchUpToHere] = current.value!!
         }
         for (next in current.next) {
