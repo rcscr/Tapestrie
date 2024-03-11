@@ -5,6 +5,7 @@ class SearchableMap<K, V>(private val searchTermsExtractor: (V) -> Collection<St
     private val map: MutableMap<K, V> = mutableMapOf()
 
     // maps search terms to a set of keys in the map above
+    // the same search term may map to multiple keys
     private val trie: Trie<MutableSet<K>> = Trie()
 
     fun put(key: K, value: V) {
