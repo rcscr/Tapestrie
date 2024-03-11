@@ -115,16 +115,26 @@ class TrieTest {
         trie.put("123", 7)
 
         // Act
-        val resultA: Collection<Trie.SearchResult<Int>> = trie.matchByExactSubstring("a") // match a prefix of length 1
+        val resultA: Collection<Trie.SearchResult<Int>> =
+            trie.matchByExactSubstring("a") // match a prefix of length 1
+
         val resultB: Collection<Trie.SearchResult<Int>> =
             trie.matchByExactSubstring("def") // match a prefix of length > 1
+
         val resultC: Collection<Trie.SearchResult<Int>> =
             trie.matchByExactSubstring("ghi") // match a postfix & substring
-        val resultD: Collection<Trie.SearchResult<Int>> = trie.matchByExactSubstring("jklmno") // match an entire string
+
+        val resultD: Collection<Trie.SearchResult<Int>> =
+            trie.matchByExactSubstring("jklmno") // match an entire string
+
         val resultE: Collection<Trie.SearchResult<Int>> =
             trie.matchByExactSubstring("pqs") // match after an initial failed attempt
-        val resultF: Collection<Trie.SearchResult<Int>> = trie.matchByExactSubstring("vw") // matched whole word
-        val resultG: Collection<Trie.SearchResult<Int>> = trie.matchByExactSubstring("234") // only partial match
+
+        val resultF: Collection<Trie.SearchResult<Int>> =
+            trie.matchByExactSubstring("vw") // matched whole word
+
+        val resultG: Collection<Trie.SearchResult<Int>> =
+            trie.matchByExactSubstring("234") // only partial match
 
         // Assert
         Assertions.assertThat(resultA).containsExactlyInAnyOrder(
@@ -160,14 +170,14 @@ class TrieTest {
     fun testMatchByExactSubstringWithLength() {
         // Arrange
         val trie = Trie<Int>()
-        trie.put("googl", 1)
+        trie.put("google", 1)
 
         // Act
-        val result = trie.matchBySubstring("google", 5)
+        val result = trie.matchBySubstring("googly", 5)
 
         // Assert
         Assertions.assertThat(result).containsExactly(
-            Trie.SearchResult("googl", 1, 5, true)
+            Trie.SearchResult("google", 1, 5, false)
         )
     }
 
