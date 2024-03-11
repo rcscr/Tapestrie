@@ -208,7 +208,7 @@ class Trie<T> {
         var nextNodes: Set<Node<T>>
 
         synchronized(current.next) {
-            nextNodes = java.util.Set.copyOf(current.next)
+            nextNodes = current.next.toMutableSet()
         }
 
         for (nextNode in nextNodes) {
@@ -258,7 +258,7 @@ class Trie<T> {
         var nextNodes: Set<Node<T>>
 
         synchronized(current.next) {
-            nextNodes = java.util.Set.copyOf(current.next)
+            nextNodes = current.next.toMutableSet()
         }
 
         val endMatch = null != rightOfLastMatchingCharacter
