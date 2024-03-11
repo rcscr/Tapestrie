@@ -1,7 +1,5 @@
 package com.rcs.trie
 
-import java.util.*
-
 class Trie<T> {
 
     private val wholeWordSeparator = "[^a-zA-Z\\d:]"
@@ -72,7 +70,7 @@ class Trie<T> {
     fun remove(input: String) {
         var current = root
 
-        val deque: Deque<Node<T>> = ArrayDeque(input.length + 1)
+        val deque = ArrayDeque<Node<T>>(input.length + 1)
         deque.add(root)
 
         for (element in input) {
@@ -128,7 +126,7 @@ class Trie<T> {
             throw IllegalArgumentException()
         }
 
-        val matches: MutableList<SearchResult<T>> = LinkedList()
+        val matches: MutableList<SearchResult<T>> = mutableListOf()
         val alreadySaved: MutableSet<String> = HashSet()
 
         findCompleteStringsBySubstring(
