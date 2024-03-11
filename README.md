@@ -6,6 +6,7 @@ The Trie implemented here is:
 
 - thread safe
 - compacted
+- unit-tested
 - able to search within a margin of error (in the postfix only; i.e. searching for "googly" will return "google")
 
 Future work includes:
