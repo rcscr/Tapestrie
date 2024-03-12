@@ -5,7 +5,7 @@ class Trie<T> {
     private val wholeWordSeparator = "[^a-zA-Z\\d:]"
 
     private val sortByLengthOfMatchLongestFirst: Comparator<SearchResult<T>> =
-        Comparator.comparingInt(SearchResult<T>::lengthOfMatch).reversed()
+        compareBy(SearchResult<T>::lengthOfMatch).reversed()
 
     private val sortByMatchedWholeWordTrueFirst: Comparator<SearchResult<T>> =
         compareBy(SearchResult<T>::matchedWholeWord).reversed()
@@ -42,6 +42,7 @@ class Trie<T> {
                     .filter { it.string == currentCharacter }
                     .findAny()
                     .orElse(null)
+
                 // we do not have a string going this far, so we create a new node,
                 // and then keep appending the remaining characters of the input to it
                 if (null == nextMatchingNode) {
