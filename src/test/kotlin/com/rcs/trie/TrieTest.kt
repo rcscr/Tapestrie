@@ -115,7 +115,7 @@ class TrieTest {
     }
 
     @Test
-    fun testMatchByExactSubstring() {
+    fun testMatchBySubstring() {
         // Arrange
         val trie = Trie<Int>()
 
@@ -129,25 +129,25 @@ class TrieTest {
 
         // Act
         val resultA: Collection<Trie.SearchResult<Int>> =
-            trie.matchByExactSubstring("a") // match a prefix of length 1
+            trie.matchBySubstring("a") // match a prefix of length 1
 
         val resultB: Collection<Trie.SearchResult<Int>> =
-            trie.matchByExactSubstring("def") // match a prefix of length > 1
+            trie.matchBySubstring("def") // match a prefix of length > 1
 
         val resultC: Collection<Trie.SearchResult<Int>> =
-            trie.matchByExactSubstring("ghi") // match a postfix & substring
+            trie.matchBySubstring("ghi") // match a postfix & substring
 
         val resultD: Collection<Trie.SearchResult<Int>> =
-            trie.matchByExactSubstring("jklmno") // match the whole sequence
+            trie.matchBySubstring("jklmno") // match the whole sequence
 
         val resultE: Collection<Trie.SearchResult<Int>> =
-            trie.matchByExactSubstring("pqs") // match after an initial failed attempt
+            trie.matchBySubstring("pqs") // match after an initial failed attempt
 
         val resultF: Collection<Trie.SearchResult<Int>> =
-            trie.matchByExactSubstring("vw") // matched whole word
+            trie.matchBySubstring("vw") // matched whole word
 
         val resultG: Collection<Trie.SearchResult<Int>> =
-            trie.matchByExactSubstring("234") // only partial match
+            trie.matchBySubstring("234") // only partial match
 
         // Assert
         Assertions.assertThat(resultA).containsExactlyInAnyOrder(
@@ -180,27 +180,7 @@ class TrieTest {
     }
 
     @Test
-    fun testMatchBySubstringWithMinLength() {
-        // Arrange
-        val trie = Trie<Int>()
-        trie.put("google", 1)
-        trie.put("googlo", 2)
-        trie.put("googly", 3)
-        trie.put("googu", 4)
-
-        // Act
-        val result = trie.matchBySubstring("googly", 5)
-
-        // Assert
-        Assertions.assertThat(result).containsExactly(
-            Trie.SearchResult("googly", 3, 6, true, true),
-            Trie.SearchResult("google", 1, 5, false, false),
-            Trie.SearchResult("googlo", 2, 5, false, false),
-        )
-    }
-
-    @Test
-    fun testMatchBySubstringWithSort() {
+    fun testMatchBySubstringWithErrorToleranceAndWithSort() {
         // Arrange
         val trie = Trie<Unit>()
         trie.put("man", Unit)
@@ -211,7 +191,7 @@ class TrieTest {
         trie.put("linux manual", Unit)
 
         // Act
-        val result = trie.matchBySubstring("manual", 3)
+        val result = trie.matchBySubstringWithErrorTolerance("manual", 3)
 
         // Assert
         Assertions.assertThat(result).containsExactly(
@@ -227,6 +207,35 @@ class TrieTest {
             Trie.SearchResult("man", Unit, 3, true, true),
             // partial match, but string longer, so ranked lower
             Trie.SearchResult("many", Unit, 3, false, false),
+        )
+    }
+
+
+    @Test
+    fun testMatchBySubstringWithErrorTolerance() {
+        // Arrange
+        val trie = Trie<Unit>()
+        trie.put("goggle", Unit)
+        trie.put("google", Unit)
+        trie.put("googly", Unit)
+        trie.put("giegly", Unit)
+        trie.put("moggle", Unit) // error in beginning of match
+
+        // Act
+        val resultOne = trie.matchBySubstringWithErrorTolerance("goggle", 1)
+        val resultTwo = trie.matchBySubstringWithErrorTolerance("goggle", 2)
+
+        // Assert
+        Assertions.assertThat(resultOne).containsExactly(
+            Trie.SearchResult("goggle", Unit, 6, true, true),
+            Trie.SearchResult("google", Unit, 5, false, false),
+            Trie.SearchResult("moggle", Unit, 5, false, false)
+        )
+        Assertions.assertThat(resultTwo).containsExactly(
+            Trie.SearchResult("goggle", Unit, 6, true, true),
+            Trie.SearchResult("google", Unit, 5, false, false),
+            Trie.SearchResult("moggle", Unit, 5, false, false),
+            Trie.SearchResult("googly", Unit, 4, false, false),
         )
     }
 

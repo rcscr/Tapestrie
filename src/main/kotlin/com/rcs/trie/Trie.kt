@@ -43,7 +43,7 @@ class Trie<T> {
     }
 
     fun clear() {
-        root = Node<T>("", null, mutableSetOf())
+        root = Node("", null, mutableSetOf())
     }
 
     fun put(input: String, value: T) {
@@ -134,12 +134,12 @@ class Trie<T> {
         } ?: mutableMapOf()
     }
 
-    fun matchByExactSubstring(search: String): List<SearchResult<T>> {
-        return matchBySubstring(search, search.length)
+    fun matchBySubstring(search: String): List<SearchResult<T>> {
+        return matchBySubstringWithErrorTolerance(search, 0)
     }
 
-    fun matchBySubstring(search: String, minLength: Int): List<SearchResult<T>> {
-        if (search.isEmpty() || minLength < 1 || minLength > search.length) {
+    fun matchBySubstringWithErrorTolerance(search: String, errorTolerance: Int): List<SearchResult<T>> {
+        if (search.isEmpty() || errorTolerance < 0 || errorTolerance > search.length) {
             throw IllegalArgumentException()
         }
 
@@ -150,8 +150,9 @@ class Trie<T> {
             root,
             null,
             search,
-            0,
-            minLength,
+            consecutiveMatches =  0,
+            errorTolerance,
+            errorsEncountered = 0,
             StringBuilder(),
             matches,
             alreadySaved
@@ -201,18 +202,23 @@ class Trie<T> {
         leftOfFirstMatchingCharacter: Node<T>?,
         search: String,
         consecutiveMatches: Int,
-        minLength: Int,
+        errorTolerance: Int,
+        errorsEncountered: Int,
         matchUpToHere: StringBuilder,
         accumulation: MutableCollection<SearchResult<T>>,
         alreadySaved: MutableSet<String>
     ) {
-        if (consecutiveMatches == minLength) {
+        val match = consecutiveMatches == (search.length - errorTolerance + errorsEncountered)
+                && errorsEncountered <= errorTolerance
+
+        if (match) {
             findCompleteStringsStartingAt(
                 current,
                 leftOfFirstMatchingCharacter,
                 null,
                 search,
                 consecutiveMatches,
+                errorsEncountered,
                 matchUpToHere,
                 accumulation,
                 alreadySaved
@@ -229,14 +235,38 @@ class Trie<T> {
         }
 
         for (nextNode in nextNodes) {
+            val prevNodeMatches = consecutiveMatches > 0
             val nextNodeMatches = nextNode.string == search[consecutiveMatches].toString()
+
+            var newConsecutiveMatches = 0
+            var newErrorsEncountered = 0
+
+            if (nextNodeMatches) {
+                newConsecutiveMatches = consecutiveMatches + 1
+                newErrorsEncountered = errorsEncountered
+            } else {
+                if (prevNodeMatches) {
+                    if (errorsEncountered < errorTolerance) {
+                        newConsecutiveMatches = consecutiveMatches + 1
+                        newErrorsEncountered = errorsEncountered + 1
+                    }
+                } else if (errorsEncountered < errorTolerance) {
+                    newConsecutiveMatches = 1
+                    newErrorsEncountered = 1
+                }
+            }
+
+            val newLeftOfFirstMatchingCharacter =
+                if (!thisNodeMatches && nextNodeMatches) current
+                else leftOfFirstMatchingCharacter
 
             findCompleteStringsBySubstring(
                 nextNode,
-                if (!thisNodeMatches && nextNodeMatches) current else leftOfFirstMatchingCharacter,
+                newLeftOfFirstMatchingCharacter,
                 search,
-                if (nextNodeMatches) consecutiveMatches + 1 else 0,
-                minLength,
+                newConsecutiveMatches,
+                errorTolerance,
+                newErrorsEncountered,
                 StringBuilder(matchUpToHere).append(nextNode.string),
                 accumulation,
                 alreadySaved
@@ -250,6 +280,7 @@ class Trie<T> {
         rightOfLastMatchingCharacter: Node<T>?,
         search: String,
         consecutiveMatches: Int,
+        errorsEncountered: Int,
         matchUpToHere: StringBuilder,
         accumulation: MutableCollection<SearchResult<T>>,
         alreadySaved: MutableSet<String>
@@ -258,15 +289,16 @@ class Trie<T> {
             val matchUpToHereString = matchUpToHere.toString()
 
             if (!alreadySaved.contains(matchUpToHereString)) {
-                val matchedWholeSequence = getMatchedWholeSequence(
-                    leftOfFirstMatchingCharacter, rightOfLastMatchingCharacter)
-                val matchedWholeWord = getMatchedWholeWord(
-                    leftOfFirstMatchingCharacter, rightOfLastMatchingCharacter)
+                val matchedWholeSequence = errorsEncountered == 0
+                        && getMatchedWholeSequence(leftOfFirstMatchingCharacter, rightOfLastMatchingCharacter)
+
+                val matchedWholeWord = errorsEncountered == 0
+                        && getMatchedWholeWord(leftOfFirstMatchingCharacter, rightOfLastMatchingCharacter)
 
                 val newSearchResult = SearchResult<T>(
                     matchUpToHereString,
                     current.value!!,
-                    consecutiveMatches,
+                    lengthOfMatch = consecutiveMatches - errorsEncountered,
                     matchedWholeSequence,
                     matchedWholeWord
                 )
@@ -302,6 +334,7 @@ class Trie<T> {
                 nextRightOfLastMatchingCharacter,
                 search,
                 newConsecutiveMatches,
+                errorsEncountered,
                 StringBuilder(matchUpToHere).append(nextNode.string),
                 accumulation,
                 alreadySaved
