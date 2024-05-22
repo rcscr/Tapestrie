@@ -4,11 +4,24 @@ import org.assertj.core.api.Assertions
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.Executors
-import java.util.function.Consumer
 import kotlin.collections.Collection
 import kotlin.test.Test
 
 class TrieTest {
+
+    @Test
+    fun testClear() {
+        // Arrange
+        val trie = Trie<Int>()
+        trie.put("Hello", 123)
+        Assertions.assertThat(trie.matchByPrefix("")).isEqualTo(mapOf("Hello" to 123))
+
+        // Act
+        trie.clear()
+
+        // Assert
+        Assertions.assertThat(trie.matchByPrefix("")).isEmpty()
+    }
 
     @Test
     fun testAdd() {
@@ -125,7 +138,7 @@ class TrieTest {
             trie.matchByExactSubstring("ghi") // match a postfix & substring
 
         val resultD: Collection<Trie.SearchResult<Int>> =
-            trie.matchByExactSubstring("jklmno") // match an entire string
+            trie.matchByExactSubstring("jklmno") // match the whole sequence
 
         val resultE: Collection<Trie.SearchResult<Int>> =
             trie.matchByExactSubstring("pqs") // match after an initial failed attempt
@@ -138,61 +151,82 @@ class TrieTest {
 
         // Assert
         Assertions.assertThat(resultA).containsExactlyInAnyOrder(
-            Trie.SearchResult("abcdef", 1, 1, false)
+            Trie.SearchResult("abcdef", 1, 1, false, false)
         )
 
         Assertions.assertThat(resultB).containsExactlyInAnyOrder(
-            Trie.SearchResult("abcdef", 1, 3, false),
-            Trie.SearchResult("defghi", 2, 3, false)
+            Trie.SearchResult("abcdef", 1, 3, false, false),
+            Trie.SearchResult("defghi", 2, 3, false, false)
         )
 
         Assertions.assertThat(resultC).containsExactlyInAnyOrder(
-            Trie.SearchResult("defghi", 2, 3, false),
-            Trie.SearchResult("deghij", 3, 3, false)
+            Trie.SearchResult("defghi", 2, 3, false, false),
+            Trie.SearchResult("deghij", 3, 3, false, false)
         )
 
         Assertions.assertThat(resultD).containsExactlyInAnyOrder(
-            Trie.SearchResult("jklmno", 4, 6, true)
+            Trie.SearchResult("jklmno", 4, 6, true, true)
         )
 
         Assertions.assertThat(resultE).containsExactlyInAnyOrder(
-            Trie.SearchResult("pqrpqs", 5, 3, false)
+            Trie.SearchResult("pqrpqs", 5, 3, false, false)
         )
 
         Assertions.assertThat(resultF).containsExactlyInAnyOrder(
-            Trie.SearchResult("tu vw, xyz", 6, 2, true)
+            Trie.SearchResult("tu vw, xyz", 6, 2, false, true)
         )
 
         Assertions.assertThat(resultG).isEmpty()
     }
 
     @Test
-    fun testMatchByExactSubstringWithLength() {
+    fun testMatchBySubstringWithMinLength() {
         // Arrange
         val trie = Trie<Int>()
         trie.put("google", 1)
+        trie.put("googlo", 2)
+        trie.put("googly", 3)
+        trie.put("googu", 4)
 
         // Act
         val result = trie.matchBySubstring("googly", 5)
 
         // Assert
         Assertions.assertThat(result).containsExactly(
-            Trie.SearchResult("google", 1, 5, false)
+            Trie.SearchResult("googly", 3, 6, true, true),
+            Trie.SearchResult("google", 1, 5, false, false),
+            Trie.SearchResult("googlo", 2, 5, false, false),
         )
     }
 
     @Test
-    fun testMatchByExactSubstringWithLengthWholeWord() {
+    fun testMatchBySubstringWithSort() {
         // Arrange
-        val trie = Trie<Int>()
-        trie.put("googl", 1)
+        val trie = Trie<Unit>()
+        trie.put("man", Unit)
+        trie.put("many", Unit)
+        trie.put("manual", Unit)
+        trie.put("manually", Unit)
+        trie.put("manuals", Unit)
+        trie.put("linux manual", Unit)
 
         // Act
-        val result = trie.matchBySubstring("google", 5)
+        val result = trie.matchBySubstring("manual", 3)
 
         // Assert
         Assertions.assertThat(result).containsExactly(
-            Trie.SearchResult("googl", 1, 5, true)
+            // matches whole sequence is highest ranking
+            Trie.SearchResult("manual", Unit, 6, true, true),
+            // matches a whole word
+            Trie.SearchResult("linux manual", Unit, 6, false, true),
+            // matches the highest possible number of characters, but it's neither the whole sequence nor a whole word
+            Trie.SearchResult("manuals", Unit, 6, false, false),
+            // same as above, but the string is longer, so is ranked lower
+            Trie.SearchResult("manually", Unit, 6, false, false),
+            // partial match, but matched whole sequence and whole word
+            Trie.SearchResult("man", Unit, 3, true, true),
+            // partial match, but string longer, so ranked lower
+            Trie.SearchResult("many", Unit, 3, false, false),
         )
     }
 

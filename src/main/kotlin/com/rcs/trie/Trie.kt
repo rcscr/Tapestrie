@@ -7,16 +7,26 @@ class Trie<T> {
     private val sortByLengthOfMatchLongestFirst: Comparator<SearchResult<T>> =
         compareBy(SearchResult<T>::lengthOfMatch).reversed()
 
+    private val sortByLengthOfStringShortestFirst: Comparator<SearchResult<T>> =
+        compareBy { it.string.length }
+
+    private val sortByMatchedSequenceTrueFirst: Comparator<SearchResult<T>> =
+        compareBy(SearchResult<T>::matchedWholeWord).reversed()
+
     private val sortByMatchedWholeWordTrueFirst: Comparator<SearchResult<T>> =
         compareBy(SearchResult<T>::matchedWholeWord).reversed()
 
     private val sortByBestMatchFirst: Comparator<SearchResult<T>> =
-        sortByLengthOfMatchLongestFirst.thenComparing(sortByMatchedWholeWordTrueFirst)
+        sortByLengthOfMatchLongestFirst
+            .thenComparing(sortByMatchedSequenceTrueFirst)
+            .thenComparing(sortByMatchedWholeWordTrueFirst)
+            .thenComparing(sortByLengthOfStringShortestFirst)
 
     data class SearchResult<T>(
         val string: String,
         val value: T,
         val lengthOfMatch: Int,
+        val matchedWholeSequence: Boolean,
         val matchedWholeWord: Boolean
     )
 
@@ -26,7 +36,15 @@ class Trie<T> {
         }
     }
 
-    private val root = Node<T>("", null, mutableSetOf())
+    private lateinit var root: Node<T>
+
+    init {
+        clear()
+    }
+
+    fun clear() {
+        root = Node<T>("", null, mutableSetOf())
+    }
 
     fun put(input: String, value: T) {
         var current = root
@@ -240,12 +258,16 @@ class Trie<T> {
             val matchUpToHereString = matchUpToHere.toString()
 
             if (!alreadySaved.contains(matchUpToHereString)) {
-                val matchedWholeWord = getMatchedWholeWord(leftOfFirstMatchingCharacter, rightOfLastMatchingCharacter)
+                val matchedWholeSequence = getMatchedWholeSequence(
+                    leftOfFirstMatchingCharacter, rightOfLastMatchingCharacter)
+                val matchedWholeWord = getMatchedWholeWord(
+                    leftOfFirstMatchingCharacter, rightOfLastMatchingCharacter)
 
                 val newSearchResult = SearchResult<T>(
                     matchUpToHereString,
                     current.value!!,
                     consecutiveMatches,
+                    matchedWholeSequence,
                     matchedWholeWord
                 )
 
@@ -291,7 +313,17 @@ class Trie<T> {
         return node?.string?.matches(wholeWordSeparator.toRegex()) ?: false
     }
 
-    private fun getMatchedWholeWord(leftOfFirstMatchingCharacter: Node<T>?, rightOfLastMatchingCharacter: Node<T>?): Boolean {
+    private fun getMatchedWholeSequence(
+        leftOfFirstMatchingCharacter: Node<T>?,
+        rightOfLastMatchingCharacter: Node<T>?
+    ): Boolean {
+        return leftOfFirstMatchingCharacter == root && rightOfLastMatchingCharacter == null
+    }
+
+    private fun getMatchedWholeWord(
+        leftOfFirstMatchingCharacter: Node<T>?,
+        rightOfLastMatchingCharacter: Node<T>?
+    ): Boolean {
         return (leftOfFirstMatchingCharacter == root || isWordSeparator(leftOfFirstMatchingCharacter))
                 &&
                 (rightOfLastMatchingCharacter == null || isWordSeparator(rightOfLastMatchingCharacter))
