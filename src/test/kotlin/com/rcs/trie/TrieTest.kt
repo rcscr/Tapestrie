@@ -14,7 +14,7 @@ class TrieTest {
         // Arrange
         val trie = Trie<Int>()
         trie.put("Hello", 123)
-        Assertions.assertThat(trie.matchByPrefix("")).isEqualTo(mapOf("Hello" to 123))
+        Assertions.assertThat(trie.getExactly("Hello")).isEqualTo(123)
 
         // Act
         trie.clear()
@@ -180,7 +180,7 @@ class TrieTest {
     }
 
     @Test
-    fun testMatchBySubstringWithErrorToleranceAndWithSort() {
+    fun testMatchBySubstringFuzzyWithSort() {
         // Arrange
         val trie = Trie<Unit>()
         trie.put("man", Unit)
@@ -192,7 +192,7 @@ class TrieTest {
         trie.put("linux manual", Unit)
 
         // Act
-        val result = trie.matchBySubstringWithErrorTolerance("manual", 3)
+        val result = trie.matchBySubstringFuzzy("manual", 3)
 
         // Assert
         Assertions.assertThat(result).containsExactly(
@@ -215,7 +215,7 @@ class TrieTest {
 
 
     @Test
-    fun testMatchBySubstringWithErrorTolerance() {
+    fun testMatchBySubstringFuzzy() {
         // Arrange
         val trie = Trie<Unit>()
         trie.put("goggle", Unit)
@@ -226,8 +226,8 @@ class TrieTest {
         trie.put("blah google blah", Unit) // good match with chars before and after
 
         // Act
-        val resultOne = trie.matchBySubstringWithErrorTolerance("goggle", 1)
-        val resultTwo = trie.matchBySubstringWithErrorTolerance("goggle", 2)
+        val resultOne = trie.matchBySubstringFuzzy("goggle", 1)
+        val resultTwo = trie.matchBySubstringFuzzy("goggle", 2)
 
         // Assert
         Assertions.assertThat(resultOne).containsExactly(

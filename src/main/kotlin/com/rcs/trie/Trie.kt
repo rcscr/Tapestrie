@@ -131,6 +131,20 @@ class Trie<T> {
         }
     }
 
+    fun getExactly(string: String): T? {
+        return prefixMatchUpTo(string)?.let {
+            if (it.completes()) {
+                it.value
+            } else {
+                null
+            }
+        }
+    }
+
+    fun containsExactly(string: String): Boolean {
+        return getExactly(string) != null
+    }
+
     fun matchByPrefix(prefix: String): Map<String, T> {
         return prefixMatchUpTo(prefix)?.let {
             val matches: MutableMap<String, T> = HashMap()
@@ -140,10 +154,10 @@ class Trie<T> {
     }
 
     fun matchBySubstring(search: String): List<SearchResult<T>> {
-        return matchBySubstringWithErrorTolerance(search, 0)
+        return matchBySubstringFuzzy(search, 0)
     }
 
-    fun matchBySubstringWithErrorTolerance(search: String, errorTolerance: Int): List<SearchResult<T>> {
+    fun matchBySubstringFuzzy(search: String, errorTolerance: Int): List<SearchResult<T>> {
         if (search.isEmpty() || errorTolerance < 0 || errorTolerance > search.length) {
             throw IllegalArgumentException()
         }
@@ -164,20 +178,6 @@ class Trie<T> {
         )
 
         return matches.sortedWith(sortByBestMatchFirst)
-    }
-
-    fun getExactly(string: String): T? {
-        return prefixMatchUpTo(string)?.let {
-            if (it.completes()) {
-                it.value
-            } else {
-                null
-            }
-        }
-    }
-
-    fun containsExactly(string: String): Boolean {
-        return getExactly(string) != null
     }
 
     private fun prefixMatchUpTo(string: String): Node<T>? {
