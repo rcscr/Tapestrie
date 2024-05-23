@@ -84,7 +84,7 @@ class Trie<T> {
         // if it does not complete, input does not exist
         if (last.completes()) {
             var j = input.length - 1
-            while (!isUsedForOtherStrings(deque.removeLast().also { last = it })) {
+            while (!deque.removeLast().also { last = it }.isUsedForOtherStrings()) {
                 j--
             }
             val charToUnlink = input[j].toString()
@@ -179,7 +179,7 @@ class Trie<T> {
         if (match || partialMatch) {
             findCompleteStringsStartingAt(
                 current,
-                leftOfFirstMatchingCharacter,
+                leftOfFirstMatchingCharacter!!, // if matched, this is automatically not null
                 null,
                 search,
                 consecutiveMatches,
@@ -202,12 +202,11 @@ class Trie<T> {
 
             var newConsecutiveMatches: Int
             var newErrorsEncountered: Int
-
             if (nextNodeMatches) {
                 newConsecutiveMatches = consecutiveMatches + 1
                 newErrorsEncountered = errorsEncountered
             } else if (currentNodeMatches && errorsEncountered < errorTolerance) {
-                // was matching before, but no longer matches, however, there's some error tolerance to be used
+                // was matching before, but no longer matches; however, there's some error tolerance to be used
                 newConsecutiveMatches = consecutiveMatches + 1
                 newErrorsEncountered = errorsEncountered + 1
             } else {
@@ -246,7 +245,7 @@ class Trie<T> {
 
     private fun findCompleteStringsStartingAt(
         current: Node<T>,
-        leftOfFirstMatchingCharacter: Node<T>?,
+        leftOfFirstMatchingCharacter: Node<T>,
         rightOfLastMatchingCharacter: Node<T>?,
         search: String,
         consecutiveMatches: Int,
@@ -269,10 +268,10 @@ class Trie<T> {
                     else errors
 
                 val matchedWholeSequence = actualErrors == 0
-                        && getMatchedWholeSequence(leftOfFirstMatchingCharacter, rightOfLastMatchingCharacter)
+                        && matchedWholeSequence(leftOfFirstMatchingCharacter, rightOfLastMatchingCharacter)
 
                 val matchedWholeWord = actualErrors == 0
-                        && getMatchedWholeWord(leftOfFirstMatchingCharacter, rightOfLastMatchingCharacter)
+                        && matchedWholeWord(leftOfFirstMatchingCharacter, rightOfLastMatchingCharacter)
 
                 val newSearchResult = TrieSearchResult<T>(
                     matchUpToHereString,
@@ -290,7 +289,6 @@ class Trie<T> {
         }
 
         var nextNodes: Set<Node<T>>
-
         synchronized(current.next) {
             nextNodes = current.next.toMutableSet()
         }
@@ -323,40 +321,40 @@ class Trie<T> {
         }
     }
 
-    private fun isWordSeparator(node: Node<T>?): Boolean {
-        return node?.string?.matches(wholeWordSeparator.toRegex()) ?: false
-    }
-
-    private fun getMatchedWholeSequence(
+    private fun matchedWholeSequence(
         leftOfFirstMatchingCharacter: Node<T>?,
         rightOfLastMatchingCharacter: Node<T>?
     ): Boolean {
-        return leftOfFirstMatchingCharacter == root && rightOfLastMatchingCharacter == null
+        return leftOfFirstMatchingCharacter == root
+                && rightOfLastMatchingCharacter == null
     }
 
-    private fun getMatchedWholeWord(
-        leftOfFirstMatchingCharacter: Node<T>?,
+    private fun matchedWholeWord(
+        leftOfFirstMatchingCharacter: Node<T>,
         rightOfLastMatchingCharacter: Node<T>?
     ): Boolean {
-        return (leftOfFirstMatchingCharacter == root || isWordSeparator(leftOfFirstMatchingCharacter))
-                &&
-                (rightOfLastMatchingCharacter == null || isWordSeparator(rightOfLastMatchingCharacter))
+        return leftOfFirstMatchingCharacter.isWordSeparator()
+                && rightOfLastMatchingCharacter.isWordSeparator()
     }
 
     private fun findCompleteStringsStartingAt(
         current: Node<T>,
-        matchUpToHere: String,
+        sequence: String,
         accumulation: MutableMap<String, T>
     ) {
         if (current.completes()) {
-            accumulation[matchUpToHere] = current.value!!
+            accumulation[sequence] = current.value!!
         }
         for (next in current.next) {
-            findCompleteStringsStartingAt(next, matchUpToHere + next.string, accumulation)
+            findCompleteStringsStartingAt(next, sequence + next.string, accumulation)
         }
     }
 
-    private fun isUsedForOtherStrings(node: Node<T>): Boolean {
-        return node === root || node.completes() || node.next.size > 1
+    private fun Node<T>?.isWordSeparator(): Boolean {
+        return this == null || this == root || this.string.matches(wholeWordSeparator.toRegex()) ?: false
+    }
+
+    private fun Node<T>.isUsedForOtherStrings(): Boolean {
+        return this === root || this.completes() || this.next.size > 1
     }
 }
