@@ -2,7 +2,7 @@ package com.rcs.trie
 
 class Trie<T> {
 
-    private val wholeWordSeparator = "[^a-zA-Z\\d:]"
+    private val wholeWordSeparator = "[\\s\\p{P}]"
 
     data class SearchResult<T>(
         val string: String,
