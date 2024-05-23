@@ -226,14 +226,14 @@ class Trie<T> {
                 errorsEncountered,
                 matchUpToHere,
                 accumulation,
-                alreadySaved
+                mutableMapOf()
             )
             return
         }
 
         val thisNodeMatches = consecutiveMatches > 0
 
-        var nextNodes: Set<Node<T>>
+        var nextNodes: MutableSet<Node<T>>
 
         synchronized(current.next) {
             nextNodes = current.next.toMutableSet()
@@ -255,9 +255,6 @@ class Trie<T> {
                         newConsecutiveMatches = consecutiveMatches + 1
                         newErrorsEncountered = errorsEncountered + 1
                     }
-                } else if (errorsEncountered < errorTolerance) {
-                    newConsecutiveMatches = 1
-                    newErrorsEncountered = 1
                 }
             }
 
@@ -276,6 +273,29 @@ class Trie<T> {
                 accumulation,
                 alreadySaved
             )
+
+            // looking ahead allows examining potential matches with letters missing
+            // I could use better nomenclature for this flow, but it does work
+            val shouldLookAhead = !nextNodeMatches
+                    && errorsEncountered < errorTolerance
+                    && consecutiveMatches + 1 < search.length
+                    && nextNode.string == search[consecutiveMatches + 1].toString()
+
+            val attempts = if (shouldLookAhead) 2 else 1
+
+            for (i in 0..<attempts) {
+                findCompleteStringsBySubstring(
+                    nextNode,
+                    newLeftOfFirstMatchingCharacter,
+                    search,
+                    newConsecutiveMatches + i,
+                    errorTolerance,
+                    newErrorsEncountered,
+                    StringBuilder(matchUpToHere).append(nextNode.string),
+                    accumulation,
+                    alreadySaved
+                )
+            }
         }
     }
 
@@ -288,14 +308,17 @@ class Trie<T> {
         errors: Int,
         matchUpToHere: StringBuilder,
         accumulation: MutableCollection<SearchResult<T>>,
-        alreadySaved: MutableSet<String>
+        alreadySaved: MutableMap<String, Int>
     ) {
         if (current.completes()) {
             val matchUpToHereString = matchUpToHere.toString()
 
-            if (!alreadySaved.contains(matchUpToHereString)) {
-                val lengthOfMatch = consecutiveMatches - errors
+            val lengthOfMatch = consecutiveMatches - errors
 
+            val hasAlreadySaved = alreadySaved[matchUpToHereString] != null
+            val foundBetterMatch = !hasAlreadySaved || lengthOfMatch < alreadySaved[matchUpToHereString]!!
+
+            if (!hasAlreadySaved || foundBetterMatch) {
                 val actualErrors =
                     if (matchUpToHereString.length < search.length) search.length - lengthOfMatch
                     else errors
@@ -306,7 +329,6 @@ class Trie<T> {
                 val matchedWholeWord = actualErrors == 0
                         && getMatchedWholeWord(leftOfFirstMatchingCharacter, rightOfLastMatchingCharacter)
 
-
                 val newSearchResult = SearchResult<T>(
                     matchUpToHereString,
                     current.value!!,
@@ -316,8 +338,9 @@ class Trie<T> {
                     matchedWholeWord
                 )
 
+                accumulation.removeIf { it.string == matchUpToHereString }
                 accumulation.add(newSearchResult)
-                alreadySaved.add(matchUpToHereString)
+                alreadySaved[matchUpToHereString] = lengthOfMatch
             }
         }
 

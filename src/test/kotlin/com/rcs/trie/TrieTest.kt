@@ -183,6 +183,7 @@ class TrieTest {
     fun testMatchBySubstringWithErrorToleranceAndWithSort() {
         // Arrange
         val trie = Trie<Unit>()
+        trie.put("man", Unit)
         trie.put("manu", Unit)
         trie.put("many", Unit)
         trie.put("manual", Unit)
@@ -206,6 +207,8 @@ class TrieTest {
             // partial match, with fewer errors
             Trie.SearchResult("manu", Unit, 4, 2, false, false),
             // partial match, with more errors
+            Trie.SearchResult("man", Unit, 3, 3, false, false),
+            // partial match, with more errors, and lower string
             Trie.SearchResult("many", Unit, 3, 3, false, false),
         )
     }
@@ -218,8 +221,9 @@ class TrieTest {
         trie.put("goggle", Unit)
         trie.put("google", Unit)
         trie.put("googly", Unit)
-        trie.put("giegly", Unit)
-        trie.put("moggle", Unit) // error in beginning of match
+        trie.put("giegly", Unit) // will not match any
+        trie.put("gogle", Unit)  // missing letter
+        trie.put("blah google blah", Unit) // good match with chars before and after
 
         // Act
         val resultOne = trie.matchBySubstringWithErrorTolerance("goggle", 1)
@@ -228,13 +232,15 @@ class TrieTest {
         // Assert
         Assertions.assertThat(resultOne).containsExactly(
             Trie.SearchResult("goggle", Unit, 6, 0, true, true),
+            Trie.SearchResult("gogle", Unit, 5, 1, false, false),
             Trie.SearchResult("google", Unit, 5, 1, false, false),
-            Trie.SearchResult("moggle", Unit, 5, 1, false, false)
+            Trie.SearchResult("blah google blah", Unit, 5, 1, false, false)
         )
         Assertions.assertThat(resultTwo).containsExactly(
             Trie.SearchResult("goggle", Unit, 6, 0, true, true),
+            Trie.SearchResult("gogle", Unit, 5, 1, false, false),
             Trie.SearchResult("google", Unit, 5, 1, false, false),
-            Trie.SearchResult("moggle", Unit, 5, 1, false, false),
+            Trie.SearchResult("blah google blah", Unit, 5, 1, false, false),
             Trie.SearchResult("googly", Unit, 4, 2, false, false),
         )
     }
