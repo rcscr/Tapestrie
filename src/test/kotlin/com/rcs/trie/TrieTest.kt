@@ -151,29 +151,29 @@ class TrieTest {
 
         // Assert
         Assertions.assertThat(resultA).containsExactlyInAnyOrder(
-            Trie.SearchResult("abcdef", 1, 1, false, false)
+            Trie.SearchResult("abcdef", 1, 1, 0, false, false)
         )
 
         Assertions.assertThat(resultB).containsExactlyInAnyOrder(
-            Trie.SearchResult("abcdef", 1, 3, false, false),
-            Trie.SearchResult("defghi", 2, 3, false, false)
+            Trie.SearchResult("abcdef", 1, 3, 0, false, false),
+            Trie.SearchResult("defghi", 2, 3, 0, false, false)
         )
 
         Assertions.assertThat(resultC).containsExactlyInAnyOrder(
-            Trie.SearchResult("defghi", 2, 3, false, false),
-            Trie.SearchResult("deghij", 3, 3, false, false)
+            Trie.SearchResult("defghi", 2, 3, 0, false, false),
+            Trie.SearchResult("deghij", 3, 3, 0, false, false)
         )
 
         Assertions.assertThat(resultD).containsExactlyInAnyOrder(
-            Trie.SearchResult("jklmno", 4, 6, true, true)
+            Trie.SearchResult("jklmno", 4, 6, 0, true, true)
         )
 
         Assertions.assertThat(resultE).containsExactlyInAnyOrder(
-            Trie.SearchResult("pqrpqs", 5, 3, false, false)
+            Trie.SearchResult("pqrpqs", 5, 3, 0, false, false)
         )
 
         Assertions.assertThat(resultF).containsExactlyInAnyOrder(
-            Trie.SearchResult("tu vw, xyz", 6, 2, false, true)
+            Trie.SearchResult("tu vw, xyz", 6, 2, 0, false, true)
         )
 
         Assertions.assertThat(resultG).isEmpty()
@@ -183,7 +183,7 @@ class TrieTest {
     fun testMatchBySubstringWithErrorToleranceAndWithSort() {
         // Arrange
         val trie = Trie<Unit>()
-        trie.put("man", Unit)
+        trie.put("manu", Unit)
         trie.put("many", Unit)
         trie.put("manual", Unit)
         trie.put("manually", Unit)
@@ -196,17 +196,17 @@ class TrieTest {
         // Assert
         Assertions.assertThat(result).containsExactly(
             // matches whole sequence is highest ranking
-            Trie.SearchResult("manual", Unit, 6, true, true),
+            Trie.SearchResult("manual", Unit, 6, 0, true, true),
             // matches a whole word
-            Trie.SearchResult("linux manual", Unit, 6, false, true),
+            Trie.SearchResult("linux manual", Unit, 6, 0, false, true),
             // matches the highest possible number of characters, but it's neither the whole sequence nor a whole word
-            Trie.SearchResult("manuals", Unit, 6, false, false),
+            Trie.SearchResult("manuals", Unit, 6, 0, false, false),
             // same as above, but the string is longer, so is ranked lower
-            Trie.SearchResult("manually", Unit, 6, false, false),
-            // partial match, but matched whole sequence and whole word
-            Trie.SearchResult("man", Unit, 3, true, true),
-            // partial match, but string longer, so ranked lower
-            Trie.SearchResult("many", Unit, 3, false, false),
+            Trie.SearchResult("manually", Unit, 6, 0, false, false),
+            // partial match, with fewer errors
+            Trie.SearchResult("manu", Unit, 4, 2, false, false),
+            // partial match, with more errors
+            Trie.SearchResult("many", Unit, 3, 3, false, false),
         )
     }
 
@@ -227,15 +227,15 @@ class TrieTest {
 
         // Assert
         Assertions.assertThat(resultOne).containsExactly(
-            Trie.SearchResult("goggle", Unit, 6, true, true),
-            Trie.SearchResult("google", Unit, 5, false, false),
-            Trie.SearchResult("moggle", Unit, 5, false, false)
+            Trie.SearchResult("goggle", Unit, 6, 0, true, true),
+            Trie.SearchResult("google", Unit, 5, 1, false, false),
+            Trie.SearchResult("moggle", Unit, 5, 1, false, false)
         )
         Assertions.assertThat(resultTwo).containsExactly(
-            Trie.SearchResult("goggle", Unit, 6, true, true),
-            Trie.SearchResult("google", Unit, 5, false, false),
-            Trie.SearchResult("moggle", Unit, 5, false, false),
-            Trie.SearchResult("googly", Unit, 4, false, false),
+            Trie.SearchResult("goggle", Unit, 6, 0, true, true),
+            Trie.SearchResult("google", Unit, 5, 1, false, false),
+            Trie.SearchResult("moggle", Unit, 5, 1, false, false),
+            Trie.SearchResult("googly", Unit, 4, 2, false, false),
         )
     }
 

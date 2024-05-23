@@ -16,16 +16,21 @@ class Trie<T> {
     private val sortByMatchedWholeWordTrueFirst: Comparator<SearchResult<T>> =
         compareBy(SearchResult<T>::matchedWholeWord).reversed()
 
+    private val sortByLessErrorsFirst: Comparator<SearchResult<T>> =
+        compareBy { it.errors }
+
     private val sortByBestMatchFirst: Comparator<SearchResult<T>> =
         sortByLengthOfMatchLongestFirst
             .thenComparing(sortByMatchedSequenceTrueFirst)
             .thenComparing(sortByMatchedWholeWordTrueFirst)
             .thenComparing(sortByLengthOfStringShortestFirst)
+            .thenComparing(sortByLessErrorsFirst)
 
     data class SearchResult<T>(
         val string: String,
         val value: T,
         val lengthOfMatch: Int,
+        val errors: Int,
         val matchedWholeSequence: Boolean,
         val matchedWholeWord: Boolean
     )
@@ -208,10 +213,10 @@ class Trie<T> {
         accumulation: MutableCollection<SearchResult<T>>,
         alreadySaved: MutableSet<String>
     ) {
-        val match = consecutiveMatches == (search.length - errorTolerance + errorsEncountered)
-                && errorsEncountered <= errorTolerance
+        val match = consecutiveMatches == search.length && errorsEncountered <= errorTolerance
+        val partialMatch = current.completes() && consecutiveMatches >= search.length - errorTolerance
 
-        if (match) {
+        if (match || partialMatch) {
             findCompleteStringsStartingAt(
                 current,
                 leftOfFirstMatchingCharacter,
@@ -280,7 +285,7 @@ class Trie<T> {
         rightOfLastMatchingCharacter: Node<T>?,
         search: String,
         consecutiveMatches: Int,
-        errorsEncountered: Int,
+        errors: Int,
         matchUpToHere: StringBuilder,
         accumulation: MutableCollection<SearchResult<T>>,
         alreadySaved: MutableSet<String>
@@ -289,16 +294,24 @@ class Trie<T> {
             val matchUpToHereString = matchUpToHere.toString()
 
             if (!alreadySaved.contains(matchUpToHereString)) {
-                val matchedWholeSequence = errorsEncountered == 0
+                val lengthOfMatch = consecutiveMatches - errors
+
+                val actualErrors =
+                    if (matchUpToHereString.length < search.length) search.length - lengthOfMatch
+                    else errors
+
+                val matchedWholeSequence = actualErrors == 0
                         && getMatchedWholeSequence(leftOfFirstMatchingCharacter, rightOfLastMatchingCharacter)
 
-                val matchedWholeWord = errorsEncountered == 0
+                val matchedWholeWord = actualErrors == 0
                         && getMatchedWholeWord(leftOfFirstMatchingCharacter, rightOfLastMatchingCharacter)
+
 
                 val newSearchResult = SearchResult<T>(
                     matchUpToHereString,
                     current.value!!,
-                    lengthOfMatch = consecutiveMatches - errorsEncountered,
+                    lengthOfMatch,
+                    actualErrors,
                     matchedWholeSequence,
                     matchedWholeWord
                 )
@@ -334,7 +347,7 @@ class Trie<T> {
                 nextRightOfLastMatchingCharacter,
                 search,
                 newConsecutiveMatches,
-                errorsEncountered,
+                errors,
                 StringBuilder(matchUpToHere).append(nextNode.string),
                 accumulation,
                 alreadySaved
