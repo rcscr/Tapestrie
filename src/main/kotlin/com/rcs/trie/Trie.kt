@@ -163,18 +163,16 @@ class Trie<T> {
         }
 
         val matches: MutableList<SearchResult<T>> = mutableListOf()
-        val alreadySaved: MutableSet<String> = HashSet()
 
         findCompleteStringsBySubstring(
+            search,
             root,
             null,
-            search,
             consecutiveMatches =  0,
             errorTolerance,
             errorsEncountered = 0,
             StringBuilder(),
-            matches,
-            alreadySaved
+            matches
         )
 
         return matches.sortedWith(sortByBestMatchFirst)
@@ -203,15 +201,14 @@ class Trie<T> {
     }
 
     private fun findCompleteStringsBySubstring(
+        search: String,
         current: Node<T>,
         leftOfFirstMatchingCharacter: Node<T>?,
-        search: String,
         consecutiveMatches: Int,
         errorTolerance: Int,
         errorsEncountered: Int,
-        matchUpToHere: StringBuilder,
-        accumulation: MutableCollection<SearchResult<T>>,
-        alreadySaved: MutableSet<String>
+        sequence: StringBuilder,
+        accumulation: MutableCollection<SearchResult<T>>
     ) {
         val match = consecutiveMatches == search.length && errorsEncountered <= errorTolerance
         val partialMatch = current.completes() && consecutiveMatches >= search.length - errorTolerance
@@ -224,42 +221,40 @@ class Trie<T> {
                 search,
                 consecutiveMatches,
                 errorsEncountered,
-                matchUpToHere,
+                sequence,
                 accumulation,
                 mutableMapOf()
             )
             return
         }
 
-        val thisNodeMatches = consecutiveMatches > 0
-
         var nextNodes: MutableSet<Node<T>>
-
         synchronized(current.next) {
             nextNodes = current.next.toMutableSet()
         }
 
         for (nextNode in nextNodes) {
-            val prevNodeMatches = consecutiveMatches > 0
+            val currentNodeMatches = consecutiveMatches > 0
             val nextNodeMatches = nextNode.string == search[consecutiveMatches].toString()
 
-            var newConsecutiveMatches = 0
-            var newErrorsEncountered = 0
+            var newConsecutiveMatches: Int
+            var newErrorsEncountered: Int
 
             if (nextNodeMatches) {
                 newConsecutiveMatches = consecutiveMatches + 1
                 newErrorsEncountered = errorsEncountered
+            } else if (currentNodeMatches && errorsEncountered < errorTolerance) {
+                // was matching before, but no longer matches, however, there's some error tolerance to be used
+                newConsecutiveMatches = consecutiveMatches + 1
+                newErrorsEncountered = errorsEncountered + 1
             } else {
-                if (prevNodeMatches) {
-                    if (errorsEncountered < errorTolerance) {
-                        newConsecutiveMatches = consecutiveMatches + 1
-                        newErrorsEncountered = errorsEncountered + 1
-                    }
-                }
+                // reset
+                newConsecutiveMatches = 0
+                newErrorsEncountered = 0
             }
 
             val newLeftOfFirstMatchingCharacter =
-                if (!thisNodeMatches && nextNodeMatches) current
+                if (!currentNodeMatches && nextNodeMatches) current
                 else leftOfFirstMatchingCharacter
 
             // looking ahead allows examining potential matches with letters missing
@@ -273,15 +268,14 @@ class Trie<T> {
 
             for (i in 0..<attempts) {
                 findCompleteStringsBySubstring(
+                    search,
                     nextNode,
                     newLeftOfFirstMatchingCharacter,
-                    search,
                     newConsecutiveMatches + i,
                     errorTolerance,
                     newErrorsEncountered,
-                    StringBuilder(matchUpToHere).append(nextNode.string),
-                    accumulation,
-                    alreadySaved
+                    StringBuilder(sequence).append(nextNode.string),
+                    accumulation
                 )
             }
         }
