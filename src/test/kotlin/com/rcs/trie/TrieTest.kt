@@ -128,52 +128,52 @@ class TrieTest {
         trie.put("123", 7)
 
         // Act
-        val resultA: Collection<Trie.SearchResult<Int>> =
+        val resultA: Collection<TrieSearchResult<Int>> =
             trie.matchBySubstring("a") // match a prefix of length 1
 
-        val resultB: Collection<Trie.SearchResult<Int>> =
+        val resultB: Collection<TrieSearchResult<Int>> =
             trie.matchBySubstring("def") // match a prefix of length > 1
 
-        val resultC: Collection<Trie.SearchResult<Int>> =
+        val resultC: Collection<TrieSearchResult<Int>> =
             trie.matchBySubstring("ghi") // match a postfix & substring
 
-        val resultD: Collection<Trie.SearchResult<Int>> =
+        val resultD: Collection<TrieSearchResult<Int>> =
             trie.matchBySubstring("jklmno") // match the whole sequence
 
-        val resultE: Collection<Trie.SearchResult<Int>> =
+        val resultE: Collection<TrieSearchResult<Int>> =
             trie.matchBySubstring("pqs") // match after an initial failed attempt
 
-        val resultF: Collection<Trie.SearchResult<Int>> =
+        val resultF: Collection<TrieSearchResult<Int>> =
             trie.matchBySubstring("vw") // matched whole word
 
-        val resultG: Collection<Trie.SearchResult<Int>> =
+        val resultG: Collection<TrieSearchResult<Int>> =
             trie.matchBySubstring("234") // only partial match
 
         // Assert
         Assertions.assertThat(resultA).containsExactlyInAnyOrder(
-            Trie.SearchResult("abcdef", 1, 1, 0, false, false)
+            TrieSearchResult("abcdef", 1, 1, 0, false, false)
         )
 
         Assertions.assertThat(resultB).containsExactlyInAnyOrder(
-            Trie.SearchResult("abcdef", 1, 3, 0, false, false),
-            Trie.SearchResult("defghi", 2, 3, 0, false, false)
+            TrieSearchResult("abcdef", 1, 3, 0, false, false),
+            TrieSearchResult("defghi", 2, 3, 0, false, false)
         )
 
         Assertions.assertThat(resultC).containsExactlyInAnyOrder(
-            Trie.SearchResult("defghi", 2, 3, 0, false, false),
-            Trie.SearchResult("deghij", 3, 3, 0, false, false)
+            TrieSearchResult("defghi", 2, 3, 0, false, false),
+            TrieSearchResult("deghij", 3, 3, 0, false, false)
         )
 
         Assertions.assertThat(resultD).containsExactlyInAnyOrder(
-            Trie.SearchResult("jklmno", 4, 6, 0, true, true)
+            TrieSearchResult("jklmno", 4, 6, 0, true, true)
         )
 
         Assertions.assertThat(resultE).containsExactlyInAnyOrder(
-            Trie.SearchResult("pqrpqs", 5, 3, 0, false, false)
+            TrieSearchResult("pqrpqs", 5, 3, 0, false, false)
         )
 
         Assertions.assertThat(resultF).containsExactlyInAnyOrder(
-            Trie.SearchResult("tu vw, xyz", 6, 2, 0, false, true)
+            TrieSearchResult("tu vw, xyz", 6, 2, 0, false, true)
         )
 
         Assertions.assertThat(resultG).isEmpty()
@@ -197,19 +197,19 @@ class TrieTest {
         // Assert
         Assertions.assertThat(result).containsExactly(
             // matches whole sequence is highest ranking
-            Trie.SearchResult("manual", Unit, 6, 0, true, true),
+            TrieSearchResult("manual", Unit, 6, 0, true, true),
             // matches a whole word
-            Trie.SearchResult("linux manual", Unit, 6, 0, false, true),
+            TrieSearchResult("linux manual", Unit, 6, 0, false, true),
             // matches the highest possible number of characters, but it's neither the whole sequence nor a whole word
-            Trie.SearchResult("manuals", Unit, 6, 0, false, false),
+            TrieSearchResult("manuals", Unit, 6, 0, false, false),
             // same as above, but the string is longer, so is ranked lower
-            Trie.SearchResult("manually", Unit, 6, 0, false, false),
+            TrieSearchResult("manually", Unit, 6, 0, false, false),
             // partial match, with fewer errors
-            Trie.SearchResult("manu", Unit, 4, 2, false, false),
+            TrieSearchResult("manu", Unit, 4, 2, false, false),
             // partial match, with more errors
-            Trie.SearchResult("man", Unit, 3, 3, false, false),
+            TrieSearchResult("man", Unit, 3, 3, false, false),
             // partial match, with more errors, and lower string
-            Trie.SearchResult("many", Unit, 3, 3, false, false),
+            TrieSearchResult("many", Unit, 3, 3, false, false),
         )
     }
 
@@ -231,17 +231,17 @@ class TrieTest {
 
         // Assert
         Assertions.assertThat(resultOne).containsExactly(
-            Trie.SearchResult("goggle", Unit, 6, 0, true, true),
-            Trie.SearchResult("gogle", Unit, 5, 1, false, false),
-            Trie.SearchResult("google", Unit, 5, 1, false, false),
-            Trie.SearchResult("blah google blah", Unit, 5, 1, false, false)
+            TrieSearchResult("goggle", Unit, 6, 0, true, true),
+            TrieSearchResult("gogle", Unit, 5, 1, false, false),
+            TrieSearchResult("google", Unit, 5, 1, false, false),
+            TrieSearchResult("blah google blah", Unit, 5, 1, false, false)
         )
         Assertions.assertThat(resultTwo).containsExactly(
-            Trie.SearchResult("goggle", Unit, 6, 0, true, true),
-            Trie.SearchResult("gogle", Unit, 5, 1, false, false),
-            Trie.SearchResult("google", Unit, 5, 1, false, false),
-            Trie.SearchResult("blah google blah", Unit, 5, 1, false, false),
-            Trie.SearchResult("googly", Unit, 4, 2, false, false),
+            TrieSearchResult("goggle", Unit, 6, 0, true, true),
+            TrieSearchResult("gogle", Unit, 5, 1, false, false),
+            TrieSearchResult("google", Unit, 5, 1, false, false),
+            TrieSearchResult("blah google blah", Unit, 5, 1, false, false),
+            TrieSearchResult("googly", Unit, 4, 2, false, false),
         )
     }
 

@@ -4,21 +4,6 @@ class Trie<T> {
 
     private val wholeWordSeparator = "[\\s\\p{P}]"
 
-    data class SearchResult<T>(
-        val string: String,
-        val value: T,
-        val lengthOfMatch: Int,
-        val errors: Int,
-        val matchedWholeSequence: Boolean,
-        val matchedWholeWord: Boolean
-    )
-
-    class Node<T>(val string: String, val value: T?, val next: MutableSet<Node<T>>) {
-        fun completes(): Boolean {
-            return value != null
-        }
-    }
-
     private lateinit var root: Node<T>
 
     init {
@@ -131,16 +116,16 @@ class Trie<T> {
         } ?: mutableMapOf()
     }
 
-    fun matchBySubstring(search: String): List<SearchResult<T>> {
+    fun matchBySubstring(search: String): List<TrieSearchResult<T>> {
         return matchBySubstringFuzzy(search, 0)
     }
 
-    fun matchBySubstringFuzzy(search: String, errorTolerance: Int): List<SearchResult<T>> {
+    fun matchBySubstringFuzzy(search: String, errorTolerance: Int): List<TrieSearchResult<T>> {
         if (search.isEmpty() || errorTolerance < 0 || errorTolerance > search.length) {
             throw IllegalArgumentException()
         }
 
-        val matches: MutableList<SearchResult<T>> = mutableListOf()
+        val matches: MutableList<TrieSearchResult<T>> = mutableListOf()
 
         findCompleteStringsBySubstring(
             search,
@@ -153,7 +138,7 @@ class Trie<T> {
             matches
         )
 
-        return matches.sortedWith(TrieResultComparator.sortByBestMatchFirst)
+        return matches.sortedWith(TrieSearchResultComparator.sortByBestMatchFirst)
     }
 
     private fun prefixMatchUpTo(string: String): Node<T>? {
@@ -186,7 +171,7 @@ class Trie<T> {
         errorTolerance: Int,
         errorsEncountered: Int,
         sequence: StringBuilder,
-        accumulation: MutableCollection<SearchResult<T>>
+        accumulation: MutableCollection<TrieSearchResult<T>>
     ) {
         val match = consecutiveMatches == search.length && errorsEncountered <= errorTolerance
         val partialMatch = current.completes() && consecutiveMatches >= search.length - errorTolerance
@@ -267,7 +252,7 @@ class Trie<T> {
         consecutiveMatches: Int,
         errors: Int,
         matchUpToHere: StringBuilder,
-        accumulation: MutableCollection<SearchResult<T>>,
+        accumulation: MutableCollection<TrieSearchResult<T>>,
         alreadySaved: MutableMap<String, Int>
     ) {
         if (current.completes()) {
@@ -289,7 +274,7 @@ class Trie<T> {
                 val matchedWholeWord = actualErrors == 0
                         && getMatchedWholeWord(leftOfFirstMatchingCharacter, rightOfLastMatchingCharacter)
 
-                val newSearchResult = SearchResult<T>(
+                val newSearchResult = TrieSearchResult<T>(
                     matchUpToHereString,
                     current.value!!,
                     lengthOfMatch,
