@@ -20,5 +20,5 @@ The `Trie` implemented here is:
       - `google` (1 wrong letter)
       - `moggle` (1 wrong letter)
       - `googly` (2 wrong letters)
-      - `gole` (2 missing letters)
+      - `goge` (2 missing letters)
       - but not `giegly` (3 wrong letters)
