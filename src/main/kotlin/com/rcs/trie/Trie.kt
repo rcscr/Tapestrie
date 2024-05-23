@@ -262,18 +262,6 @@ class Trie<T> {
                 if (!thisNodeMatches && nextNodeMatches) current
                 else leftOfFirstMatchingCharacter
 
-            findCompleteStringsBySubstring(
-                nextNode,
-                newLeftOfFirstMatchingCharacter,
-                search,
-                newConsecutiveMatches,
-                errorTolerance,
-                newErrorsEncountered,
-                StringBuilder(matchUpToHere).append(nextNode.string),
-                accumulation,
-                alreadySaved
-            )
-
             // looking ahead allows examining potential matches with letters missing
             // I could use better nomenclature for this flow, but it does work
             val shouldLookAhead = !nextNodeMatches
