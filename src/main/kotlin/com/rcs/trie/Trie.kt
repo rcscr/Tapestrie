@@ -64,15 +64,12 @@ class Trie<T> {
             val currentCharacter = element.toString()
 
             var nextMatchingNode: Node<T>?
-
             synchronized(current.next) {
-                nextMatchingNode = current.next
-                    .firstOrNull { it.string == currentCharacter }
+                nextMatchingNode = current.next.firstOrNull { it.string == currentCharacter }
             }
 
-            // input does not exist
             if (nextMatchingNode == null) {
-                return
+                return // input does not exist
             } else {
                 current = nextMatchingNode!!
                 deque.add(current)
