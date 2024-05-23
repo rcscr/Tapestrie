@@ -4,28 +4,6 @@ class Trie<T> {
 
     private val wholeWordSeparator = "[^a-zA-Z\\d:]"
 
-    private val sortByLengthOfMatchLongestFirst: Comparator<SearchResult<T>> =
-        compareBy(SearchResult<T>::lengthOfMatch).reversed()
-
-    private val sortByLengthOfStringShortestFirst: Comparator<SearchResult<T>> =
-        compareBy { it.string.length }
-
-    private val sortByMatchedSequenceTrueFirst: Comparator<SearchResult<T>> =
-        compareBy(SearchResult<T>::matchedWholeWord).reversed()
-
-    private val sortByMatchedWholeWordTrueFirst: Comparator<SearchResult<T>> =
-        compareBy(SearchResult<T>::matchedWholeWord).reversed()
-
-    private val sortByLessErrorsFirst: Comparator<SearchResult<T>> =
-        compareBy { it.errors }
-
-    private val sortByBestMatchFirst: Comparator<SearchResult<T>> =
-        sortByLengthOfMatchLongestFirst
-            .thenComparing(sortByMatchedSequenceTrueFirst)
-            .thenComparing(sortByMatchedWholeWordTrueFirst)
-            .thenComparing(sortByLengthOfStringShortestFirst)
-            .thenComparing(sortByLessErrorsFirst)
-
     data class SearchResult<T>(
         val string: String,
         val value: T,
@@ -175,7 +153,7 @@ class Trie<T> {
             matches
         )
 
-        return matches.sortedWith(sortByBestMatchFirst)
+        return matches.sortedWith(TrieResultComparator.sortByBestMatchFirst)
     }
 
     private fun prefixMatchUpTo(string: String): Node<T>? {
