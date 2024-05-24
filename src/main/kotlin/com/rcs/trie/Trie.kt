@@ -219,7 +219,7 @@ class Trie<T> {
             // looking ahead allows examining potential matches with letters missing
             // I could use better nomenclature for this flow, but it does work
             val shouldLookAhead = !nextNodeMatches
-                    && errorsEncountered < errorTolerance
+                    && newErrorsEncountered <= errorTolerance
                     && consecutiveMatches + 1 < search.length
                     && nextNode.string == search[consecutiveMatches + 1].toString()
 
