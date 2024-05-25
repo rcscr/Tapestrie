@@ -54,7 +54,7 @@ class Trie<T> {
         }
     }
 
-    fun remove(input: String) {
+    fun remove(input: String): T? {
         var current = root
 
         val deque = ArrayDeque<Node<T>>(input.length + 1)
@@ -69,7 +69,7 @@ class Trie<T> {
             }
 
             if (nextMatchingNode == null) {
-                return // input does not exist
+                return null // input does not exist
             } else {
                 current = nextMatchingNode!!
                 deque.add(current)
@@ -80,6 +80,7 @@ class Trie<T> {
 
         // if it does not complete, input does not exist
         if (last.completes()) {
+            val value = last.value
             var j = input.length - 1
             while (!deque.removeLast().also { last = it }.isUsedForOtherStrings()) {
                 j--
@@ -88,6 +89,9 @@ class Trie<T> {
             synchronized(last.next) {
                 last.next.removeIf { it.string == charToUnlink }
             }
+            return value
+        } else {
+            return null
         }
     }
 

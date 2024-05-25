@@ -61,11 +61,27 @@ class TrieTest {
         trie.put("Hello, World!", 1)
 
         // Act
-        trie.remove("Hello, Nomads!")
+        val result = trie.remove("Hello, Nomads!")
 
         // Assert
-        Assertions.assertThat(trie.matchByPrefix("Hello, Talk")).isEmpty()
+        Assertions.assertThat(result).isEqualTo(1)
         Assertions.assertThat(trie.containsExactly("Hello, Nomads!")).isFalse()
+        Assertions.assertThat(trie.containsExactly("Hello, World!")).isTrue()
+    }
+
+    @Test
+    fun testRemoveNonExistant() {
+        // Arrange
+        val trie = Trie<Int>()
+        trie.put("Hello, Nomads!", 1)
+        trie.put("Hello, World!", 1)
+
+        // Act
+        val result = trie.remove("Hello, People!")
+
+        // Assert
+        Assertions.assertThat(result).isNull()
+        Assertions.assertThat(trie.containsExactly("Hello, Nomads!")).isTrue()
         Assertions.assertThat(trie.containsExactly("Hello, World!")).isTrue()
     }
 
@@ -285,7 +301,9 @@ class TrieTest {
                 executorService.submit {
                     val substring = it.substring(0, 10)
                     val matched = trie.matchByPrefix(substring)
-                    matched.keys.forEach { trie.remove(it) }
+                    matched.keys.forEach {
+                        Assertions.assertThat(trie.remove(it)).isNotNull()
+                    }
                 }
             }
             .forEach { it.get() }
