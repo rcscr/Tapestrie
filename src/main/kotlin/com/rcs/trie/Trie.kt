@@ -182,7 +182,7 @@ class Trie<T> {
                 && state.numberOfErrors <= errorTolerance
 
         val partialMatch = state.node.completes()
-                && state.numberOfMatches + state.numberOfErrors >= search.length - errorTolerance
+                && state.numberOfMatches >= search.length - errorTolerance
 
         if (match || partialMatch) {
             findCompleteStringsStartingAt(search, results, state)
@@ -293,7 +293,9 @@ class Trie<T> {
                 else state.numberOfErrors
 
             val existing = results.find { it.string == sequenceString }
-            val isBetterMatch = existing == null || existing.lengthOfMatch < state.numberOfMatches
+            val isBetterMatch = existing == null
+                    || existing.lengthOfMatch < state.numberOfMatches
+                    || existing.errors > state.numberOfErrors
 
             if (isBetterMatch) {
                 val matchedWholeSequence = actualErrors == 0

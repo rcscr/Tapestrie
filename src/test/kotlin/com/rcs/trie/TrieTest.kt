@@ -266,18 +266,35 @@ class TrieTest {
         val trie = Trie<Unit>()
         trie.put("raphael", Unit)
         trie.put("rafael", Unit)
+        trie.put("raffaello", Unit)
 
         // Act
         val r1 = trie.matchBySubstringFuzzy("raphael", 2)
         val r2 = trie.matchBySubstringFuzzy("rafael", 2)
 
+        val r3 = trie.matchBySubstringFuzzy("raffaello", 2)
+        val r4 = trie.matchBySubstringFuzzy("raffaello", 3)
+        val r5 = trie.matchBySubstringFuzzy("raffaello", 4)
+
         // Assert
         Assertions.assertThat(r1).containsExactly(
             TrieSearchResult("raphael", Unit, 7, 0, true, true),
-            TrieSearchResult("rafael", Unit, 5, 2, false, false))
+            TrieSearchResult("rafael", Unit, 5, 2, false, false),
+            TrieSearchResult("raffaello", Unit, 5, 2, false, false))
         Assertions.assertThat(r2).containsExactly(
             TrieSearchResult("rafael", Unit, 6, 0, true, true),
+            TrieSearchResult("raffaello", Unit, 6, 1, false, false),
             TrieSearchResult("raphael", Unit, 5, 2, false, false))
+
+        Assertions.assertThat(r3).containsExactly(
+            TrieSearchResult("raffaello", Unit, 9, 0, true, true))
+        Assertions.assertThat(r4).containsExactly(
+            TrieSearchResult("raffaello", Unit, 9, 0, true, true),
+            TrieSearchResult("rafael", Unit, 6, 3, false, false))
+        Assertions.assertThat(r5).containsExactly(
+            TrieSearchResult("raffaello", Unit, 9, 0, true, true),
+            TrieSearchResult("rafael", Unit, 6, 3, false, false),
+            TrieSearchResult("raphael", Unit, 5, 4, false, false))
     }
 
     @Test
