@@ -1,6 +1,6 @@
 package com.rcs.trie
 
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.*
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.Executors
@@ -14,13 +14,13 @@ class TrieTest {
         // Arrange
         val trie = Trie<Int>()
         trie.put("Hello", 123)
-        Assertions.assertThat(trie.getExactly("Hello")).isEqualTo(123)
+        assertThat(trie.getExactly("Hello")).isEqualTo(123)
 
         // Act
         trie.clear()
 
         // Assert
-        Assertions.assertThat(trie.matchByPrefix("")).isEmpty()
+        assertThat(trie.matchByPrefix("")).isEmpty()
     }
 
     @Test
@@ -32,9 +32,9 @@ class TrieTest {
         trie.put("Hello, Nomads!", 123)
 
         // Assert
-        Assertions.assertThat(trie.containsExactly("Hello")).isFalse()
-        Assertions.assertThat(trie.containsExactly("Hello, World!")).isFalse()
-        Assertions.assertThat(trie.containsExactly("Hello, Nomads!")).isTrue()
+        assertThat(trie.containsExactly("Hello")).isFalse()
+        assertThat(trie.containsExactly("Hello, World!")).isFalse()
+        assertThat(trie.containsExactly("Hello, Nomads!")).isTrue()
     }
 
     @Test
@@ -48,9 +48,9 @@ class TrieTest {
         trie.put("1234", 3)
 
         // Assert
-        Assertions.assertThat(trie.containsExactly("123456")).isTrue()
-        Assertions.assertThat(trie.containsExactly("12345")).isTrue()
-        Assertions.assertThat(trie.containsExactly("1234")).isTrue()
+        assertThat(trie.containsExactly("123456")).isTrue()
+        assertThat(trie.containsExactly("12345")).isTrue()
+        assertThat(trie.containsExactly("1234")).isTrue()
     }
 
     @Test
@@ -64,9 +64,9 @@ class TrieTest {
         val result = trie.remove("Hello, Nomads!")
 
         // Assert
-        Assertions.assertThat(result).isEqualTo(1)
-        Assertions.assertThat(trie.containsExactly("Hello, Nomads!")).isFalse()
-        Assertions.assertThat(trie.containsExactly("Hello, World!")).isTrue()
+        assertThat(result).isEqualTo(1)
+        assertThat(trie.containsExactly("Hello, Nomads!")).isFalse()
+        assertThat(trie.containsExactly("Hello, World!")).isTrue()
     }
 
     @Test
@@ -80,9 +80,9 @@ class TrieTest {
         val result = trie.remove("Hello, People!")
 
         // Assert
-        Assertions.assertThat(result).isNull()
-        Assertions.assertThat(trie.containsExactly("Hello, Nomads!")).isTrue()
-        Assertions.assertThat(trie.containsExactly("Hello, World!")).isTrue()
+        assertThat(result).isNull()
+        assertThat(trie.containsExactly("Hello, Nomads!")).isTrue()
+        assertThat(trie.containsExactly("Hello, World!")).isTrue()
     }
 
     @Test
@@ -100,20 +100,20 @@ class TrieTest {
         val matchedBlank = trie.matchByPrefix("")
 
         // Assert
-        Assertions.assertThat(matchedHello).isEqualTo(
+        assertThat(matchedHello).isEqualTo(
             mapOf(
                 "Hello, Nomads!" to 1,
                 "Hello, World!" to 2
             )
         )
 
-        Assertions.assertThat(matchedHi).isEqualTo(
+        assertThat(matchedHi).isEqualTo(
             mapOf(
                 "Hi there!" to 3
             )
         )
 
-        Assertions.assertThat(matchedH).isEqualTo(
+        assertThat(matchedH).isEqualTo(
             mapOf(
                 "Hello, Nomads!" to 1,
                 "Hello, World!" to 2,
@@ -121,7 +121,7 @@ class TrieTest {
             )
         )
 
-        Assertions.assertThat(matchedBlank).isEqualTo(
+        assertThat(matchedBlank).isEqualTo(
             mapOf(
                 "Hello, Nomads!" to 1,
                 "Hello, World!" to 2,
@@ -166,33 +166,33 @@ class TrieTest {
             trie.matchBySubstring("234") // only partial match
 
         // Assert
-        Assertions.assertThat(resultA).containsExactlyInAnyOrder(
+        assertThat(resultA).containsExactlyInAnyOrder(
             TrieSearchResult("abcdef", 1, 1, 0, false, false)
         )
 
-        Assertions.assertThat(resultB).containsExactlyInAnyOrder(
+        assertThat(resultB).containsExactlyInAnyOrder(
             TrieSearchResult("abcdef", 1, 3, 0, false, false),
             TrieSearchResult("defghi", 2, 3, 0, false, false)
         )
 
-        Assertions.assertThat(resultC).containsExactlyInAnyOrder(
+        assertThat(resultC).containsExactlyInAnyOrder(
             TrieSearchResult("defghi", 2, 3, 0, false, false),
             TrieSearchResult("deghij", 3, 3, 0, false, false)
         )
 
-        Assertions.assertThat(resultD).containsExactlyInAnyOrder(
+        assertThat(resultD).containsExactlyInAnyOrder(
             TrieSearchResult("jklmno", 4, 6, 0, true, true)
         )
 
-        Assertions.assertThat(resultE).containsExactlyInAnyOrder(
+        assertThat(resultE).containsExactlyInAnyOrder(
             TrieSearchResult("pqrpqs", 5, 3, 0, false, false)
         )
 
-        Assertions.assertThat(resultF).containsExactlyInAnyOrder(
+        assertThat(resultF).containsExactlyInAnyOrder(
             TrieSearchResult("tu vw, xyz", 6, 2, 0, false, true)
         )
 
-        Assertions.assertThat(resultG).isEmpty()
+        assertThat(resultG).isEmpty()
     }
 
     @Test
@@ -211,7 +211,7 @@ class TrieTest {
         val result = trie.matchBySubstringFuzzy("manual", 3)
 
         // Assert
-        Assertions.assertThat(result).containsExactly(
+        assertThat(result).containsExactly(
             // matches whole sequence is highest ranking
             TrieSearchResult("manual", Unit, 6, 0, true, true),
             // matches a whole word
@@ -245,13 +245,13 @@ class TrieTest {
         val resultTwo = trie.matchBySubstringFuzzy("goggle", 2)
 
         // Assert
-        Assertions.assertThat(resultOne).containsExactly(
+        assertThat(resultOne).containsExactly(
             TrieSearchResult("goggle", Unit, 6, 0, true, true),
             TrieSearchResult("gogle", Unit, 5, 1, false, false),
             TrieSearchResult("google", Unit, 5, 1, false, false),
             TrieSearchResult("blah google blah", Unit, 5, 1, false, false)
         )
-        Assertions.assertThat(resultTwo).containsExactly(
+        assertThat(resultTwo).containsExactly(
             TrieSearchResult("goggle", Unit, 6, 0, true, true),
             TrieSearchResult("gogle", Unit, 5, 1, false, false),
             TrieSearchResult("google", Unit, 5, 1, false, false),
@@ -277,21 +277,21 @@ class TrieTest {
         val r5 = trie.matchBySubstringFuzzy("raffaello", 4)
 
         // Assert
-        Assertions.assertThat(r1).containsExactly(
+        assertThat(r1).containsExactly(
             TrieSearchResult("raphael", Unit, 7, 0, true, true),
             TrieSearchResult("rafael", Unit, 5, 2, false, false),
             TrieSearchResult("raffaello", Unit, 5, 2, false, false))
-        Assertions.assertThat(r2).containsExactly(
+        assertThat(r2).containsExactly(
             TrieSearchResult("rafael", Unit, 6, 0, true, true),
             TrieSearchResult("raffaello", Unit, 6, 1, false, false),
             TrieSearchResult("raphael", Unit, 5, 2, false, false))
 
-        Assertions.assertThat(r3).containsExactly(
+        assertThat(r3).containsExactly(
             TrieSearchResult("raffaello", Unit, 9, 0, true, true))
-        Assertions.assertThat(r4).containsExactly(
+        assertThat(r4).containsExactly(
             TrieSearchResult("raffaello", Unit, 9, 0, true, true),
             TrieSearchResult("rafael", Unit, 6, 3, false, false))
-        Assertions.assertThat(r5).containsExactly(
+        assertThat(r5).containsExactly(
             TrieSearchResult("raffaello", Unit, 9, 0, true, true),
             TrieSearchResult("rafael", Unit, 6, 3, false, false),
             TrieSearchResult("raphael", Unit, 5, 4, false, false))
@@ -310,7 +310,7 @@ class TrieTest {
             .forEach { it.get() }
 
         // Assert
-        Assertions.assertThat(trie.matchByPrefix("").size).isEqualTo(randomStrings.size)
+        assertThat(trie.matchByPrefix("").size).isEqualTo(randomStrings.size)
 
         // parallel match and remove
         randomStrings
@@ -319,13 +319,13 @@ class TrieTest {
                     val substring = it.substring(0, 10)
                     val matched = trie.matchByPrefix(substring)
                     matched.keys.forEach {
-                        Assertions.assertThat(trie.remove(it)).isNotNull()
+                        assertThat(trie.remove(it)).isNotNull()
                     }
                 }
             }
             .forEach { it.get() }
 
-        Assertions.assertThat(trie.matchByPrefix("").size).isEqualTo(0)
+        assertThat(trie.matchByPrefix("").size).isEqualTo(0)
     }
 
     private fun getRandomString(): String {
