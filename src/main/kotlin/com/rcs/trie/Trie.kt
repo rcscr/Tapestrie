@@ -76,10 +76,11 @@ class Trie<T> {
             }
         }
 
+        // this is the node to remove - but only if it completes
         var last = deque.removeLast()
 
-        // if it does not complete, input does not exist
         if (last.completes()) {
+            // remove all characters, unless they're used for other strings
             val value = last.value
             var j = input.length - 1
             while (!deque.removeLast().also { last = it }.isUsedForOtherStrings()) {
@@ -91,7 +92,7 @@ class Trie<T> {
             }
             return value
         } else {
-            return null
+            return null // if it does not complete, input does not exist
         }
     }
 
@@ -130,9 +131,9 @@ class Trie<T> {
 
         findCompleteStringsBySubstring(
             search,
-            0,
+            searchIndex = 0,
             root,
-            null,
+            leftOfFirstMatchingCharacter = null,
             consecutiveMatches =  0,
             errorTolerance,
             errorsEncountered = 0,
@@ -225,7 +226,7 @@ class Trie<T> {
             } else if (currentNodeMatches && errorsEncountered < errorTolerance) {
                 // was matching before, but no longer matches;
                 // however, there's some error tolerance to be used
-                // there are three ways this can go: mispeling, missing letter in search input, or missing letter in data
+                // there are three ways this can go: misspelling, missing letter in search input, or missing letter in data
 
                 // misspelling
                 // increment searchIndex and go to the next node
@@ -276,12 +277,12 @@ class Trie<T> {
                 // reset matching
                 findCompleteStringsBySubstring(
                     search,
-                    0,
+                    searchIndex = 0,
                     nextNode,
-                    null,
-                    0,
+                    leftOfFirstMatchingCharacter = null,
+                    consecutiveMatches = 0,
                     errorTolerance,
-                    0,
+                    errorsEncountered = 0,
                     StringBuilder(sequence).append(nextNode.string),
                     accumulation
                 )
