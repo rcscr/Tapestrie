@@ -123,7 +123,7 @@ class Trie<T> {
     fun matchByPrefix(prefix: String): Map<String, T> {
         return prefixMatchUpTo(prefix)?.let {
             val matches: MutableMap<String, T> = HashMap()
-            findCompleteStringsStartingAt(it, prefix, matches)
+            buildSubstringMatches(it, prefix, matches)
             matches
         } ?: mutableMapOf()
     }
@@ -139,7 +139,7 @@ class Trie<T> {
 
         val matches: MutableList<TrieSearchResult<T>> = mutableListOf()
 
-        findCompleteStringsBySubstring(
+        findSubstringMatches(
             search,
             matches,
             errorTolerance,
@@ -170,7 +170,7 @@ class Trie<T> {
         return current
     }
 
-    private fun findCompleteStringsBySubstring(
+    private fun findSubstringMatches(
         search: String,
         results: MutableCollection<TrieSearchResult<T>>,
         errorTolerance: Int,
@@ -184,7 +184,7 @@ class Trie<T> {
                 && state.numberOfMatches >= search.length - errorTolerance
 
         if (match || partialMatch) {
-            findCompleteStringsStartingAt(search, results, state)
+            buildSubstringMatches(search, results, state)
             return
         }
 
@@ -269,7 +269,7 @@ class Trie<T> {
             }
 
             searchStates.forEach {
-                findCompleteStringsBySubstring(
+                findSubstringMatches(
                     search,
                     results,
                     errorTolerance,
@@ -279,7 +279,7 @@ class Trie<T> {
         }
     }
 
-    private fun findCompleteStringsStartingAt(
+    private fun buildSubstringMatches(
         search: String,
         results: MutableCollection<TrieSearchResult<T>>,
         state: FuzzySubstringSearchState<T>,
@@ -335,7 +335,7 @@ class Trie<T> {
                 if (!endMatch && nextNodeMatches) state.numberOfMatches + 1
                 else state.numberOfMatches
 
-            findCompleteStringsStartingAt(
+            buildSubstringMatches(
                 search,
                 results,
                 FuzzySubstringSearchState(
@@ -367,12 +367,12 @@ class Trie<T> {
                 && rightOfLastMatchingCharacter.isWordSeparator()
     }
 
-    private fun findCompleteStringsStartingAt(current: Node<T>, sequence: String, results: MutableMap<String, T>) {
+    private fun buildSubstringMatches(current: Node<T>, sequence: String, results: MutableMap<String, T>) {
         if (current.completes()) {
             results[sequence] = current.value!!
         }
         for (next in current.next) {
-            findCompleteStringsStartingAt(next, sequence + next.string, results)
+            buildSubstringMatches(next, sequence + next.string, results)
         }
     }
 
