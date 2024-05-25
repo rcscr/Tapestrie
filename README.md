@@ -10,9 +10,9 @@ The `Trie` implemented here is thread-safe, unit-tested, and able to efficiently
     - searching for `brazil` with `errorTolerance=1` returns:
       - `brazil` (perfect match)
       - `brasil` (1 wrong letter) 
-      - `brasilien` (1 wrong letters - additional letters don't count as errors)
+      - `brasilien` (1 wrong letter - additional letters don't count as errors)
     - searching for `raphael` with `errorTolerance=2` returns:
       - `raphael` (perfect match)
       - `rafael` (1 wrong letter + 1 missing letter = 2 errors)
-      - `raffaello` (2 wrong letters)
+      - `raffaello` (2 wrong letters - additional letters don't count as errors)
     - it works the other way around, too
