@@ -11,14 +11,10 @@ The `Trie` implemented here is:
   - prefix match
   - substring match
   - "fuzzy" substring match with configurable error tolerance:
-    - searching for `goggle` with `errorTolerance=1` returns:
-      - `google` (1 wrong letter)
-      - `moggle` (1 wrong letter) 
-      - `gogle` (1 missing letter)
-      - but not `googly` (2 wrong letters)
-    - searching for `goggle` with `errorTolerance=2` returns:
-      - `google` (1 wrong letter)
-      - `moggle` (1 wrong letter)
-      - `googly` (2 wrong letters)
-      - `goge` (2 missing letters)
-      - but not `giegly` (3 wrong letters)
+    - searching for `brazil` with `errorTolerance=1` returns:
+      - `brazil` (perfect match)
+      - `brasil` (1 wrong letter) 
+    - searching for `raphael` with `errorTolerance=2` returns:
+      - `raphael` (perfect match)
+      - `rafael` (1 wrong letter, 1 missing letter = 2 errors)
+    - it works the other way around, too
