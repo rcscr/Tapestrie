@@ -156,7 +156,6 @@ class Trie<T> {
             val currentCharacter = element.toString()
 
             var nextSubstring: Node<T>? = null
-
             synchronized(current.next) {
                 nextSubstring = current.next.firstOrNull { it.string == currentCharacter }
             }
@@ -189,9 +188,9 @@ class Trie<T> {
             return
         }
 
-        var nextNodes: MutableSet<Node<T>>
+        var nextNodes: Array<Node<T>>
         synchronized(state.node.next) {
-            nextNodes = state.node.next.toMutableSet()
+            nextNodes = state.node.next.toTypedArray()
         }
 
         val currentNodeMatches = state.numberOfMatches > 0
@@ -317,9 +316,9 @@ class Trie<T> {
             }
         }
 
-        var nextNodes: Set<Node<T>>
+        var nextNodes: Array<Node<T>>
         synchronized(state.node.next) {
-            nextNodes = state.node.next.toMutableSet()
+            nextNodes = state.node.next.toTypedArray()
         }
 
         val endMatch = null != state.rightOfLastMatchingCharacter
