@@ -126,6 +126,7 @@ class Trie<T> {
 
         findCompleteStringsBySubstring(
             search,
+            0,
             root,
             null,
             consecutiveMatches =  0,
@@ -162,6 +163,7 @@ class Trie<T> {
 
     private fun findCompleteStringsBySubstring(
         search: String,
+        searchIndex: Int,
         current: Node<T>,
         leftOfFirstMatchingCharacter: Node<T>?,
         consecutiveMatches: Int,
@@ -170,8 +172,12 @@ class Trie<T> {
         sequence: StringBuilder,
         accumulation: MutableCollection<TrieSearchResult<T>>
     ) {
-        val match = consecutiveMatches == search.length && errorsEncountered <= errorTolerance
-        val partialMatch = current.completes() && consecutiveMatches >= search.length - errorTolerance
+        val match = searchIndex >= search.length
+                && consecutiveMatches >= search.length - errorsEncountered
+                && errorsEncountered <= errorTolerance
+
+        val partialMatch = current.completes()
+                && consecutiveMatches >= search.length - errorTolerance
 
         if (match || partialMatch) {
             findCompleteStringsStartingAt(
@@ -182,8 +188,7 @@ class Trie<T> {
                 consecutiveMatches,
                 errorsEncountered,
                 sequence,
-                accumulation,
-                mutableMapOf()
+                accumulation
             )
             return
         }
@@ -195,44 +200,81 @@ class Trie<T> {
 
         for (nextNode in nextNodes) {
             val currentNodeMatches = consecutiveMatches > 0
-            val nextNodeMatches = nextNode.string == search[consecutiveMatches].toString()
-
-            var newConsecutiveMatches: Int
-            var newErrorsEncountered: Int
-            if (nextNodeMatches) {
-                newConsecutiveMatches = consecutiveMatches + 1
-                newErrorsEncountered = errorsEncountered
-            } else if (currentNodeMatches && errorsEncountered < errorTolerance) {
-                // was matching before, but no longer matches; however, there's some error tolerance to be used
-                newConsecutiveMatches = consecutiveMatches + 1
-                newErrorsEncountered = errorsEncountered + 1
-            } else {
-                // reset
-                newConsecutiveMatches = 0
-                newErrorsEncountered = 0
-            }
-
+            val nextNodeMatches = nextNode.string == search[searchIndex].toString()
             val newLeftOfFirstMatchingCharacter =
                 if (!currentNodeMatches && nextNodeMatches) current
                 else leftOfFirstMatchingCharacter
 
-            // looking ahead allows examining potential matches with letters missing
-            // I could use better nomenclature for this flow, but it does work
-            val shouldLookAhead = !nextNodeMatches
-                    && newErrorsEncountered <= errorTolerance
-                    && consecutiveMatches + 1 < search.length
-                    && nextNode.string == search[consecutiveMatches + 1].toString()
-
-            val attempts = if (shouldLookAhead) 2 else 1
-
-            for (i in 0..<attempts) {
+            if (nextNodeMatches) {
+                // happy path - continue matching
                 findCompleteStringsBySubstring(
                     search,
+                    searchIndex + 1,
                     nextNode,
                     newLeftOfFirstMatchingCharacter,
-                    newConsecutiveMatches + i,
+                    consecutiveMatches + 1,
                     errorTolerance,
-                    newErrorsEncountered,
+                    errorsEncountered,
+                    StringBuilder(sequence).append(nextNode.string),
+                    accumulation
+                )
+            } else if (currentNodeMatches && errorsEncountered < errorTolerance) {
+                // was matching before, but no longer matches;
+                // however, there's some error tolerance to be used
+                // there are three ways this can go: mispeling, missing letter in search input, or missing letter in data
+
+                // misspelling
+                if (searchIndex + 1 < search.length) {
+                    findCompleteStringsBySubstring(
+                        search,
+                        searchIndex + 1,
+                        nextNode,
+                        newLeftOfFirstMatchingCharacter,
+                        consecutiveMatches + 1,
+                        errorTolerance,
+                        errorsEncountered + 1,
+                        StringBuilder(sequence).append(nextNode.string),
+                        accumulation
+                    )
+                }
+
+                // missing letter in data
+                if (searchIndex + 1 < search.length) {
+                    findCompleteStringsBySubstring(
+                        search,
+                        searchIndex,
+                        nextNode,
+                        newLeftOfFirstMatchingCharacter,
+                        consecutiveMatches + 1,
+                        errorTolerance,
+                        errorsEncountered + 1,
+                        StringBuilder(sequence).append(nextNode.string),
+                        accumulation
+                    )
+                }
+
+                // missing letter in search input
+                findCompleteStringsBySubstring(
+                    search,
+                    searchIndex + 1,
+                    current,
+                    newLeftOfFirstMatchingCharacter,
+                    consecutiveMatches + 1,
+                    errorTolerance,
+                    errorsEncountered + 1,
+                    StringBuilder(sequence),
+                    accumulation
+                )
+            } else {
+                // reset matching
+                findCompleteStringsBySubstring(
+                    search,
+                    0,
+                    nextNode,
+                    null,
+                    0,
+                    errorTolerance,
+                    0,
                     StringBuilder(sequence).append(nextNode.string),
                     accumulation
                 )
@@ -248,22 +290,20 @@ class Trie<T> {
         consecutiveMatches: Int,
         errors: Int,
         matchUpToHere: StringBuilder,
-        accumulation: MutableCollection<TrieSearchResult<T>>,
-        alreadySaved: MutableMap<String, Int>
+        accumulation: MutableCollection<TrieSearchResult<T>>
     ) {
         if (current.completes()) {
             val matchUpToHereString = matchUpToHere.toString()
 
             val lengthOfMatch = consecutiveMatches - errors
+            val actualErrors =
+                if (matchUpToHereString.length < search.length) search.length - lengthOfMatch
+                else errors
 
-            val hasAlreadySaved = alreadySaved[matchUpToHereString] != null
-            val foundBetterMatch = !hasAlreadySaved || lengthOfMatch < alreadySaved[matchUpToHereString]!!
+            val existing = accumulation.find { it.string == matchUpToHereString }
+            val isBetterMatch = existing == null || existing.lengthOfMatch < lengthOfMatch
 
-            if (!hasAlreadySaved || foundBetterMatch) {
-                val actualErrors =
-                    if (matchUpToHereString.length < search.length) search.length - lengthOfMatch
-                    else errors
-
+            if (isBetterMatch) {
                 val matchedWholeSequence = actualErrors == 0
                         && matchedWholeSequence(leftOfFirstMatchingCharacter, rightOfLastMatchingCharacter)
 
@@ -278,10 +318,8 @@ class Trie<T> {
                     matchedWholeSequence,
                     matchedWholeWord
                 )
-
-                accumulation.removeIf { it.string == matchUpToHereString }
+                existing?.let { accumulation.remove(it) }
                 accumulation.add(newSearchResult)
-                alreadySaved[matchUpToHereString] = lengthOfMatch
             }
         }
 
@@ -312,8 +350,7 @@ class Trie<T> {
                 newConsecutiveMatches,
                 errors,
                 StringBuilder(matchUpToHere).append(nextNode.string),
-                accumulation,
-                alreadySaved
+                accumulation
             )
         }
     }

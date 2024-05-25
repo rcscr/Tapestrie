@@ -246,6 +246,26 @@ class TrieTest {
     }
 
     @Test
+    fun testFuzzySubstringSearchWorksBothWays() {
+        // Arrange
+        val trie = Trie<Unit>()
+        trie.put("raphael", Unit)
+        trie.put("rafael", Unit)
+
+        // Act
+        val r1 = trie.matchBySubstringFuzzy("raphael", 2)
+        val r2 = trie.matchBySubstringFuzzy("rafael", 2)
+
+        // Assert
+        Assertions.assertThat(r1).containsExactly(
+            TrieSearchResult("raphael", Unit, 7, 0, true, true),
+            TrieSearchResult("rafael", Unit, 5, 2, false, false))
+        Assertions.assertThat(r2).containsExactly(
+            TrieSearchResult("rafael", Unit, 6, 0, true, true),
+            TrieSearchResult("raphael", Unit, 5, 2, false, false))
+    }
+
+    @Test
     fun testConcurrency() {
         // Arrange
         val trie = Trie<Int>()
