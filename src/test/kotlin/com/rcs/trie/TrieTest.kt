@@ -213,7 +213,6 @@ class TrieTest {
         )
     }
 
-
     @Test
     fun testMatchBySubstringFuzzy() {
         // Arrange

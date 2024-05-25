@@ -224,6 +224,7 @@ class Trie<T> {
                 // there are three ways this can go: mispeling, missing letter in search input, or missing letter in data
 
                 // misspelling
+                // increment searchIndex and go to the next node
                 if (searchIndex + 1 < search.length) {
                     findCompleteStringsBySubstring(
                         search,
@@ -239,30 +240,32 @@ class Trie<T> {
                 }
 
                 // missing letter in data
+                // increment searchIndex and go to the previous node
                 if (searchIndex + 1 < search.length) {
                     findCompleteStringsBySubstring(
                         search,
-                        searchIndex,
-                        nextNode,
+                        searchIndex + 1,
+                        current,
                         newLeftOfFirstMatchingCharacter,
                         consecutiveMatches + 1,
                         errorTolerance,
                         errorsEncountered + 1,
-                        StringBuilder(sequence).append(nextNode.string),
+                        StringBuilder(sequence),
                         accumulation
                     )
                 }
 
                 // missing letter in search input
+                // keep searchIndex the same and go to the next node
                 findCompleteStringsBySubstring(
                     search,
-                    searchIndex + 1,
-                    current,
+                    searchIndex,
+                    nextNode,
                     newLeftOfFirstMatchingCharacter,
                     consecutiveMatches + 1,
                     errorTolerance,
                     errorsEncountered + 1,
-                    StringBuilder(sequence),
+                    StringBuilder(sequence).append(nextNode.string),
                     accumulation
                 )
             } else {
