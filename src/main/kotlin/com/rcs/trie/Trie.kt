@@ -5,7 +5,7 @@ class Trie<T> {
     private data class FuzzySubstringSearchState<T>(
         val node: Node<T>,
         val leftOfFirstMatchingCharacter: Node<T>?,
-        val rightOfLastMatchingCharacter: Node<T>?,
+        var rightOfLastMatchingCharacter: Node<T>?,
         val searchIndex: Int,
         val numberOfMatches: Int,
         val numberOfErrors: Int,
@@ -178,11 +178,11 @@ class Trie<T> {
         state: FuzzySubstringSearchState<T>,
     ) {
         val match = state.searchIndex >= search.length
-                && state.numberOfMatches >= search.length - state.numberOfErrors
+                && state.numberOfMatches + state.numberOfErrors >= search.length - state.numberOfErrors
                 && state.numberOfErrors <= errorTolerance
 
         val partialMatch = state.node.completes()
-                && state.numberOfMatches >= search.length - errorTolerance
+                && state.numberOfMatches + state.numberOfErrors >= search.length - errorTolerance
 
         if (match || partialMatch) {
             findCompleteStringsStartingAt(search, results, state)
@@ -213,7 +213,7 @@ class Trie<T> {
                     sequence = StringBuilder(state.sequence).append(nextNode.string)
                 ))
             } else if (currentNodeMatches && state.numberOfErrors < errorTolerance) {
-                // was matching before, but no longer matches;
+                // was matching before, but no longer matches
                 // however, there's some error tolerance to be used
                 // there are three ways this can go: misspelling, missing letter in search input, or missing letter in data
 
@@ -225,7 +225,7 @@ class Trie<T> {
                         leftOfFirstMatchingCharacter = state.leftOfFirstMatchingCharacter,
                         rightOfLastMatchingCharacter = null,
                         searchIndex = state.searchIndex + 1,
-                        numberOfMatches = state.numberOfMatches + 1,
+                        numberOfMatches = state.numberOfMatches,
                         numberOfErrors = state.numberOfErrors + 1,
                         sequence = StringBuilder(state.sequence).append(nextNode.string)
                     ))
@@ -239,7 +239,7 @@ class Trie<T> {
                         leftOfFirstMatchingCharacter = state.leftOfFirstMatchingCharacter,
                         rightOfLastMatchingCharacter = null,
                         searchIndex = state.searchIndex + 1,
-                        numberOfMatches = state.numberOfMatches + 1,
+                        numberOfMatches = state.numberOfMatches,
                         numberOfErrors = state.numberOfErrors + 1,
                         sequence = StringBuilder(state.sequence)
                     ))
@@ -252,7 +252,7 @@ class Trie<T> {
                     leftOfFirstMatchingCharacter = state.leftOfFirstMatchingCharacter,
                     rightOfLastMatchingCharacter = null,
                     searchIndex = state.searchIndex ,
-                    numberOfMatches = state.numberOfMatches + 1,
+                    numberOfMatches = state.numberOfMatches,
                     numberOfErrors = state.numberOfErrors + 1,
                     sequence = StringBuilder(state.sequence).append(nextNode.string)
                 ))
@@ -288,13 +288,12 @@ class Trie<T> {
         if (state.node.completes()) {
             val sequenceString = state.sequence.toString()
 
-            val lengthOfMatch = state.numberOfMatches - state.numberOfErrors
             val actualErrors =
-                if (sequenceString.length < search.length) search.length - lengthOfMatch
+                if (sequenceString.length < search.length) search.length - state.numberOfMatches
                 else state.numberOfErrors
 
             val existing = results.find { it.string == sequenceString }
-            val isBetterMatch = existing == null || existing.lengthOfMatch < lengthOfMatch
+            val isBetterMatch = existing == null || existing.lengthOfMatch < state.numberOfMatches
 
             if (isBetterMatch) {
                 val matchedWholeSequence = actualErrors == 0
@@ -306,7 +305,7 @@ class Trie<T> {
                 val newSearchResult = TrieSearchResult<T>(
                     sequenceString,
                     state.node.value!!,
-                    lengthOfMatch,
+                    state.numberOfMatches,
                     actualErrors,
                     matchedWholeSequence,
                     matchedWholeWord
@@ -331,7 +330,7 @@ class Trie<T> {
                 if (!endMatch && !nextNodeMatches) nextNode
                 else state.rightOfLastMatchingCharacter
 
-            val newConsecutiveMatches =
+            val newNumberOfMatches =
                 if (!endMatch && nextNodeMatches) state.numberOfMatches + 1
                 else state.numberOfMatches
 
@@ -343,7 +342,7 @@ class Trie<T> {
                     leftOfFirstMatchingCharacter = state.leftOfFirstMatchingCharacter,
                     rightOfLastMatchingCharacter = nextRightOfLastMatchingCharacter,
                     searchIndex = state.searchIndex,
-                    numberOfMatches = newConsecutiveMatches,
+                    numberOfMatches = newNumberOfMatches,
                     numberOfErrors = state.numberOfErrors,
                     sequence = StringBuilder(state.sequence).append(nextNode.string)
                 )
