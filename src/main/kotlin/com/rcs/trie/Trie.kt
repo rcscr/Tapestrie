@@ -2,6 +2,16 @@ package com.rcs.trie
 
 class Trie<T> {
 
+    private data class FuzzySubstringSearchState<T>(
+        val node: Node<T>,
+        val leftOfFirstMatchingCharacter: Node<T>?,
+        val rightOfLastMatchingCharacter: Node<T>?,
+        val searchIndex: Int,
+        val numberOfMatches: Int,
+        val numberOfErrors: Int,
+        val sequence: StringBuilder,
+    )
+
     private val wholeWordSeparator = "[\\s\\p{P}]"
 
     private lateinit var root: Node<T>
@@ -131,14 +141,9 @@ class Trie<T> {
 
         findCompleteStringsBySubstring(
             search,
-            searchIndex = 0,
-            root,
-            leftOfFirstMatchingCharacter = null,
-            consecutiveMatches =  0,
+            matches,
             errorTolerance,
-            errorsEncountered = 0,
-            StringBuilder(),
-            matches
+            FuzzySubstringSearchState(root, null, null, 0, 0, 0, StringBuilder())
         )
 
         return matches.sortedWith(TrieSearchResultComparator.sortByBestMatchFirst)
@@ -168,203 +173,186 @@ class Trie<T> {
 
     private fun findCompleteStringsBySubstring(
         search: String,
-        searchIndex: Int,
-        current: Node<T>,
-        leftOfFirstMatchingCharacter: Node<T>?,
-        consecutiveMatches: Int,
+        results: MutableCollection<TrieSearchResult<T>>,
         errorTolerance: Int,
-        errorsEncountered: Int,
-        sequence: StringBuilder,
-        accumulation: MutableCollection<TrieSearchResult<T>>
+        state: FuzzySubstringSearchState<T>,
     ) {
-        val match = searchIndex >= search.length
-                && consecutiveMatches >= search.length - errorsEncountered
-                && errorsEncountered <= errorTolerance
+        val match = state.searchIndex >= search.length
+                && state.numberOfMatches >= search.length - state.numberOfErrors
+                && state.numberOfErrors <= errorTolerance
 
-        val partialMatch = current.completes()
-                && consecutiveMatches >= search.length - errorTolerance
+        val partialMatch = state.node.completes()
+                && state.numberOfMatches >= search.length - errorTolerance
 
         if (match || partialMatch) {
-            findCompleteStringsStartingAt(
-                current,
-                leftOfFirstMatchingCharacter!!, // if matched, this is automatically not null
-                null,
-                search,
-                consecutiveMatches,
-                errorsEncountered,
-                sequence,
-                accumulation
-            )
+            findCompleteStringsStartingAt(search, results, state)
             return
         }
 
         var nextNodes: MutableSet<Node<T>>
-        synchronized(current.next) {
-            nextNodes = current.next.toMutableSet()
+        synchronized(state.node.next) {
+            nextNodes = state.node.next.toMutableSet()
         }
 
+        val currentNodeMatches = state.numberOfMatches > 0
+
         for (nextNode in nextNodes) {
-            val currentNodeMatches = consecutiveMatches > 0
-            val nextNodeMatches = nextNode.string == search[searchIndex].toString()
-            val newLeftOfFirstMatchingCharacter =
-                if (!currentNodeMatches && nextNodeMatches) current
-                else leftOfFirstMatchingCharacter
+            val nextNodeMatches = nextNode.string == search[state.searchIndex].toString()
+
+            val searchStates = mutableListOf<FuzzySubstringSearchState<T>>()
 
             if (nextNodeMatches) {
                 // happy path - continue matching
-                findCompleteStringsBySubstring(
-                    search,
-                    searchIndex + 1,
-                    nextNode,
-                    newLeftOfFirstMatchingCharacter,
-                    consecutiveMatches + 1,
-                    errorTolerance,
-                    errorsEncountered,
-                    StringBuilder(sequence).append(nextNode.string),
-                    accumulation
-                )
-            } else if (currentNodeMatches && errorsEncountered < errorTolerance) {
+                searchStates.add(FuzzySubstringSearchState(
+                    node = nextNode,
+                    leftOfFirstMatchingCharacter = state.leftOfFirstMatchingCharacter ?: state.node,
+                    rightOfLastMatchingCharacter = null,
+                    searchIndex = state.searchIndex + 1,
+                    numberOfMatches = state.numberOfMatches + 1,
+                    numberOfErrors = state.numberOfErrors,
+                    sequence = StringBuilder(state.sequence).append(nextNode.string)
+                ))
+            } else if (currentNodeMatches && state.numberOfErrors < errorTolerance) {
                 // was matching before, but no longer matches;
                 // however, there's some error tolerance to be used
                 // there are three ways this can go: misspelling, missing letter in search input, or missing letter in data
 
                 // misspelling
                 // increment searchIndex and go to the next node
-                if (searchIndex + 1 < search.length) {
-                    findCompleteStringsBySubstring(
-                        search,
-                        searchIndex + 1,
-                        nextNode,
-                        newLeftOfFirstMatchingCharacter,
-                        consecutiveMatches + 1,
-                        errorTolerance,
-                        errorsEncountered + 1,
-                        StringBuilder(sequence).append(nextNode.string),
-                        accumulation
-                    )
+                if (state.searchIndex + 1 < search.length) {
+                    searchStates.add(FuzzySubstringSearchState(
+                        node = nextNode,
+                        leftOfFirstMatchingCharacter = state.leftOfFirstMatchingCharacter,
+                        rightOfLastMatchingCharacter = null,
+                        searchIndex = state.searchIndex + 1,
+                        numberOfMatches = state.numberOfMatches + 1,
+                        numberOfErrors = state.numberOfErrors + 1,
+                        sequence = StringBuilder(state.sequence).append(nextNode.string)
+                    ))
                 }
 
                 // missing letter in data
                 // increment searchIndex and go to the previous node
-                if (searchIndex + 1 < search.length) {
-                    findCompleteStringsBySubstring(
-                        search,
-                        searchIndex + 1,
-                        current,
-                        newLeftOfFirstMatchingCharacter,
-                        consecutiveMatches + 1,
-                        errorTolerance,
-                        errorsEncountered + 1,
-                        StringBuilder(sequence),
-                        accumulation
-                    )
+                if (state.searchIndex + 1 < search.length) {
+                    searchStates.add(FuzzySubstringSearchState(
+                        node = state.node,
+                        leftOfFirstMatchingCharacter = state.leftOfFirstMatchingCharacter,
+                        rightOfLastMatchingCharacter = null,
+                        searchIndex = state.searchIndex + 1,
+                        numberOfMatches = state.numberOfMatches + 1,
+                        numberOfErrors = state.numberOfErrors + 1,
+                        sequence = StringBuilder(state.sequence)
+                    ))
                 }
 
                 // missing letter in search input
                 // keep searchIndex the same and go to the next node
-                findCompleteStringsBySubstring(
-                    search,
-                    searchIndex,
-                    nextNode,
-                    newLeftOfFirstMatchingCharacter,
-                    consecutiveMatches + 1,
-                    errorTolerance,
-                    errorsEncountered + 1,
-                    StringBuilder(sequence).append(nextNode.string),
-                    accumulation
-                )
+                searchStates.add(FuzzySubstringSearchState(
+                    node = nextNode,
+                    leftOfFirstMatchingCharacter = state.leftOfFirstMatchingCharacter,
+                    rightOfLastMatchingCharacter = null,
+                    searchIndex = state.searchIndex ,
+                    numberOfMatches = state.numberOfMatches + 1,
+                    numberOfErrors = state.numberOfErrors + 1,
+                    sequence = StringBuilder(state.sequence).append(nextNode.string)
+                ))
             } else {
                 // reset matching
+                searchStates.add(FuzzySubstringSearchState(
+                    node = nextNode,
+                    leftOfFirstMatchingCharacter = null,
+                    rightOfLastMatchingCharacter = null,
+                    searchIndex = 0,
+                    numberOfMatches = 0,
+                    numberOfErrors = 0,
+                    sequence = StringBuilder(state.sequence).append(nextNode.string)
+                ))
+            }
+
+            searchStates.forEach {
                 findCompleteStringsBySubstring(
                     search,
-                    searchIndex = 0,
-                    nextNode,
-                    leftOfFirstMatchingCharacter = null,
-                    consecutiveMatches = 0,
+                    results,
                     errorTolerance,
-                    errorsEncountered = 0,
-                    StringBuilder(sequence).append(nextNode.string),
-                    accumulation
+                    it
                 )
             }
         }
     }
 
     private fun findCompleteStringsStartingAt(
-        current: Node<T>,
-        leftOfFirstMatchingCharacter: Node<T>,
-        rightOfLastMatchingCharacter: Node<T>?,
         search: String,
-        consecutiveMatches: Int,
-        errors: Int,
-        matchUpToHere: StringBuilder,
-        accumulation: MutableCollection<TrieSearchResult<T>>
+        results: MutableCollection<TrieSearchResult<T>>,
+        state: FuzzySubstringSearchState<T>,
     ) {
-        if (current.completes()) {
-            val matchUpToHereString = matchUpToHere.toString()
+        if (state.node.completes()) {
+            val sequenceString = state.sequence.toString()
 
-            val lengthOfMatch = consecutiveMatches - errors
+            val lengthOfMatch = state.numberOfMatches - state.numberOfErrors
             val actualErrors =
-                if (matchUpToHereString.length < search.length) search.length - lengthOfMatch
-                else errors
+                if (sequenceString.length < search.length) search.length - lengthOfMatch
+                else state.numberOfErrors
 
-            val existing = accumulation.find { it.string == matchUpToHereString }
+            val existing = results.find { it.string == sequenceString }
             val isBetterMatch = existing == null || existing.lengthOfMatch < lengthOfMatch
 
             if (isBetterMatch) {
                 val matchedWholeSequence = actualErrors == 0
-                        && matchedWholeSequence(leftOfFirstMatchingCharacter, rightOfLastMatchingCharacter)
+                        && matchedWholeSequence(state.leftOfFirstMatchingCharacter!!, state.rightOfLastMatchingCharacter)
 
                 val matchedWholeWord = actualErrors == 0
-                        && matchedWholeWord(leftOfFirstMatchingCharacter, rightOfLastMatchingCharacter)
+                        && matchedWholeWord(state.leftOfFirstMatchingCharacter!!, state.rightOfLastMatchingCharacter)
 
                 val newSearchResult = TrieSearchResult<T>(
-                    matchUpToHereString,
-                    current.value!!,
+                    sequenceString,
+                    state.node.value!!,
                     lengthOfMatch,
                     actualErrors,
                     matchedWholeSequence,
                     matchedWholeWord
                 )
-                existing?.let { accumulation.remove(it) }
-                accumulation.add(newSearchResult)
+                existing?.let { results.remove(it) }
+                results.add(newSearchResult)
             }
         }
 
         var nextNodes: Set<Node<T>>
-        synchronized(current.next) {
-            nextNodes = current.next.toMutableSet()
+        synchronized(state.node.next) {
+            nextNodes = state.node.next.toMutableSet()
         }
 
-        val endMatch = null != rightOfLastMatchingCharacter
+        val endMatch = null != state.rightOfLastMatchingCharacter
 
         for (nextNode in nextNodes) {
-            val nextNodeMatches = !endMatch && consecutiveMatches < search.length
-                    && nextNode.string == search[consecutiveMatches].toString()
+            val nextNodeMatches = !endMatch && state.numberOfMatches < search.length
+                    && nextNode.string == search[state.numberOfMatches].toString()
 
             val nextRightOfLastMatchingCharacter =
                 if (!endMatch && !nextNodeMatches) nextNode
-                else rightOfLastMatchingCharacter
+                else state.rightOfLastMatchingCharacter
 
             val newConsecutiveMatches =
-                if (!endMatch && nextNodeMatches) consecutiveMatches + 1
-                else consecutiveMatches
+                if (!endMatch && nextNodeMatches) state.numberOfMatches + 1
+                else state.numberOfMatches
 
             findCompleteStringsStartingAt(
-                nextNode,
-                leftOfFirstMatchingCharacter,
-                nextRightOfLastMatchingCharacter,
                 search,
-                newConsecutiveMatches,
-                errors,
-                StringBuilder(matchUpToHere).append(nextNode.string),
-                accumulation
+                results,
+                FuzzySubstringSearchState(
+                    node = nextNode,
+                    leftOfFirstMatchingCharacter = state.leftOfFirstMatchingCharacter,
+                    rightOfLastMatchingCharacter = nextRightOfLastMatchingCharacter,
+                    searchIndex = state.searchIndex,
+                    numberOfMatches = newConsecutiveMatches,
+                    numberOfErrors = state.numberOfErrors,
+                    sequence = StringBuilder(state.sequence).append(nextNode.string)
+                )
             )
         }
     }
 
     private fun matchedWholeSequence(
-        leftOfFirstMatchingCharacter: Node<T>?,
+        leftOfFirstMatchingCharacter: Node<T>,
         rightOfLastMatchingCharacter: Node<T>?
     ): Boolean {
         return leftOfFirstMatchingCharacter == root
@@ -379,16 +367,12 @@ class Trie<T> {
                 && rightOfLastMatchingCharacter.isWordSeparator()
     }
 
-    private fun findCompleteStringsStartingAt(
-        current: Node<T>,
-        sequence: String,
-        accumulation: MutableMap<String, T>
-    ) {
+    private fun findCompleteStringsStartingAt(current: Node<T>, sequence: String, results: MutableMap<String, T>) {
         if (current.completes()) {
-            accumulation[sequence] = current.value!!
+            results[sequence] = current.value!!
         }
         for (next in current.next) {
-            findCompleteStringsStartingAt(next, sequence + next.string, accumulation)
+            findCompleteStringsStartingAt(next, sequence + next.string, results)
         }
     }
 
