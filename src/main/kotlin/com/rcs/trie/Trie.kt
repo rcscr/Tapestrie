@@ -377,7 +377,7 @@ class Trie<T> {
     }
 
     private fun Node<T>?.isWordSeparator(): Boolean {
-        return this == null || this == root || this.string.matches(wholeWordSeparator.toRegex()) ?: false
+        return this == null || this == root || this.string.matches(wholeWordSeparator.toRegex())
     }
 
     private fun Node<T>.isUsedForOtherStrings(): Boolean {
