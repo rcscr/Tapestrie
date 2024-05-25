@@ -137,7 +137,7 @@ class Trie<T> {
             throw IllegalArgumentException()
         }
 
-        val matches: MutableList<TrieSearchResult<T>> = mutableListOf()
+        val matches = mutableMapOf<String, TrieSearchResult<T>>()
 
         findSubstringMatches(
             search,
@@ -146,7 +146,7 @@ class Trie<T> {
             FuzzySubstringSearchState(root, null, null, 0, 0, 0, StringBuilder())
         )
 
-        return matches.sortedWith(TrieSearchResultComparator.sortByBestMatchFirst)
+        return matches.values.sortedWith(TrieSearchResultComparator.sortByBestMatchFirst)
     }
 
     private fun prefixMatchUpTo(string: String): Node<T>? {
@@ -172,7 +172,7 @@ class Trie<T> {
 
     private fun findSubstringMatches(
         search: String,
-        results: MutableCollection<TrieSearchResult<T>>,
+        results: MutableMap<String, TrieSearchResult<T>>,
         errorTolerance: Int,
         state: FuzzySubstringSearchState<T>,
     ) {
@@ -281,7 +281,7 @@ class Trie<T> {
 
     private fun buildSubstringMatches(
         search: String,
-        results: MutableCollection<TrieSearchResult<T>>,
+        results: MutableMap<String, TrieSearchResult<T>>,
         state: FuzzySubstringSearchState<T>,
     ) {
         if (state.node.completes()) {
@@ -291,7 +291,7 @@ class Trie<T> {
                 if (sequenceString.length < search.length) search.length - state.numberOfMatches
                 else state.numberOfErrors
 
-            val existing = results.find { it.string == sequenceString }
+            val existing = results[sequenceString]
             val isBetterMatch = existing == null
                     || existing.lengthOfMatch < state.numberOfMatches
                     || existing.errors > state.numberOfErrors
@@ -311,8 +311,7 @@ class Trie<T> {
                     matchedWholeSequence,
                     matchedWholeWord
                 )
-                existing?.let { results.remove(it) }
-                results.add(newSearchResult)
+                results[sequenceString] = newSearchResult
             }
         }
 
