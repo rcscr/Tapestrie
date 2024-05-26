@@ -98,6 +98,7 @@ class TrieTest {
         val matchedHi = trie.matchByPrefix("Hi")
         val matchedH = trie.matchByPrefix("H")
         val matchedBlank = trie.matchByPrefix("")
+        val matchFail = trie.matchByPrefix("O")
 
         // Assert
         assertThat(matchedHello).isEqualTo(
@@ -128,6 +129,8 @@ class TrieTest {
                 "Hi there!" to 3
             )
         )
+
+        assertThat(matchFail).isEmpty()
     }
 
     @Test
@@ -320,6 +323,7 @@ class TrieTest {
                     val matched = trie.matchByPrefix(substring)
                     matched.keys.forEach {
                         assertThat(trie.remove(it)).isNotNull()
+                        assertThat(trie.getExactly(it)).isNull()
                     }
                 }
             }

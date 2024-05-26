@@ -84,7 +84,7 @@ class Trie<T> {
         if (last.completes()) {
             // look back until you first the last character that is not used for other strings
             var j = input.length - 1
-            var nodeToUnlink = last
+            var nodeToUnlink: Node<T>
             while (!deque.removeLast().also { nodeToUnlink = it }.isUsedForOtherStrings()) {
                 j--
             }
