@@ -2,18 +2,6 @@ package com.rcs.trie
 
 class Trie<T> {
 
-    private data class FuzzySubstringSearchState<T>(
-        val node: Node<T>,
-        val leftOfFirstMatchingCharacter: Node<T>?,
-        var rightOfLastMatchingCharacter: Node<T>?,
-        val searchIndex: Int,
-        val numberOfMatches: Int,
-        val numberOfErrors: Int,
-        val sequence: StringBuilder,
-    )
-
-    private val wholeWordSeparator = "[\\s\\p{P}]"
-
     private lateinit var root: Node<T>
 
     init {
@@ -25,6 +13,10 @@ class Trie<T> {
     }
 
     fun put(input: String, value: T) {
+        if (input.isEmpty()) {
+            throw IllegalArgumentException("Cannot add an empty string")
+        }
+
         var current = root
 
         for (i in input.indices) {
@@ -87,20 +79,21 @@ class Trie<T> {
         }
 
         // this is the node to remove - but only if it completes
-        var last = deque.removeLast()
+        val last = deque.removeLast()
 
         if (last.completes()) {
-            // remove all characters, unless they're used for other strings
-            val value = last.value
+            // look back until you first the last character that is not used for other strings
             var j = input.length - 1
-            while (!deque.removeLast().also { last = it }.isUsedForOtherStrings()) {
+            var nodeToUnlink = last
+            while (!deque.removeLast().also { nodeToUnlink = it }.isUsedForOtherStrings()) {
                 j--
             }
+            // unlink this last character, thus completing the removal
             val charToUnlink = input[j].toString()
-            synchronized(last.next) {
-                last.next.removeIf { it.string == charToUnlink }
+            synchronized(nodeToUnlink.next) {
+                nodeToUnlink.next.removeIf { it.string == charToUnlink }
             }
-            return value
+            return last.value
         } else {
             return null // if it does not complete, input does not exist
         }
@@ -122,9 +115,7 @@ class Trie<T> {
 
     fun matchByPrefix(prefix: String): Map<String, T> {
         return prefixMatchUpTo(prefix)?.let {
-            val matches: MutableMap<String, T> = HashMap()
-            buildSubstringMatches(it, prefix, matches)
-            matches
+            gatherAll(it, prefix)
         } ?: mutableMapOf()
     }
 
@@ -137,16 +128,56 @@ class Trie<T> {
             throw IllegalArgumentException()
         }
 
-        val matches = mutableMapOf<String, TrieSearchResult<T>>()
+        val results = mutableMapOf<String, TrieSearchResult<T>>()
 
-        findSubstringMatches(
-            search,
-            matches,
-            errorTolerance,
-            FuzzySubstringSearchState(root, null, null, 0, 0, 0, StringBuilder())
-        )
+        val queue = ArrayDeque<FuzzySubstringSearchState<T>>()
+        val initialState = FuzzySubstringSearchState(search, root, null, null, 0, 0, 0, errorTolerance, StringBuilder())
+        queue.add(initialState)
 
-        return matches.values.sortedWith(TrieSearchResultComparator.sortByBestMatchFirst)
+        while (queue.isNotEmpty()) {
+            val state = queue.removeFirst()
+
+            if (state.matches()) {
+                val newMatches = gatherAll(state)
+                results.putOnlyNewOrBetterMatches(newMatches)
+                continue
+            }
+
+            var nextNodes: Array<Node<T>>
+            synchronized(state.node.next) {
+                nextNodes = state.node.next.toTypedArray()
+            }
+            for (nextNode in nextNodes) {
+                queue.addAll(state.nextSearchStates(nextNode))
+            }
+        }
+
+        return results.values.sortedWith(TrieSearchResultComparator.sortByBestMatchFirst)
+    }
+
+    private fun gatherAll(initialState: FuzzySubstringSearchState<T>): MutableMap<String, TrieSearchResult<T>> {
+        val results = mutableMapOf<String, TrieSearchResult<T>>()
+        val queue = ArrayDeque<FuzzySubstringSearchState<T>>()
+        queue.add(initialState)
+
+        while(queue.isNotEmpty()) {
+            val state = queue.removeFirst()
+
+            if (state.node.completes()) {
+                val searchResult = state.buildSearchResult()
+                results[searchResult.string] = searchResult
+            }
+
+            var nextNodes: Array<Node<T>>
+            synchronized(state.node.next) {
+                nextNodes = state.node.next.toTypedArray()
+            }
+            for (nextNode in nextNodes) {
+                queue.add(state.nextBuildState(nextNode))
+            }
+        }
+
+        return results
     }
 
     private fun prefixMatchUpTo(string: String): Node<T>? {
@@ -170,216 +201,38 @@ class Trie<T> {
         return current
     }
 
-    private fun findSubstringMatches(
-        search: String,
-        results: MutableMap<String, TrieSearchResult<T>>,
-        errorTolerance: Int,
-        state: FuzzySubstringSearchState<T>,
-    ) {
-        val match = state.searchIndex >= search.length
-                && state.numberOfMatches + state.numberOfErrors >= search.length - state.numberOfErrors
-                && state.numberOfErrors <= errorTolerance
+    private fun gatherAll(start: Node<T>, startSequence: String): MutableMap<String, T> {
+        val results = mutableMapOf<String, T>()
+        val queue = ArrayDeque<Pair<Node<T>, String>>()
+        queue.add(Pair(start, startSequence))
 
-        val partialMatch = state.node.completes()
-                && state.numberOfMatches >= search.length - errorTolerance
-
-        if (match || partialMatch) {
-            buildSubstringMatches(search, results, state)
-            return
-        }
-
-        var nextNodes: Array<Node<T>>
-        synchronized(state.node.next) {
-            nextNodes = state.node.next.toTypedArray()
-        }
-
-        val currentNodeMatches = state.numberOfMatches > 0
-
-        for (nextNode in nextNodes) {
-            val nextNodeMatches = nextNode.string == search[state.searchIndex].toString()
-
-            val searchStates = mutableListOf<FuzzySubstringSearchState<T>>()
-
-            if (nextNodeMatches) {
-                // happy path - continue matching
-                searchStates.add(FuzzySubstringSearchState(
-                    node = nextNode,
-                    leftOfFirstMatchingCharacter = state.leftOfFirstMatchingCharacter ?: state.node,
-                    rightOfLastMatchingCharacter = null,
-                    searchIndex = state.searchIndex + 1,
-                    numberOfMatches = state.numberOfMatches + 1,
-                    numberOfErrors = state.numberOfErrors,
-                    sequence = StringBuilder(state.sequence).append(nextNode.string)
-                ))
-            } else if (currentNodeMatches && state.numberOfErrors < errorTolerance) {
-                // was matching before, but no longer matches
-                // however, there's some error tolerance to be used
-                // there are three ways this can go: misspelling, missing letter in search input, or missing letter in data
-
-                // misspelling
-                // increment searchIndex and go to the next node
-                if (state.searchIndex + 1 < search.length) {
-                    searchStates.add(FuzzySubstringSearchState(
-                        node = nextNode,
-                        leftOfFirstMatchingCharacter = state.leftOfFirstMatchingCharacter,
-                        rightOfLastMatchingCharacter = null,
-                        searchIndex = state.searchIndex + 1,
-                        numberOfMatches = state.numberOfMatches,
-                        numberOfErrors = state.numberOfErrors + 1,
-                        sequence = StringBuilder(state.sequence).append(nextNode.string)
-                    ))
-                }
-
-                // missing letter in data
-                // increment searchIndex and go to the previous node
-                if (state.searchIndex + 1 < search.length) {
-                    searchStates.add(FuzzySubstringSearchState(
-                        node = state.node,
-                        leftOfFirstMatchingCharacter = state.leftOfFirstMatchingCharacter,
-                        rightOfLastMatchingCharacter = null,
-                        searchIndex = state.searchIndex + 1,
-                        numberOfMatches = state.numberOfMatches,
-                        numberOfErrors = state.numberOfErrors + 1,
-                        sequence = StringBuilder(state.sequence)
-                    ))
-                }
-
-                // missing letter in search input
-                // keep searchIndex the same and go to the next node
-                searchStates.add(FuzzySubstringSearchState(
-                    node = nextNode,
-                    leftOfFirstMatchingCharacter = state.leftOfFirstMatchingCharacter,
-                    rightOfLastMatchingCharacter = null,
-                    searchIndex = state.searchIndex ,
-                    numberOfMatches = state.numberOfMatches,
-                    numberOfErrors = state.numberOfErrors + 1,
-                    sequence = StringBuilder(state.sequence).append(nextNode.string)
-                ))
-            } else {
-                // reset matching
-                searchStates.add(FuzzySubstringSearchState(
-                    node = nextNode,
-                    leftOfFirstMatchingCharacter = null,
-                    rightOfLastMatchingCharacter = null,
-                    searchIndex = 0,
-                    numberOfMatches = 0,
-                    numberOfErrors = 0,
-                    sequence = StringBuilder(state.sequence).append(nextNode.string)
-                ))
+        while(queue.isNotEmpty()) {
+            val current = queue.removeFirst()
+            val node = current.first
+            val sequence = current.second
+            if (node.completes()) {
+                results[sequence] = node.value!!
             }
-
-            searchStates.forEach {
-                findSubstringMatches(
-                    search,
-                    results,
-                    errorTolerance,
-                    it
-                )
-            }
-        }
-    }
-
-    private fun buildSubstringMatches(
-        search: String,
-        results: MutableMap<String, TrieSearchResult<T>>,
-        state: FuzzySubstringSearchState<T>,
-    ) {
-        if (state.node.completes()) {
-            val sequenceString = state.sequence.toString()
-
-            val actualErrors =
-                if (sequenceString.length < search.length) search.length - state.numberOfMatches
-                else state.numberOfErrors
-
-            val existing = results[sequenceString]
-            val isBetterMatch = existing == null
-                    || existing.lengthOfMatch < state.numberOfMatches
-                    || existing.errors > state.numberOfErrors
-
-            if (isBetterMatch) {
-                val matchedWholeSequence = actualErrors == 0
-                        && matchedWholeSequence(state.leftOfFirstMatchingCharacter!!, state.rightOfLastMatchingCharacter)
-
-                val matchedWholeWord = actualErrors == 0
-                        && matchedWholeWord(state.leftOfFirstMatchingCharacter!!, state.rightOfLastMatchingCharacter)
-
-                val newSearchResult = TrieSearchResult<T>(
-                    sequenceString,
-                    state.node.value!!,
-                    state.numberOfMatches,
-                    actualErrors,
-                    matchedWholeSequence,
-                    matchedWholeWord
-                )
-                results[sequenceString] = newSearchResult
+            for (next in node.next) {
+                queue.add(Pair(next, sequence + next.string))
             }
         }
 
-        var nextNodes: Array<Node<T>>
-        synchronized(state.node.next) {
-            nextNodes = state.node.next.toTypedArray()
-        }
-
-        val endMatch = null != state.rightOfLastMatchingCharacter
-
-        for (nextNode in nextNodes) {
-            val nextNodeMatches = !endMatch && state.numberOfMatches < search.length
-                    && nextNode.string == search[state.numberOfMatches].toString()
-
-            val nextRightOfLastMatchingCharacter =
-                if (!endMatch && !nextNodeMatches) nextNode
-                else state.rightOfLastMatchingCharacter
-
-            val newNumberOfMatches =
-                if (!endMatch && nextNodeMatches) state.numberOfMatches + 1
-                else state.numberOfMatches
-
-            buildSubstringMatches(
-                search,
-                results,
-                FuzzySubstringSearchState(
-                    node = nextNode,
-                    leftOfFirstMatchingCharacter = state.leftOfFirstMatchingCharacter,
-                    rightOfLastMatchingCharacter = nextRightOfLastMatchingCharacter,
-                    searchIndex = state.searchIndex,
-                    numberOfMatches = newNumberOfMatches,
-                    numberOfErrors = state.numberOfErrors,
-                    sequence = StringBuilder(state.sequence).append(nextNode.string)
-                )
-            )
-        }
-    }
-
-    private fun matchedWholeSequence(
-        leftOfFirstMatchingCharacter: Node<T>,
-        rightOfLastMatchingCharacter: Node<T>?
-    ): Boolean {
-        return leftOfFirstMatchingCharacter == root
-                && rightOfLastMatchingCharacter == null
-    }
-
-    private fun matchedWholeWord(
-        leftOfFirstMatchingCharacter: Node<T>,
-        rightOfLastMatchingCharacter: Node<T>?
-    ): Boolean {
-        return leftOfFirstMatchingCharacter.isWordSeparator()
-                && rightOfLastMatchingCharacter.isWordSeparator()
-    }
-
-    private fun buildSubstringMatches(current: Node<T>, sequence: String, results: MutableMap<String, T>) {
-        if (current.completes()) {
-            results[sequence] = current.value!!
-        }
-        for (next in current.next) {
-            buildSubstringMatches(next, sequence + next.string, results)
-        }
-    }
-
-    private fun Node<T>?.isWordSeparator(): Boolean {
-        return this == null || this == root || this.string.matches(wholeWordSeparator.toRegex())
+        return results
     }
 
     private fun Node<T>.isUsedForOtherStrings(): Boolean {
         return this === root || this.completes() || this.next.size > 1
+    }
+
+    private fun <T> MutableMap<String, TrieSearchResult<T>>
+            .putOnlyNewOrBetterMatches(newMatches: MutableMap<String, TrieSearchResult<T>>) {
+        newMatches.entries
+            .filter {
+                this[it.key] == null
+                        || this[it.key]!!.lengthOfMatch < it.value.lengthOfMatch
+                        || this[it.key]!!.errors > it.value.errors
+            }
+            .forEach { this[it.key] = it.value }
     }
 }
