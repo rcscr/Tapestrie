@@ -2,14 +2,14 @@ package com.rcs.trie
 
 class Trie<T> {
 
-    private lateinit var root: Node<T>
+    private lateinit var root: TrieNode<T>
 
     init {
         clear()
     }
 
     fun clear() {
-        root = Node("", null, mutableSetOf())
+        root = TrieNode("", null, mutableSetOf())
     }
 
     fun put(input: String, value: T) {
@@ -34,7 +34,7 @@ class Trie<T> {
                 // we do not have a string going this far, so we create a new node,
                 // and then keep appending the remaining characters of the input to it
                 if (null == nextMatchingNode) {
-                    val next = Node(currentCharacter, if (reachedEndOfInput) value else null, mutableSetOf())
+                    val next = TrieNode(currentCharacter, if (reachedEndOfInput) value else null, mutableSetOf())
                     current.next.add(next)
                     current = next
 
@@ -43,7 +43,7 @@ class Trie<T> {
                 // (if its already complete, that means we have already inserted the same input before)
                 // see TrieTest.testAddShorterAfter
                 } else if (reachedEndOfInput && nextMatchingNode.value == null) {
-                    val completed = Node(nextMatchingNode.string, value, nextMatchingNode.next)
+                    val completed = TrieNode(nextMatchingNode.string, value, nextMatchingNode.next)
                     current.next.removeIf { it.string == nextMatchingNode.string }
                     current.next.add(completed)
 
@@ -59,13 +59,13 @@ class Trie<T> {
     fun remove(input: String): T? {
         var current = root
 
-        val deque = ArrayDeque<Node<T>>(input.length + 1)
+        val deque = ArrayDeque<TrieNode<T>>(input.length + 1)
         deque.add(root)
 
         for (element in input) {
             val currentCharacter = element.toString()
 
-            var nextMatchingNode: Node<T>?
+            var nextMatchingNode: TrieNode<T>?
             synchronized(current.next) {
                 nextMatchingNode = current.next.firstOrNull { it.string == currentCharacter }
             }
@@ -84,7 +84,7 @@ class Trie<T> {
         if (last.completes()) {
             // look back until you first the last character that is not used for other strings
             var j = input.length - 1
-            var nodeToUnlink: Node<T>
+            var nodeToUnlink: TrieNode<T>
             while (!deque.removeLast().also { nodeToUnlink = it }.isUsedForOtherStrings()) {
                 j--
             }
@@ -128,70 +128,16 @@ class Trie<T> {
         errorTolerance: Int,
         matchingStrategy: FuzzySubstringMatchingStrategy
     ): List<TrieSearchResult<T>> {
-
-        if (search.isEmpty() || errorTolerance < 0 || errorTolerance > search.length) {
-            throw IllegalArgumentException()
-        }
-
-        val results = mutableMapOf<String, TrieSearchResult<T>>()
-
-        val queue = ArrayDeque<FuzzySubstringSearchState<T>>()
-        val initialState = FuzzySubstringSearchState(search, root, null, null, 0, 0, 0, errorTolerance, StringBuilder())
-        queue.add(initialState)
-
-        while (queue.isNotEmpty()) {
-            val state = queue.removeFirst()
-
-            if (state.sufficientlyMatches()) {
-                val newMatches = gatherAll(state)
-                results.putOnlyNewOrBetterMatches(newMatches)
-                continue
-            }
-
-            var nextNodes: Array<Node<T>>
-            synchronized(state.node.next) {
-                nextNodes = state.node.next.toTypedArray()
-            }
-            for (nextNode in nextNodes) {
-                queue.addAll(state.nextSearchStates(nextNode, matchingStrategy))
-            }
-        }
-
-        return results.values.sortedWith(TrieSearchResultComparator.sortByBestMatchFirst)
+        return FuzzySubstringSearcher.search(root, search, errorTolerance, matchingStrategy)
     }
 
-    private fun gatherAll(initialState: FuzzySubstringSearchState<T>): MutableMap<String, TrieSearchResult<T>> {
-        val results = mutableMapOf<String, TrieSearchResult<T>>()
-        val queue = ArrayDeque<FuzzySubstringSearchState<T>>()
-        queue.add(initialState)
-
-        while(queue.isNotEmpty()) {
-            val state = queue.removeFirst()
-
-            if (state.node.completes()) {
-                val searchResult = state.buildSearchResult()
-                results[searchResult.string] = searchResult
-            }
-
-            var nextNodes: Array<Node<T>>
-            synchronized(state.node.next) {
-                nextNodes = state.node.next.toTypedArray()
-            }
-            for (nextNode in nextNodes) {
-                queue.add(state.nextBuildState(nextNode))
-            }
-        }
-
-        return results
-    }
-
-    private fun prefixMatchUpTo(string: String): Node<T>? {
+    private fun prefixMatchUpTo(string: String): TrieNode<T>? {
         var current = root
 
         for (element in string) {
             val currentCharacter = element.toString()
 
-            var nextSubstring: Node<T>? = null
+            var nextSubstring: TrieNode<T>? = null
             synchronized(current.next) {
                 nextSubstring = current.next.firstOrNull { it.string == currentCharacter }
             }
@@ -206,9 +152,9 @@ class Trie<T> {
         return current
     }
 
-    private fun gatherAll(start: Node<T>, startSequence: String): MutableMap<String, T> {
+    private fun gatherAll(start: TrieNode<T>, startSequence: String): MutableMap<String, T> {
         val results = mutableMapOf<String, T>()
-        val queue = ArrayDeque<Pair<Node<T>, String>>()
+        val queue = ArrayDeque<Pair<TrieNode<T>, String>>()
         queue.add(Pair(start, startSequence))
 
         while(queue.isNotEmpty()) {
@@ -226,18 +172,7 @@ class Trie<T> {
         return results
     }
 
-    private fun Node<T>.isUsedForOtherStrings(): Boolean {
+    private fun TrieNode<T>.isUsedForOtherStrings(): Boolean {
         return this === root || this.completes() || this.next.size > 1
-    }
-
-    private fun <T> MutableMap<String, TrieSearchResult<T>>
-            .putOnlyNewOrBetterMatches(newMatches: MutableMap<String, TrieSearchResult<T>>) {
-        newMatches.entries
-            .filter {
-                this[it.key] == null
-                        || this[it.key]!!.lengthOfMatch < it.value.lengthOfMatch
-                        || this[it.key]!!.errors > it.value.errors
-            }
-            .forEach { this[it.key] = it.value }
     }
 }

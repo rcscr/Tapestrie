@@ -2,7 +2,7 @@ package com.rcs.trie
 
 data class FuzzySubstringSearchState<T>(
     val search: String,
-    val node: Node<T>,
+    val node: TrieNode<T>,
     val startMatchIndex: Int?,
     val endMatchIndex: Int?,
     val searchIndex: Int,
@@ -27,7 +27,7 @@ data class FuzzySubstringSearchState<T>(
         }
     }
 
-    fun nextBuildState(nextNode: Node<T>): FuzzySubstringSearchState<T> {
+    fun nextBuildState(nextNode: TrieNode<T>): FuzzySubstringSearchState<T> {
         val matchHasEnded = endMatchIndex != null
         
         val nextNodeMatches = !matchHasEnded
@@ -56,7 +56,7 @@ data class FuzzySubstringSearchState<T>(
     }
 
     fun nextSearchStates(
-        nextNode: Node<T>,
+        nextNode: TrieNode<T>,
         matchingStrategy: FuzzySubstringMatchingStrategy
     ): Collection<FuzzySubstringSearchState<T>> {
         // has matched enough - no more searching is necessary
