@@ -64,8 +64,6 @@ data class FuzzySubstringSearchState<T>(
             return listOf()
         }
 
-        val nextStates = mutableListOf<FuzzySubstringSearchState<T>>()
-
         val wasMatchingBefore = numberOfMatches > 0
 
         val matchingPreconditions = when (matchingStrategy) {
@@ -81,7 +79,7 @@ data class FuzzySubstringSearchState<T>(
 
         // happy path - continue matching
         if (nextNodeMatches) {
-            nextStates.add(
+            return listOf(
                 FuzzySubstringSearchState(
                     search = search,
                     node = nextNode,
@@ -94,14 +92,12 @@ data class FuzzySubstringSearchState<T>(
                     sequence = StringBuilder(sequence).append(nextNode.string)
                 )
             )
-            return nextStates
         }
 
+        val nextStates = mutableListOf<FuzzySubstringSearchState<T>>()
+
         // was matching before, but no longer matches - however, there's some error tolerance to be used
-        // there are three ways this can go:
-        // 1. misspelling,
-        // 2. missing letter in search input
-        // 3. missing letter in data
+        // there are three ways this can go: 1. misspelling, 2. missing letter in search input 3. missing letter in data
         if (wasMatchingBefore && numberOfErrors < errorTolerance) {
             // 1. misspelling
             // increment searchIndex and go to the next node
@@ -173,7 +169,7 @@ data class FuzzySubstringSearchState<T>(
         // case when the target data might be a match, but there are wrong letters in the beginning
         val shouldConsiderMatchesWithWrongBeginning = when(matchingStrategy) {
             FuzzySubstringMatchingStrategy.ANCHOR_TO_PREFIX ->
-                distanceToLastWordSeparatorIsPermissable()
+                distanceToStartWordSeparatorIsPermissible()
             else ->
                 false
         }
@@ -234,7 +230,7 @@ data class FuzzySubstringSearchState<T>(
         }
     }
 
-    private fun distanceToLastWordSeparatorIsPermissable(): Boolean {
+    private fun distanceToStartWordSeparatorIsPermissible(): Boolean {
         val indexOfLastWordSeparator = sequence.indexOfLastWordSeparator()
         val distanceToWordSeparator = sequence.length - 1 - indexOfLastWordSeparator
         return distanceToWordSeparator - 1 <= numberOfErrors
