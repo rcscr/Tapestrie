@@ -72,7 +72,7 @@ data class FuzzySubstringSearchState<T>(
             FuzzySubstringMatchingStrategy.LIBERAL ->
                 true
             FuzzySubstringMatchingStrategy.MATCH_PREFIX ->
-                wasMatchingBefore || node.string.isWordSeparator()
+                wasMatchingBefore || node.string == "" || node.string.matches(wholeWordSeparator)
             else ->
                 true
         }
@@ -245,12 +245,12 @@ data class FuzzySubstringSearchState<T>(
     }
 
     private fun matchedWholeWord(startMatchIndex: Int, endMatchIndex: Int): Boolean {
-        return (startMatchIndex-1 < 0 || sequence[startMatchIndex-1].toString().isWordSeparator())
-                && (endMatchIndex+1 >= sequence.length || sequence[endMatchIndex+1].toString().isWordSeparator())
+        return sequence.isWordSeparatorAt(startMatchIndex - 1)
+                && sequence.isWordSeparatorAt(endMatchIndex + 1)
     }
 
-    private fun String?.isWordSeparator(): Boolean {
-        return this == null || this.isBlank() || this.toString().matches(wholeWordSeparator)
+    private fun StringBuilder.isWordSeparatorAt(index: Int): Boolean {
+        return index < 0 || index >= this.length || this[index].toString().matches(wholeWordSeparator)
     }
 
     private fun StringBuilder.indexOfLastWordSeparator(): Int {
