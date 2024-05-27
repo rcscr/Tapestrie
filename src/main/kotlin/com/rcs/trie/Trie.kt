@@ -120,10 +120,15 @@ class Trie<T> {
     }
 
     fun matchBySubstring(search: String): List<TrieSearchResult<T>> {
-        return matchBySubstringFuzzy(search, 0)
+        return matchBySubstringFuzzy(search, 0, FuzzySubstringMatchingStrategy.LIBERAL)
     }
 
-    fun matchBySubstringFuzzy(search: String, errorTolerance: Int): List<TrieSearchResult<T>> {
+    fun matchBySubstringFuzzy(
+        search: String,
+        errorTolerance: Int,
+        matchingStrategy: FuzzySubstringMatchingStrategy
+    ): List<TrieSearchResult<T>> {
+
         if (search.isEmpty() || errorTolerance < 0 || errorTolerance > search.length) {
             throw IllegalArgumentException()
         }
@@ -148,7 +153,7 @@ class Trie<T> {
                 nextNodes = state.node.next.toTypedArray()
             }
             for (nextNode in nextNodes) {
-                queue.addAll(state.nextSearchStates(nextNode))
+                queue.addAll(state.nextSearchStates(nextNode, matchingStrategy))
             }
         }
 

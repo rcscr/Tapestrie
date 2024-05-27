@@ -199,6 +199,86 @@ class TrieTest {
     }
 
     @Test
+    fun testDoesNotMatchEdgeCase() {
+        // Arrange
+        val trie = Trie<Unit>()
+        trie.put("ionice", Unit)
+
+        // Act
+        val result = trie.matchBySubstringFuzzy("indices", 2, FuzzySubstringMatchingStrategy.LIBERAL)
+
+        // Assert
+        assertThat(result).isEmpty()
+    }
+
+    @Test
+    fun testMatchBySubstringFuzzyAnchorToPrefix() {
+        // Arrange
+        val trie = Trie<Unit>()
+        trie.put("index", Unit)
+        trie.put("ondex", Unit) // will match because it has 1 wrong first letter
+        trie.put("oldex", Unit) // will match because it has 2 wrong first letter
+        trie.put("omtex", Unit) // will match because it has 2 wrong first letter
+        trie.put("lalala index", Unit)
+        trie.put("lalala ondex", Unit) // will match because it has 1 wrong first letter
+        trie.put("lalala oldex", Unit) // will match because it has 2 wrong first letter
+        trie.put("lalala omtex", Unit) // will not match because it has 3 wrong first letter
+
+        // Act
+        val result = trie.matchBySubstringFuzzy("index", 2, FuzzySubstringMatchingStrategy.ANCHOR_TO_PREFIX)
+
+        // Assert
+        assertThat(result).containsExactly(
+            TrieSearchResult("index", Unit, 5, 0, true, true),
+            TrieSearchResult("lalala index", Unit, 5, 0, false, true),
+            TrieSearchResult("ondex", Unit, 4, 1, false, false),
+            TrieSearchResult("lalala ondex", Unit, 4, 1, false, false),
+            TrieSearchResult("oldex", Unit, 3, 2, false, false),
+            TrieSearchResult("lalala oldex", Unit, 3, 2, false, false)
+        )
+    }
+
+    @Test
+    fun testMatchBySubstringFuzzyMatchPrefix() {
+        // Arrange
+        val trie = Trie<Unit>()
+        trie.put("lalala index", Unit)
+        trie.put("lalala indix", Unit)
+        trie.put("lalala ondex", Unit) // will not match because it doesn't match first letter in keyword
+
+        // Act
+        val result = trie.matchBySubstringFuzzy("index", 1, FuzzySubstringMatchingStrategy.MATCH_PREFIX)
+
+        // Assert
+        assertThat(result).containsExactly(
+            TrieSearchResult("lalala index", Unit, 5, 0, false, true),
+            TrieSearchResult("lalala indix", Unit, 4, 1, false, false)
+        )
+    }
+
+    @Test
+    fun testMatchBySubstringFuzzyCommonCase() {
+        // Arrange
+        val trie = Trie<Unit>()
+        trie.put("indexes", Unit)
+        trie.put("indices", Unit)
+
+        // Act
+        val resultIndexes = trie.matchBySubstringFuzzy("indexes", 2, FuzzySubstringMatchingStrategy.LIBERAL)
+        val resultIndices = trie.matchBySubstringFuzzy("indices", 2, FuzzySubstringMatchingStrategy.LIBERAL)
+
+        // Assert
+        assertThat(resultIndexes).containsExactly(
+            TrieSearchResult("indexes", Unit, 7, 0, true, true),
+            TrieSearchResult("indices", Unit, 5, 2, false, false)
+        )
+        assertThat(resultIndices).containsExactly(
+            TrieSearchResult("indices", Unit, 7, 0, true, true),
+            TrieSearchResult("indexes", Unit, 5, 2, false, false)
+        )
+    }
+
+    @Test
     fun testMatchBySubstringFuzzyWithSort() {
         // Arrange
         val trie = Trie<Unit>()
@@ -211,7 +291,7 @@ class TrieTest {
         trie.put("linux manual", Unit)
 
         // Act
-        val result = trie.matchBySubstringFuzzy("manual", 3)
+        val result = trie.matchBySubstringFuzzy("manual", 3, FuzzySubstringMatchingStrategy.LIBERAL)
 
         // Assert
         assertThat(result).containsExactly(
@@ -244,8 +324,8 @@ class TrieTest {
         trie.put("blah google blah", Unit) // good match with chars before and after
 
         // Act
-        val resultOne = trie.matchBySubstringFuzzy("goggle", 1)
-        val resultTwo = trie.matchBySubstringFuzzy("goggle", 2)
+        val resultOne = trie.matchBySubstringFuzzy("goggle", 1, FuzzySubstringMatchingStrategy.LIBERAL)
+        val resultTwo = trie.matchBySubstringFuzzy("goggle", 2, FuzzySubstringMatchingStrategy.LIBERAL)
 
         // Assert
         assertThat(resultOne).containsExactly(
@@ -264,40 +344,66 @@ class TrieTest {
     }
 
     @Test
-    fun testFuzzySubstringSearchWorksBothWays() {
+    fun testFuzzySubstringSearchLiberal() {
         // Arrange
         val trie = Trie<Unit>()
-        trie.put("raphael", Unit)
-        trie.put("rafael", Unit)
-        trie.put("raffaello", Unit)
+        trie.put("this is raphael", Unit)
+        trie.put("this is raphaël", Unit)
+        trie.put("this is rafael", Unit)
+        trie.put("this is rafaela", Unit)
+        trie.put("this is raffaello", Unit)
+        trie.put("this is raffaella", Unit)
 
         // Act
-        val r1 = trie.matchBySubstringFuzzy("raphael", 2)
-        val r2 = trie.matchBySubstringFuzzy("rafael", 2)
-
-        val r3 = trie.matchBySubstringFuzzy("raffaello", 2)
-        val r4 = trie.matchBySubstringFuzzy("raffaello", 3)
-        val r5 = trie.matchBySubstringFuzzy("raffaello", 4)
+        val r1 = trie.matchBySubstringFuzzy("raphael", 2, FuzzySubstringMatchingStrategy.LIBERAL)
+        val r2 = trie.matchBySubstringFuzzy("rafael", 2, FuzzySubstringMatchingStrategy.LIBERAL)
+        val r3 = trie.matchBySubstringFuzzy("raffaello", 2, FuzzySubstringMatchingStrategy.LIBERAL)
+        val r4 = trie.matchBySubstringFuzzy("raffaello", 3, FuzzySubstringMatchingStrategy.LIBERAL)
+        val r5 = trie.matchBySubstringFuzzy("raffaello", 4, FuzzySubstringMatchingStrategy.LIBERAL)
 
         // Assert
         assertThat(r1).containsExactly(
-            TrieSearchResult("raphael", Unit, 7, 0, true, true),
-            TrieSearchResult("rafael", Unit, 5, 2, false, false),
-            TrieSearchResult("raffaello", Unit, 5, 2, false, false))
+            TrieSearchResult("this is raphael", Unit, 7, 0, false, true),
+            TrieSearchResult("this is raphaël", Unit, 6, 1, false, false),
+            TrieSearchResult("this is rafael", Unit, 5, 2, false, false),
+            TrieSearchResult("this is rafaela", Unit, 5, 2, false, false),
+            TrieSearchResult("this is raffaello", Unit, 5, 2, false, false),
+            TrieSearchResult("this is raffaella", Unit, 5, 2, false, false))
         assertThat(r2).containsExactly(
-            TrieSearchResult("rafael", Unit, 6, 0, true, true),
-            TrieSearchResult("raffaello", Unit, 6, 1, false, false),
-            TrieSearchResult("raphael", Unit, 5, 2, false, false))
-
+            TrieSearchResult("this is rafael", Unit, 6, 0, false, true),
+            TrieSearchResult("this is rafaela", Unit, 6, 0, false, false),
+            TrieSearchResult("this is raffaello", Unit, 6, 1, false, false),
+            TrieSearchResult("this is raffaella", Unit, 6, 1, false, false),
+            TrieSearchResult("this is raphael", Unit, 5, 2, false, false))
         assertThat(r3).containsExactly(
-            TrieSearchResult("raffaello", Unit, 9, 0, true, true))
+            TrieSearchResult("this is raffaello", Unit, 9, 0, false, true),
+            TrieSearchResult("this is raffaella", Unit, 8, 1, false, false))
         assertThat(r4).containsExactly(
-            TrieSearchResult("raffaello", Unit, 9, 0, true, true),
-            TrieSearchResult("rafael", Unit, 6, 3, false, false))
+            TrieSearchResult("this is raffaello", Unit, 9, 0, false, true),
+            TrieSearchResult("this is raffaella", Unit, 8, 1, false, false),
+            TrieSearchResult("this is rafael", Unit, 6, 3, false, false),
+            TrieSearchResult("this is rafaela", Unit, 6, 3, false, false))
         assertThat(r5).containsExactly(
-            TrieSearchResult("raffaello", Unit, 9, 0, true, true),
-            TrieSearchResult("rafael", Unit, 6, 3, false, false),
-            TrieSearchResult("raphael", Unit, 5, 4, false, false))
+            TrieSearchResult("this is raffaello", Unit, 9, 0, false, true),
+            TrieSearchResult("this is raffaella", Unit, 8, 1, false, false),
+            TrieSearchResult("this is rafael", Unit, 6, 3, false, false),
+            TrieSearchResult("this is rafaela", Unit, 6, 3, false, false),
+            TrieSearchResult("this is raphael", Unit, 5, 4, false, false))
+    }
+
+    @Test
+    fun testMatchesLongWord() {
+        // Arrange
+        val trie = Trie<Unit>()
+        trie.put("indistinguishable", Unit)
+
+        // Act
+        val result = trie.matchBySubstringFuzzy("indices", 2, FuzzySubstringMatchingStrategy.MATCH_PREFIX)
+
+        // Assert
+        assertThat(result).containsExactly(
+            TrieSearchResult("indistinguishable", Unit, 5, 2, false, false)
+        )
     }
 
     @Test
