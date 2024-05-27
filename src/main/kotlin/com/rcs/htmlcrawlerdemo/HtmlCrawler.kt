@@ -21,17 +21,18 @@ class HtmlCrawler(
 
         val currentTimeMillis = System.currentTimeMillis()
 
-        var pagesIndexedCount: Int
+        var counts: Pair<Int, Int>
 
         // synchronization prevents searching while crawling/indexing
         synchronized(this.trie) {
             trie.clear()
-            pagesIndexedCount = crawl("", ConcurrentHashMap())
+            counts = crawl("", ConcurrentHashMap())
         }
 
         val durationMillis = System.currentTimeMillis() - currentTimeMillis
 
-        println("Done initializing crawler; indexed $pagesIndexedCount HTML pages; took $durationMillis ms")
+        println("Done initializing crawler; " +
+                "indexed ${counts.first} HTML pages and ${counts.second} unique tokens; took $durationMillis ms")
 
         this.initialized = true
     }
@@ -70,10 +71,12 @@ class HtmlCrawler(
             .toList()
     }
 
-    private fun crawl(relativeUrl: String, visited: ConcurrentHashMap<String, Boolean?>): Int {
+    // Pair.first = pages index
+    // Pair.second = unique words indexed
+    private fun crawl(relativeUrl: String, visited: ConcurrentHashMap<String, Boolean?>): Pair<Int, Int> {
         // Use putIfAbsent to check and mark the URL atomically
         if (visited.putIfAbsent(relativeUrl, true) != null) {
-            return 0 // URL already visited
+            return Pair(0, 0) // URL already visited
         }
 
         val htmlContent: String
@@ -81,18 +84,20 @@ class HtmlCrawler(
             htmlContent = htmlClient.getAsString(baseUrl + relativeUrl)
         } catch (e: IOException) {
             println("Error fetching ${baseUrl + relativeUrl} - not indexing page")
-            return 0
+            return Pair(0, 0)
         }
 
-        indexPage(relativeUrl, htmlContent)
+        val wordsIndexed = indexPage(relativeUrl, htmlContent)
 
-        val newPagesIndexedCount: Int = htmlUrlFinder.findRelativeUrls(htmlContent)
+        val newCounts = htmlUrlFinder.findRelativeUrls(htmlContent)
             .parallelStream()
             .map { u -> fixUrl("/$relativeUrl", u) }
             .map { u -> crawl(u, visited) }
-            .reduce(0) { a: Int, b: Int -> Integer.sum(a, b) }
+            .reduce(Pair(0, 0)) { a, b ->
+                Pair(Integer.sum(a.first, b.first), Integer.sum(a.second, b.second))
+            }
 
-        return 1 + newPagesIndexedCount
+        return Pair(1 + newCounts.first, wordsIndexed + newCounts.second)
     }
 
     private fun fixUrl(relativeUrl: String, u: String): String {
@@ -105,16 +110,23 @@ class HtmlCrawler(
         return fixedUrl
     }
 
-    private fun indexPage(relativeUrl: String, htmlContent: String) {
+    private fun indexPage(relativeUrl: String, htmlContent: String): Int {
         println("Indexing ${baseUrl + relativeUrl}")
+
+        var wordsIndex = 0
 
         htmlTokenizer.tokenize(htmlContent)
             .forEach { token ->
                 val newKeys: MutableSet<String> = trie.getExactly(token) ?: mutableSetOf()
+                if (newKeys.isEmpty()) {
+                    wordsIndex++
+                }
                 // stores only relative URLs in order to minimize storage space
                 // the full URL must then be reconstructed on retrieval!
                 newKeys.add(relativeUrl)
                 trie.put(token, newKeys)
             }
+
+        return wordsIndex
     }
 }

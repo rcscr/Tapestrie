@@ -6,6 +6,7 @@ fun main() {
 
     val htmlCrawler = HtmlCrawler(baseUrl, HtmlTokenizer(), HtmlUrlFinder(), HtmlClient())
     htmlCrawler.init()
+    // Done initializing crawler; indexed 1860 HTML pages and 21181 unique tokens; took 90784 ms
 
     // this is a great use-case because "indices" and "indexes" are both acceptable spellings
     val searchRequest = SearchRequest("indices", SearchStrategy.FUZZY)
