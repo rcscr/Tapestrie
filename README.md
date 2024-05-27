@@ -6,18 +6,14 @@ The `Trie` implemented here is thread-safe, unit-tested, and able to efficiently
   - exact match (like a `Map`)
   - prefix match
   - substring match
-  - "fuzzy" substring match with configurable error tolerance:
-    - searching for `brasil` with `errorTolerance=1` returns:
-      - `brasil` (perfect match)
-      - `brazil` (English - 1 wrong letter) 
-      - `brésil` (French - 1 wrong letter)
-      - `brasilien` (German - no wrong letters - additional letters at the end don't count as errors)
-    - searching for `raphael` with `errorTolerance=2` returns:
-      - `raphael` (perfect match)
-      - `rafael` (1 wrong letter + 1 missing letter = 2 errors)
-      - `raffaello` (2 wrong letters - additional letters at the end don't count as errors)
-      - `raphaela` (match with no wrong letters - additional letters at the end don't count as errors)
-
-More work needs to be done to filter out irrelevant results; for example, searching for `indices` with an `errorTolerance=2` will return `indistinguishable`! It's perfectly correct, but a bit unexpected. I'm thinking of counting additional letters, like in the examples above, as errors.
+  - "fuzzy" substring match with configurable error tolerance: Brasil will match Brazil; Raphael will match Rafael; etc
 
 A demo of an `HtmlCrawler` has also been provided to illustrate the usage of the `Trie`.
+
+Searching the Linux manual (860 HTML pages and 21,181 unique tokens) for `indices` with `errorTolerance=2` takes about five minutes and will return all of these hits, sorted by best match:
+
+[indices, indic, indexes, indicate, indirect, bindings, indicates, indicated, indicator, indicating, indication, indicators, indirectly, inacessible, inaccessble, inaccessible, indirections, bindresvport, indistinguishable]
+
+The first three hits are intuitive matches, but then the results become less relevant further down the list. However, these are still perfect matches given the `errorTolerance=2`.
+
+The greater the error tolerance, the slowest the performance. The same search with `errorTolerance=1` returned instantly, because there were no matches other than indices.
