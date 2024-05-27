@@ -14,13 +14,10 @@ data class FuzzySubstringSearchState<T>(
     private val wholeWordSeparator = "[\\s\\p{P}]".toRegex()
 
     fun sufficientlyMatches(): Boolean {
-        return if (startMatchIndex == null) {
-            return false
-        } else {
-            (node.completes() || searchIndex > search.length - 1)
-                    && numberOfMatches >= search.length - errorTolerance
-                    && getNumberOfErrorsIncludingMissingLetters() <= errorTolerance
-        }
+        return startMatchIndex != null
+                && (node.completes() || searchIndex > search.length - 1)
+                && numberOfMatches >= search.length - errorTolerance
+                && getNumberOfErrorsIncludingMissingLetters() <= errorTolerance
     }
 
     fun nextBuildState(nextNode: TrieNode<T>): FuzzySubstringSearchState<T> {
