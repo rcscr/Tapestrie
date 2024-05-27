@@ -16,14 +16,10 @@ data class FuzzySubstringSearchState<T>(
     fun sufficientlyMatches(): Boolean {
         return if (startMatchIndex == null) {
             return false
-        } else if (node.completes() && numberOfMatches < search.length) {
-            // the sequence being examined is shorter than the search input
-            // however, it may still be a match
-            getNumberOfErrorsIncludingMissingLetters() <= errorTolerance
         } else {
-            searchIndex > search.length - 1
+            (node.completes() || searchIndex > search.length - 1)
                     && numberOfMatches >= search.length - errorTolerance
-                    && numberOfErrors <= errorTolerance
+                    && getNumberOfErrorsIncludingMissingLetters() <= errorTolerance
         }
     }
 
