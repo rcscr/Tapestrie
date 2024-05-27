@@ -12,12 +12,14 @@ class HtmlTokenizer {
         val cleaned = noHtml.replace("[^a-zA-Z0-9\\s]".toRegex(), " ")
 
         // Normalize multiple spaces to a single space
-        val singleSpace = cleaned.replace("\\s+".toRegex(), " ").trim { it <= ' ' }
+        val singleSpace = cleaned.replace("\\s+".toRegex(), " ")
 
         // Convert to lowercase
         val lowerCase = singleSpace.lowercase(Locale.getDefault())
 
-        // Split and remove duplicates (Set)
-        return lowerCase.split(" ").toSet()
+        // Split, remove blanks, and remove duplicates (by converting to Set)
+        return lowerCase.split(" ")
+            .filter { it.isNotBlank() }
+            .toSet()
     }
 }
