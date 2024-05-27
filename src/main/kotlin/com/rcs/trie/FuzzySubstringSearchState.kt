@@ -173,7 +173,7 @@ data class FuzzySubstringSearchState<T>(
                     FuzzySubstringSearchState(
                         search = search,
                         node = nextNode,
-                        startMatchIndex = sequence.length - 1,
+                        startMatchIndex = null,
                         endMatchIndex = null,
                         searchIndex = i,
                         numberOfMatches = 0,
@@ -197,11 +197,19 @@ data class FuzzySubstringSearchState<T>(
         val matchedWholeWord = actualErrors == 0
                 && matchedWholeWord(startMatchIndex!!, actualEndMatchIndex)
 
+        val indexOfNearestWordSeparator = sequence.subSequence(0, startMatchIndex!! + 1).indexOfLastWordSeparator()
+
+        val prefixDistance = when {
+            indexOfNearestWordSeparator == -1 -> startMatchIndex
+            else -> startMatchIndex - indexOfNearestWordSeparator - 1
+        }
+
         return TrieSearchResult(
             sequence.toString(),
             node.value!!,
             numberOfMatches,
             actualErrors,
+            prefixDistance,
             matchedWholeSequence,
             matchedWholeWord
         )
@@ -243,7 +251,7 @@ data class FuzzySubstringSearchState<T>(
         return index < 0 || index >= this.length || this[index].toString().matches(wholeWordSeparator)
     }
 
-    private fun StringBuilder.indexOfLastWordSeparator(): Int {
+    private fun CharSequence.indexOfLastWordSeparator(): Int {
         for (i in this.indices.reversed()) {
             if (this[i].toString().matches(wholeWordSeparator)) {
                 return i

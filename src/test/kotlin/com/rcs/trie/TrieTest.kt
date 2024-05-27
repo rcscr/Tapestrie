@@ -170,29 +170,29 @@ class TrieTest {
 
         // Assert
         assertThat(resultA).containsExactlyInAnyOrder(
-            TrieSearchResult("abcdef", 1, 1, 0, false, false)
+            TrieSearchResult("abcdef", 1, 1, 0, 0, false, false)
         )
 
         assertThat(resultB).containsExactlyInAnyOrder(
-            TrieSearchResult("abcdef", 1, 3, 0, false, false),
-            TrieSearchResult("defghi", 2, 3, 0, false, false)
+            TrieSearchResult("abcdef", 1, 3, 0, 3, false, false),
+            TrieSearchResult("defghi", 2, 3, 0, 0, false, false)
         )
 
         assertThat(resultC).containsExactlyInAnyOrder(
-            TrieSearchResult("defghi", 2, 3, 0, false, false),
-            TrieSearchResult("deghij", 3, 3, 0, false, false)
+            TrieSearchResult("defghi", 2, 3, 0, 3, false, false),
+            TrieSearchResult("deghij", 3, 3, 0, 2, false, false)
         )
 
         assertThat(resultD).containsExactlyInAnyOrder(
-            TrieSearchResult("jklmno", 4, 6, 0, true, true)
+            TrieSearchResult("jklmno", 4, 6, 0, 0, true, true)
         )
 
         assertThat(resultE).containsExactlyInAnyOrder(
-            TrieSearchResult("pqrpqs", 5, 3, 0, false, false)
+            TrieSearchResult("pqrpqs", 5, 3, 0, 3, false, false)
         )
 
         assertThat(resultF).containsExactlyInAnyOrder(
-            TrieSearchResult("tu vw, xyz", 6, 2, 0, false, true)
+            TrieSearchResult("tu vw, xyz", 6, 2, 0, 0, false, true)
         )
 
         assertThat(resultG).isEmpty()
@@ -229,12 +229,12 @@ class TrieTest {
 
         // Assert
         assertThat(result).containsExactly(
-            TrieSearchResult("index", Unit, 5, 0, true, true),
-            TrieSearchResult("lalala index", Unit, 5, 0, false, true),
-            TrieSearchResult("ondex", Unit, 4, 1, false, false),
-            TrieSearchResult("lalala ondex", Unit, 4, 1, false, false),
-            TrieSearchResult("oldex", Unit, 3, 2, false, false),
-            TrieSearchResult("lalala oldex", Unit, 3, 2, false, false)
+            TrieSearchResult("index", Unit, 5, 0, 0, true, true),
+            TrieSearchResult("lalala index", Unit, 5, 0, 0, false, true),
+            TrieSearchResult("ondex", Unit, 4, 1, 1, false, false),
+            TrieSearchResult("lalala ondex", Unit, 4, 1, 1, false, false),
+            TrieSearchResult("oldex", Unit, 3, 2, 2, false, false),
+            TrieSearchResult("lalala oldex", Unit, 3, 2, 2, false, false)
         )
     }
 
@@ -251,8 +251,8 @@ class TrieTest {
 
         // Assert
         assertThat(result).containsExactly(
-            TrieSearchResult("lalala index", Unit, 5, 0, false, true),
-            TrieSearchResult("lalala indix", Unit, 4, 1, false, false)
+            TrieSearchResult("lalala index", Unit, 5, 0, 0, false, true),
+            TrieSearchResult("lalala indix", Unit, 4, 1, 0, false, false)
         )
     }
 
@@ -269,12 +269,12 @@ class TrieTest {
 
         // Assert
         assertThat(resultIndexes).containsExactly(
-            TrieSearchResult("indexes", Unit, 7, 0, true, true),
-            TrieSearchResult("indices", Unit, 5, 2, false, false)
+            TrieSearchResult("indexes", Unit, 7, 0, 0, true, true),
+            TrieSearchResult("indices", Unit, 5, 2, 0, false, false)
         )
         assertThat(resultIndices).containsExactly(
-            TrieSearchResult("indices", Unit, 7, 0, true, true),
-            TrieSearchResult("indexes", Unit, 5, 2, false, false)
+            TrieSearchResult("indices", Unit, 7, 0, 0, true, true),
+            TrieSearchResult("indexes", Unit, 5, 2, 0, false, false)
         )
     }
 
@@ -286,6 +286,8 @@ class TrieTest {
         trie.put("manu", Unit)
         trie.put("many", Unit)
         trie.put("manual", Unit)
+        trie.put("emanuel", Unit)
+        trie.put("lemanuel", Unit)
         trie.put("manually", Unit)
         trie.put("manuals", Unit)
         trie.put("linux manual", Unit)
@@ -296,19 +298,23 @@ class TrieTest {
         // Assert
         assertThat(result).containsExactly(
             // matches whole sequence is highest ranking
-            TrieSearchResult("manual", Unit, 6, 0, true, true),
+            TrieSearchResult("manual", Unit, 6, 0, 0, true, true),
             // matches a whole word
-            TrieSearchResult("linux manual", Unit, 6, 0, false, true),
+            TrieSearchResult("linux manual", Unit, 6, 0, 0, false, true),
             // matches the highest possible number of characters, but it's neither the whole sequence nor a whole word
-            TrieSearchResult("manuals", Unit, 6, 0, false, false),
+            TrieSearchResult("manuals", Unit, 6, 0, 0, false, false),
             // same as above, but the string is longer, so is ranked lower
-            TrieSearchResult("manually", Unit, 6, 0, false, false),
+            TrieSearchResult("manually", Unit, 6, 0, 0, false, false),
             // partial match, with fewer errors
-            TrieSearchResult("manu", Unit, 4, 2, false, false),
+            TrieSearchResult("manu", Unit, 4, 2, 0, false, false),
             // partial match, with more errors
-            TrieSearchResult("man", Unit, 3, 3, false, false),
+            TrieSearchResult("man", Unit, 3, 3, 0, false, false),
             // partial match, with more errors, and lower string
-            TrieSearchResult("many", Unit, 3, 3, false, false),
+            TrieSearchResult("many", Unit, 3, 3, 0, false, false),
+            // prefix match > 0
+            TrieSearchResult("emanuel", Unit, 5, 1, 1, false, false),
+            // prefix match > 1
+            TrieSearchResult("lemanuel", Unit, 5, 1, 2, false, false)
         )
     }
 
@@ -329,17 +335,17 @@ class TrieTest {
 
         // Assert
         assertThat(resultOne).containsExactly(
-            TrieSearchResult("goggle", Unit, 6, 0, true, true),
-            TrieSearchResult("gogle", Unit, 5, 1, false, false),
-            TrieSearchResult("google", Unit, 5, 1, false, false),
-            TrieSearchResult("blah google blah", Unit, 5, 1, false, false)
+            TrieSearchResult("goggle", Unit, 6, 0, 0, true, true),
+            TrieSearchResult("gogle", Unit, 5, 1, 0, false, false),
+            TrieSearchResult("google", Unit, 5, 1, 0, false, false),
+            TrieSearchResult("blah google blah", Unit, 5, 1, 0, false, false)
         )
         assertThat(resultTwo).containsExactly(
-            TrieSearchResult("goggle", Unit, 6, 0, true, true),
-            TrieSearchResult("gogle", Unit, 5, 1, false, false),
-            TrieSearchResult("google", Unit, 5, 1, false, false),
-            TrieSearchResult("blah google blah", Unit, 5, 1, false, false),
-            TrieSearchResult("googly", Unit, 4, 2, false, false),
+            TrieSearchResult("goggle", Unit, 6, 0, 0, true, true),
+            TrieSearchResult("gogle", Unit, 5, 1, 0, false, false),
+            TrieSearchResult("google", Unit, 5, 1, 0, false, false),
+            TrieSearchResult("blah google blah", Unit, 5, 1, 0, false, false),
+            TrieSearchResult("googly", Unit, 4, 2, 0, false, false),
         )
     }
 
@@ -363,32 +369,32 @@ class TrieTest {
 
         // Assert
         assertThat(r1).containsExactly(
-            TrieSearchResult("this is raphael", Unit, 7, 0, false, true),
-            TrieSearchResult("this is raphaël", Unit, 6, 1, false, false),
-            TrieSearchResult("this is rafael", Unit, 5, 2, false, false),
-            TrieSearchResult("this is rafaela", Unit, 5, 2, false, false),
-            TrieSearchResult("this is raffaello", Unit, 5, 2, false, false),
-            TrieSearchResult("this is raffaella", Unit, 5, 2, false, false))
+            TrieSearchResult("this is raphael", Unit, 7, 0, 0, false, true),
+            TrieSearchResult("this is raphaël", Unit, 6, 1, 0, false, false),
+            TrieSearchResult("this is rafael", Unit, 5, 2, 0, false, false),
+            TrieSearchResult("this is rafaela", Unit, 5, 2, 0, false, false),
+            TrieSearchResult("this is raffaello", Unit, 5, 2, 0, false, false),
+            TrieSearchResult("this is raffaella", Unit, 5, 2, 0, false, false))
         assertThat(r2).containsExactly(
-            TrieSearchResult("this is rafael", Unit, 6, 0, false, true),
-            TrieSearchResult("this is rafaela", Unit, 6, 0, false, false),
-            TrieSearchResult("this is raffaello", Unit, 6, 1, false, false),
-            TrieSearchResult("this is raffaella", Unit, 6, 1, false, false),
-            TrieSearchResult("this is raphael", Unit, 5, 2, false, false))
+            TrieSearchResult("this is rafael", Unit, 6, 0, 0, false, true),
+            TrieSearchResult("this is rafaela", Unit, 6, 0, 0, false, false),
+            TrieSearchResult("this is raffaello", Unit, 6, 1, 0, false, false),
+            TrieSearchResult("this is raffaella", Unit, 6, 1, 0, false, false),
+            TrieSearchResult("this is raphael", Unit, 5, 2, 0, false, false))
         assertThat(r3).containsExactly(
-            TrieSearchResult("this is raffaello", Unit, 9, 0, false, true),
-            TrieSearchResult("this is raffaella", Unit, 8, 1, false, false))
+            TrieSearchResult("this is raffaello", Unit, 9, 0, 0, false, true),
+            TrieSearchResult("this is raffaella", Unit, 8, 1, 0, false, false))
         assertThat(r4).containsExactly(
-            TrieSearchResult("this is raffaello", Unit, 9, 0, false, true),
-            TrieSearchResult("this is raffaella", Unit, 8, 1, false, false),
-            TrieSearchResult("this is rafael", Unit, 6, 3, false, false),
-            TrieSearchResult("this is rafaela", Unit, 6, 3, false, false))
+            TrieSearchResult("this is raffaello", Unit, 9, 0, 0, false, true),
+            TrieSearchResult("this is raffaella", Unit, 8, 1, 0, false, false),
+            TrieSearchResult("this is rafael", Unit, 6, 3, 0, false, false),
+            TrieSearchResult("this is rafaela", Unit, 6, 3, 0, false, false))
         assertThat(r5).containsExactly(
-            TrieSearchResult("this is raffaello", Unit, 9, 0, false, true),
-            TrieSearchResult("this is raffaella", Unit, 8, 1, false, false),
-            TrieSearchResult("this is rafael", Unit, 6, 3, false, false),
-            TrieSearchResult("this is rafaela", Unit, 6, 3, false, false),
-            TrieSearchResult("this is raphael", Unit, 5, 4, false, false))
+            TrieSearchResult("this is raffaello", Unit, 9, 0, 0, false, true),
+            TrieSearchResult("this is raffaella", Unit, 8, 1, 0, false, false),
+            TrieSearchResult("this is rafael", Unit, 6, 3, 0, false, false),
+            TrieSearchResult("this is rafaela", Unit, 6, 3, 0, false, false),
+            TrieSearchResult("this is raphael", Unit, 5, 4, 0, false, false))
     }
 
     @Test
@@ -402,7 +408,7 @@ class TrieTest {
 
         // Assert
         assertThat(result).containsExactly(
-            TrieSearchResult("indistinguishable", Unit, 5, 2, false, false)
+            TrieSearchResult("indistinguishable", Unit, 5, 2, 0, false, false)
         )
     }
 

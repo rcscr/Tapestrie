@@ -12,6 +12,9 @@ class TrieSearchResultComparator {
         private val sortByMatchedSequenceTrueFirst: Comparator<TrieSearchResult<*>> =
             compareBy(TrieSearchResult<*>::matchedWholeWord).reversed()
 
+        private val sortByPrefixDistanceShortestFirst: Comparator<TrieSearchResult<*>> =
+            compareBy(TrieSearchResult<*>::prefixDistance)
+
         private val sortByMatchedWholeWordTrueFirst: Comparator<TrieSearchResult<*>> =
             compareBy(TrieSearchResult<*>::matchedWholeWord).reversed()
 
@@ -19,7 +22,8 @@ class TrieSearchResultComparator {
             compareBy { it.errors }
 
         val sortByBestMatchFirst: Comparator<TrieSearchResult<*>> =
-            sortByLengthOfMatchLongestFirst
+            sortByPrefixDistanceShortestFirst
+                .thenComparing(sortByLengthOfMatchLongestFirst)
                 .thenComparing(sortByMatchedSequenceTrueFirst)
                 .thenComparing(sortByMatchedWholeWordTrueFirst)
                 .thenComparing(sortByLengthOfStringShortestFirst)
