@@ -16,4 +16,4 @@ Searching the Linux manual (1,860 HTML pages and 21,181 unique tokens) for `indi
 
 The first three hits are intuitive matches, but then the results become less relevant further down the list. However, these are still perfect matches given the `errorTolerance=2`.
 
-The greater the error tolerance, the slowest the performance. The same search with `errorTolerance=1` returned instantly, because there were no matches other than indices.
+The greater the error tolerance, the slowest the performance. The same search with `errorTolerance=1` returned instantly, because there were no matches other than `indices`.
