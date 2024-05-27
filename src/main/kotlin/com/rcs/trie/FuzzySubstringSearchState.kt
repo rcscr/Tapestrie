@@ -55,12 +55,6 @@ data class FuzzySubstringSearchState<T>(
         )
     }
 
-    private fun distanceToLastWordSeparatorIsPermissable(): Boolean {
-        val indexOfLastWordSeparator = sequence.indexOfLastWordSeparator()
-        val distanceToWordSeparator = sequence.length - 1 - indexOfLastWordSeparator
-        return distanceToWordSeparator - 1 <= numberOfErrors
-    }
-
     fun nextSearchStates(
         nextNode: Node<T>,
         matchingStrategy: FuzzySubstringMatchingStrategy
@@ -239,6 +233,12 @@ data class FuzzySubstringSearchState<T>(
         } else {
             numberOfErrors
         }
+    }
+
+    private fun distanceToLastWordSeparatorIsPermissable(): Boolean {
+        val indexOfLastWordSeparator = sequence.indexOfLastWordSeparator()
+        val distanceToWordSeparator = sequence.length - 1 - indexOfLastWordSeparator
+        return distanceToWordSeparator - 1 <= numberOfErrors
     }
 
     private fun matchedWholeSequence(
