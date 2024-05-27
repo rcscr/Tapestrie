@@ -1,7 +1,9 @@
 package com.rcs.htmlcrawlerdemo
 
 fun main() {
-    val baseUrl = "to be configured at run time"
+    // linux manual pages
+    val baseUrl = "https://docs.huihoo.com/linux/man/20100621/"
+
     val htmlCrawler = HtmlCrawler(baseUrl, HtmlTokenizer(), HtmlUrlFinder(), HtmlClient())
     htmlCrawler.init()
 
