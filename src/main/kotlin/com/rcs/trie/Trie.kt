@@ -142,7 +142,7 @@ class Trie<T> {
         while (queue.isNotEmpty()) {
             val state = queue.removeFirst()
 
-            if (state.matches()) {
+            if (state.sufficientlyMatches()) {
                 val newMatches = gatherAll(state)
                 results.putOnlyNewOrBetterMatches(newMatches)
                 continue

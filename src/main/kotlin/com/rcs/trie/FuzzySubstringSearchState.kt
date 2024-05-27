@@ -3,8 +3,8 @@ package com.rcs.trie
 data class FuzzySubstringSearchState<T>(
     val search: String,
     val node: Node<T>,
-    val leftOfFirstMatchingCharacter: Node<T>?,
-    var rightOfLastMatchingCharacter: Node<T>?,
+    val startMatchIndex: Int?,
+    val endMatchIndex: Int?,
     val searchIndex: Int,
     val numberOfMatches: Int,
     val numberOfErrors: Int,
@@ -13,8 +13,8 @@ data class FuzzySubstringSearchState<T>(
 ) {
     private val wholeWordSeparator = "[\\s\\p{P}]".toRegex()
 
-    fun matches(): Boolean {
-        return if (leftOfFirstMatchingCharacter == null) {
+    fun sufficientlyMatches(): Boolean {
+        return if (startMatchIndex == null) {
             return false
         } else if (node.completes() && numberOfMatches < search.length) {
             // the sequence being examined is shorter than the search input
@@ -28,15 +28,15 @@ data class FuzzySubstringSearchState<T>(
     }
 
     fun nextBuildState(nextNode: Node<T>): FuzzySubstringSearchState<T> {
-        val matchHasEnded = null != rightOfLastMatchingCharacter
+        val matchHasEnded = endMatchIndex != null
         
         val nextNodeMatches = !matchHasEnded
                 && numberOfMatches < search.length
                 && nextNode.string == search[numberOfMatches].toString()
 
-        val nextRightOfLastMatchingCharacter =
-            if (!matchHasEnded && !nextNodeMatches) nextNode
-            else rightOfLastMatchingCharacter
+        val newEndMatchIndex =
+            if (!matchHasEnded && !nextNodeMatches) sequence.length - 1
+            else endMatchIndex
 
         val newNumberOfMatches =
             if (!matchHasEnded && nextNodeMatches) numberOfMatches + 1
@@ -45,8 +45,8 @@ data class FuzzySubstringSearchState<T>(
         return FuzzySubstringSearchState(
             search = search,
             node = nextNode,
-            leftOfFirstMatchingCharacter = leftOfFirstMatchingCharacter,
-            rightOfLastMatchingCharacter = nextRightOfLastMatchingCharacter,
+            startMatchIndex = startMatchIndex,
+            endMatchIndex = newEndMatchIndex,
             searchIndex = searchIndex,
             numberOfMatches = newNumberOfMatches,
             numberOfErrors = numberOfErrors,
@@ -59,6 +59,10 @@ data class FuzzySubstringSearchState<T>(
         nextNode: Node<T>,
         matchingStrategy: FuzzySubstringMatchingStrategy
     ): Collection<FuzzySubstringSearchState<T>> {
+        // has matched enough - no more searching is necessary
+        if (sufficientlyMatches()) {
+            return listOf()
+        }
 
         val nextStates = mutableListOf<FuzzySubstringSearchState<T>>()
 
@@ -68,7 +72,7 @@ data class FuzzySubstringSearchState<T>(
             FuzzySubstringMatchingStrategy.LIBERAL ->
                 true
             FuzzySubstringMatchingStrategy.MATCH_PREFIX ->
-                wasMatchingBefore || node.isWordSeparator()
+                wasMatchingBefore || node.string.isWordSeparator()
             else ->
                 true
         }
@@ -81,8 +85,8 @@ data class FuzzySubstringSearchState<T>(
                 FuzzySubstringSearchState(
                     search = search,
                     node = nextNode,
-                    leftOfFirstMatchingCharacter = leftOfFirstMatchingCharacter ?: node,
-                    rightOfLastMatchingCharacter = null,
+                    startMatchIndex = startMatchIndex ?: sequence.length,
+                    endMatchIndex = null,
                     searchIndex = searchIndex + 1,
                     numberOfMatches = numberOfMatches + 1,
                     numberOfErrors = numberOfErrors,
@@ -105,8 +109,8 @@ data class FuzzySubstringSearchState<T>(
                 FuzzySubstringSearchState(
                     search = search,
                     node = nextNode,
-                    leftOfFirstMatchingCharacter = leftOfFirstMatchingCharacter,
-                    rightOfLastMatchingCharacter = null,
+                    startMatchIndex = startMatchIndex,
+                    endMatchIndex = null,
                     searchIndex = searchIndex + 1,
                     numberOfMatches = numberOfMatches,
                     numberOfErrors = numberOfErrors + 1,
@@ -122,8 +126,8 @@ data class FuzzySubstringSearchState<T>(
                     FuzzySubstringSearchState(
                         search = search,
                         node = node,
-                        leftOfFirstMatchingCharacter = leftOfFirstMatchingCharacter,
-                        rightOfLastMatchingCharacter = null,
+                        startMatchIndex = startMatchIndex,
+                        endMatchIndex = null,
                         searchIndex = searchIndex + 1,
                         numberOfMatches = numberOfMatches,
                         numberOfErrors = numberOfErrors + 1,
@@ -139,8 +143,8 @@ data class FuzzySubstringSearchState<T>(
                 FuzzySubstringSearchState(
                     search = search,
                     node = nextNode,
-                    leftOfFirstMatchingCharacter = leftOfFirstMatchingCharacter,
-                    rightOfLastMatchingCharacter = null,
+                    startMatchIndex = startMatchIndex,
+                    endMatchIndex = null,
                     searchIndex = searchIndex,
                     numberOfMatches = numberOfMatches,
                     numberOfErrors = numberOfErrors + 1,
@@ -156,8 +160,8 @@ data class FuzzySubstringSearchState<T>(
             FuzzySubstringSearchState(
                 search = search,
                 node = nextNode,
-                leftOfFirstMatchingCharacter = null,
-                rightOfLastMatchingCharacter = null,
+                startMatchIndex = null,
+                endMatchIndex = null,
                 searchIndex = 0,
                 numberOfMatches = 0,
                 numberOfErrors = 0,
@@ -180,8 +184,8 @@ data class FuzzySubstringSearchState<T>(
                     FuzzySubstringSearchState(
                         search = search,
                         node = nextNode,
-                        leftOfFirstMatchingCharacter = node,
-                        rightOfLastMatchingCharacter = null,
+                        startMatchIndex = sequence.length - 1,
+                        endMatchIndex = null,
                         searchIndex = i,
                         numberOfMatches = 0,
                         numberOfErrors = numberOfErrors + i,
@@ -196,20 +200,15 @@ data class FuzzySubstringSearchState<T>(
     }
 
     fun buildSearchResult(): TrieSearchResult<T> {
-        assert(node.completes())
-
-        val sequenceString = sequence.toString()
-
         val actualErrors = getNumberOfErrorsIncludingMissingLetters()
-
+        val actualEndMatchIndex = endMatchIndex ?: (sequence.length - 1)
         val matchedWholeSequence = actualErrors == 0
-                && matchedWholeSequence(leftOfFirstMatchingCharacter!!, rightOfLastMatchingCharacter)
-
+                && matchedWholeSequence(startMatchIndex!!, actualEndMatchIndex)
         val matchedWholeWord = actualErrors == 0
-                && matchedWholeWord(leftOfFirstMatchingCharacter!!, rightOfLastMatchingCharacter)
+                && matchedWholeWord(startMatchIndex!!, actualEndMatchIndex)
 
         return TrieSearchResult(
-            sequenceString,
+            sequence.toString(),
             node.value!!,
             numberOfMatches,
             actualErrors,
@@ -241,24 +240,17 @@ data class FuzzySubstringSearchState<T>(
         return distanceToWordSeparator - 1 <= numberOfErrors
     }
 
-    private fun matchedWholeSequence(
-        leftOfFirstMatchingCharacter: Node<T>,
-        rightOfLastMatchingCharacter: Node<T>?
-    ): Boolean {
-        return leftOfFirstMatchingCharacter.string == ""
-                && rightOfLastMatchingCharacter == null
+    private fun matchedWholeSequence(startMatchIndex: Int, endMatchIndex: Int): Boolean {
+        return startMatchIndex == 0 && endMatchIndex >= sequence.length - 1
     }
 
-    private fun matchedWholeWord(
-        leftOfFirstMatchingCharacter: Node<T>,
-        rightOfLastMatchingCharacter: Node<T>?
-    ): Boolean {
-        return leftOfFirstMatchingCharacter.isWordSeparator()
-                && rightOfLastMatchingCharacter.isWordSeparator()
+    private fun matchedWholeWord(startMatchIndex: Int, endMatchIndex: Int): Boolean {
+        return (startMatchIndex-1 < 0 || sequence[startMatchIndex-1].toString().isWordSeparator())
+                && (endMatchIndex+1 >= sequence.length || sequence[endMatchIndex+1].toString().isWordSeparator())
     }
 
-    private fun Node<T>?.isWordSeparator(): Boolean {
-        return this == null || this.string == "" || this.string.matches(wholeWordSeparator)
+    private fun String?.isWordSeparator(): Boolean {
+        return this == null || this.isBlank() || this.toString().matches(wholeWordSeparator)
     }
 
     private fun StringBuilder.indexOfLastWordSeparator(): Int {
