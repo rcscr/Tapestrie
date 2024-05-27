@@ -10,7 +10,7 @@ The `Trie` implemented here is thread-safe, unit-tested, and able to efficiently
 
 A demo of an `HtmlCrawler` has also been provided to illustrate the usage of the `Trie`.
 
-Searching the Linux manual (860 HTML pages and 21,181 unique tokens) for `indices` with `errorTolerance=2` takes about five minutes and will return all of these hits, sorted by best match:
+Searching the Linux manual (1,860 HTML pages and 21,181 unique tokens) for `indices` with `errorTolerance=2` takes about five minutes and will return all of these hits, sorted by best match:
 
 [indices, indic, indexes, indicate, indirect, bindings, indicates, indicated, indicator, indicating, indication, indicators, indirectly, inacessible, inaccessble, inaccessible, indirections, bindresvport, indistinguishable]
 
