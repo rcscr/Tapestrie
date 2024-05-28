@@ -11,7 +11,7 @@ data class FuzzySubstringSearchState<T>(
     val errorTolerance: Int,
     val sequence: StringBuilder,
 ) {
-    private val wholeWordSeparator = "[\\s\\p{P}]".toRegex()
+    private val wordSeparatorRegex = "[\\s\\p{P}]".toRegex()
 
     fun sufficientlyMatches(): Boolean {
         return startMatchIndex != null
@@ -78,7 +78,7 @@ data class FuzzySubstringSearchState<T>(
             FuzzySubstringMatchingStrategy.LIBERAL ->
                 true
             FuzzySubstringMatchingStrategy.MATCH_PREFIX ->
-                wasMatchingBefore || node.string == "" || node.string.matches(wholeWordSeparator)
+                wasMatchingBefore || node.string.isWordSeparator()
             else ->
                 true
         }
@@ -285,12 +285,16 @@ data class FuzzySubstringSearchState<T>(
     }
 
     private fun StringBuilder.isWordSeparatorAt(index: Int): Boolean {
-        return index < 0 || index >= this.length || this[index].toString().matches(wholeWordSeparator)
+        return index < 0 || index >= this.length || this[index].toString().isWordSeparator()
+    }
+
+    private fun String.isWordSeparator(): Boolean {
+        return this == "" || this.matches(wordSeparatorRegex)
     }
 
     private fun CharSequence.indexOfLastWordSeparator(): Int {
         for (i in this.indices.reversed()) {
-            if (this[i].toString().matches(wholeWordSeparator)) {
+            if (this[i].toString().matches(wordSeparatorRegex)) {
                 return i
             }
         }
@@ -299,7 +303,7 @@ data class FuzzySubstringSearchState<T>(
 
     private fun CharSequence.indexOfFirstWordSeparator(): Int {
         for (i in this.indices) {
-            if (this[i].toString().matches(wholeWordSeparator)) {
+            if (this[i].toString().matches(wordSeparatorRegex)) {
                 return i
             }
         }
