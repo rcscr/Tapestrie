@@ -15,7 +15,7 @@ data class FuzzySubstringSearchState<T>(
 
     fun sufficientlyMatches(): Boolean {
         return startMatchIndex != null
-                && (node.completes() || searchIndex > search.length - 1)
+                && (node.completes() || searchIndex == search.length)
                 && numberOfMatches >= search.length - errorTolerance
                 && getActualNumberOfErrors() <= errorTolerance
     }
