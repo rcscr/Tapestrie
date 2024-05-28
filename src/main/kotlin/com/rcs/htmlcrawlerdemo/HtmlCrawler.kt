@@ -3,6 +3,7 @@ package com.rcs.htmlcrawlerdemo
 import com.rcs.trie.FuzzySubstringMatchingStrategy
 import com.rcs.trie.Trie
 import java.io.IOException
+import java.util.LinkedList
 import java.util.concurrent.ConcurrentHashMap
 
 class HtmlCrawler(
@@ -12,7 +13,7 @@ class HtmlCrawler(
     private val htmlClient: HtmlClient
 ) {
 
-    private val trie: Trie<MutableSet<String>> = Trie() // maps a token to a set of URLs where the token can be found
+    private val trie: Trie<LinkedList<HtmlIndexEntry>> = Trie() // maps a token to a set of URLs where the token can be found
 
     private var initialized = false
 
@@ -44,7 +45,7 @@ class HtmlCrawler(
 
         val normalizedKeyword: String = searchRequest.normalizedKeyword()
 
-        var resultsWithoutBaseUrl: Collection<String>
+        var resultsWithoutBaseUrl: Collection<HtmlIndexEntry>
 
         // synchronization prevents searching while crawling/indexing
         synchronized(this.trie) {
@@ -67,6 +68,7 @@ class HtmlCrawler(
         }
 
         return resultsWithoutBaseUrl
+            .map { it.url }
             .map { relativeUrl: String -> baseUrl + relativeUrl }
             .toList()
     }
@@ -119,15 +121,26 @@ class HtmlCrawler(
         var wordsIndex = 0
 
         htmlTokenizer.tokenize(htmlContent)
-            .forEach { token ->
-                val newKeys: MutableSet<String> = trie.getExactly(token) ?: mutableSetOf()
-                if (newKeys.isEmpty()) {
-                    wordsIndex++
+            .forEach { entry ->
+                val token = entry.key
+                val occurrences = entry.value
+
+                synchronized(token) {
+                    val newKeys = trie.getExactly(token) ?: LinkedList()
+
+                    if (newKeys.isEmpty()) {
+                        wordsIndex++
+                    }
+
+                    // stores only relative URLs in order to minimize storage space
+                    // the full URL must then be reconstructed on retrieval!
+                    val newEntry = HtmlIndexEntry(relativeUrl, occurrences)
+                    newKeys.add(newEntry)
+
+                    newKeys.sortByDescending { it.occurrences }
+
+                    trie.put(token, newKeys)
                 }
-                // stores only relative URLs in order to minimize storage space
-                // the full URL must then be reconstructed on retrieval!
-                newKeys.add(relativeUrl)
-                trie.put(token, newKeys)
             }
 
         return wordsIndex

@@ -34,7 +34,8 @@ class Trie<T> {
                 // we do not have a string going this far, so we create a new node,
                 // and then keep appending the remaining characters of the input to it
                 if (null == nextMatchingNode) {
-                    val next = TrieNode(currentCharacter, if (reachedEndOfInput) value else null, mutableSetOf())
+                    val valueToInsert = if (reachedEndOfInput) value else null
+                    val next = TrieNode(currentCharacter, valueToInsert, mutableSetOf())
                     current.next.add(next)
                     current = next
 

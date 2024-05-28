@@ -4,7 +4,10 @@ import java.util.*
 
 class HtmlTokenizer {
 
-    fun tokenize(htmlContent: String): Set<String> {
+    /**
+     * returns a map of a token to its number of occurrences
+     */
+    fun tokenize(htmlContent: String): Map<String, Int> {
         // Remove HTML tags using a regular expression
         val noHtml = htmlContent.replace("<[^>]*>".toRegex(), " ")
 
@@ -20,6 +23,9 @@ class HtmlTokenizer {
         // Split, remove blanks, and remove duplicates (by converting to Set)
         return lowerCase.split(" ")
             .filter { it.isNotBlank() }
-            .toSet()
+            .fold(mutableMapOf()) { map, next ->
+                map[next] = (map[next] ?: 0) + 1
+                map
+            }
     }
 }
