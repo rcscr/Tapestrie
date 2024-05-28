@@ -25,24 +25,26 @@ class FuzzySubstringSearcher {
                 val state = queue.removeFirst()
 
                 if (state.sufficientlyMatches()) {
-                    val newMatches = gatherAll(state)
+                    val newMatches = gatherAll(state, matchingStrategy)
                     results.putOnlyNewOrBetterMatches(newMatches)
                     continue
                 }
 
-                var nextNodes: Array<TrieNode<T>>
                 synchronized(state.node.next) {
-                    nextNodes = state.node.next.toTypedArray()
-                }
-                for (nextNode in nextNodes) {
-                    queue.addAll(state.nextSearchStates(nextNode, matchingStrategy))
+                    for (nextNode in state.node.next) {
+                        queue.addAll(state.nextSearchStates(nextNode, matchingStrategy))
+                    }
                 }
             }
 
             return results.values.sortedWith(TrieSearchResultComparator.sortByBestMatchFirst)
         }
 
-        private fun <T> gatherAll(initialState: FuzzySubstringSearchState<T>): MutableMap<String, TrieSearchResult<T>> {
+        private fun <T> gatherAll(
+            initialState: FuzzySubstringSearchState<T>,
+            matchingStrategy: FuzzySubstringMatchingStrategy
+        ): MutableMap<String, TrieSearchResult<T>> {
+
             val results = mutableMapOf<String, TrieSearchResult<T>>()
             val queue = ArrayDeque<FuzzySubstringSearchState<T>>()
             queue.add(initialState)
@@ -51,16 +53,14 @@ class FuzzySubstringSearcher {
                 val state = queue.removeFirst()
 
                 if (state.node.completes()) {
-                    val searchResult = state.buildSearchResult()
+                    val searchResult = state.buildSearchResult(matchingStrategy)
                     results[searchResult.string] = searchResult
                 }
 
-                var nextNodes: Array<TrieNode<T>>
                 synchronized(state.node.next) {
-                    nextNodes = state.node.next.toTypedArray()
-                }
-                for (nextNode in nextNodes) {
-                    queue.add(state.nextBuildState(nextNode))
+                    for (nextNode in state.node.next) {
+                        queue.add(state.nextBuildState(nextNode))
+                    }
                 }
             }
 
