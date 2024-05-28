@@ -8,6 +8,8 @@ The `Trie` implemented here is thread-safe, unit-tested, and able to efficiently
   - substring match
   - "fuzzy" substring match with configurable error tolerance: Brasil will match Brazil; Raphael will match Rafael; etc
 
+### Demo
+
 A demo of an `HtmlCrawler` has also been provided to illustrate the usage of the `Trie`.
 
 Searching the Linux manual (1,860 HTML pages and 21,181 unique tokens) for `indices` with `errorTolerance=2` takes only 1.5 minutes and will return all of these hits:
@@ -23,13 +25,29 @@ As you might have noticed, these results are sorted by best match, considering t
 - matchedSubstring (String): *the minimum portion of the string that matched the keyword*
 - matchedWord (string): *the whole word where the match was found*
 - numberOfMatches (Int): *number of characters that matched*
-- numberOfErrors (Int): *number of characters that didn't match due to misspelling or letters missing*
+- numberOfErrors (Int): *number of errors due to misspelling or letters missing*
 - prefixDistance (Int): *the distance from the start of the match to the beginning of the word*
 - matchedWholeSequence (Boolean): *whether the keyword perfectly matched the entire string stored in the Trie*
 - matchedWholeWord (Boolean): *whether the keyword perfectly matched a whole word*
 
-As an example, let's examine the last search hit above:
+As an example, let's examine the best and worst search hits above:
 
+#### Best
+<pre>
+TrieSearchResult(
+    string=indices, 
+    value=[htmlman8/mount.8.html, htmlman5/elf.5.html, htmlman5/tzfile.5.html, htmlman7/locale.7.html, htmlman3/termios.3.html, htmlman5/slapd.conf.5.html, htmlman5/slapd-config.5.html, htmlman5/slapo-pcache.5.html, htmlman8/slapindex.8.html, htmlman5/slapd-bdb.5.html], 
+    matchedSubstring=indices, 
+    matchedWord=indices
+    numberOfMatches=7, 
+    numberOfErrors=0, 
+    prefixDistance=0, 
+    matchedWholeSequence=true, 
+    matchedWholeWord=true
+)
+</pre>
+
+#### Worst
 <pre>
 TrieSearchResult(
     string=bindresvport, 
@@ -43,6 +61,8 @@ TrieSearchResult(
     matchedWholeWord=false
 )
 </pre>
+
+### Other notes
 
 The greater the error tolerance, the slowest the performance. The same search with `errorTolerance=1` returned instantly, because there were no matches other than `indices`.
 
