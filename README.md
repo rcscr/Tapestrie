@@ -64,6 +64,6 @@ TrieSearchResult(
 
 ### Other notes
 
-The greater the error tolerance, the slowest the performance. The same search with `errorTolerance=1` returned instantly, because there were no matches other than `indices`.
+The greater the error tolerance, the slower the performance. The same search with `errorTolerance=1` returned instantly, because there were no matches other than `indices`.
 
 A shallow `Trie`, where each entry is short (i.e. words) offers the best performance, but with the limitation that you can only search for short strings. A `Trie` that stores longer text (i.e. sentences) allows searching for phrases (multiple words chained together), but is slower.
