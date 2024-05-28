@@ -18,8 +18,7 @@ class FuzzySubstringSearcher {
             val results = mutableMapOf<String, TrieSearchResult<T>>()
 
             val queue = ArrayDeque<FuzzySubstringSearchState<T>>()
-            val initialState = FuzzySubstringSearchState(search, root, null, null, 0, 0, 0, errorTolerance, StringBuilder())
-            queue.add(initialState)
+            queue.add(initialState(root, search, errorTolerance))
 
             while (queue.isNotEmpty()) {
                 val state = queue.removeFirst()
@@ -65,6 +64,25 @@ class FuzzySubstringSearcher {
             }
 
             return results
+        }
+
+        private fun <T> initialState(
+            root: TrieNode<T>,
+            search: String,
+            errorTolerance: Int
+        ): FuzzySubstringSearchState<T> {
+
+            return FuzzySubstringSearchState(
+                search = search,
+                node = root,
+                startMatchIndex = null,
+                endMatchIndex =  null,
+                searchIndex = 0,
+                numberOfMatches = 0,
+                numberOfErrors = 0,
+                errorTolerance,
+                sequence = StringBuilder()
+            )
         }
 
         private fun <T> MutableMap<String, TrieSearchResult<T>>
