@@ -17,7 +17,7 @@ data class FuzzySubstringSearchState<T>(
         return startMatchIndex != null
                 && (node.completes() || searchIndex > search.length - 1)
                 && numberOfMatches >= search.length - errorTolerance
-                && getNumberOfErrorsIncludingMissingLetters() <= errorTolerance
+                && getActualNumberOfErrors() <= errorTolerance
     }
 
     fun nextBuildState(nextNode: TrieNode<T>): FuzzySubstringSearchState<T> {
@@ -206,7 +206,7 @@ data class FuzzySubstringSearchState<T>(
     }
 
     fun buildSearchResult(): TrieSearchResult<T> {
-        val actualErrors = getNumberOfErrorsIncludingMissingLetters()
+        val actualErrors = getActualNumberOfErrors()
 
         val actualEndMatchIndex = endMatchIndex ?: (sequence.length - 1)
 
@@ -246,21 +246,9 @@ data class FuzzySubstringSearchState<T>(
         )
     }
 
-    // this needs to be revised and commented
-    // it's a mess, but it does work
-    private fun getNumberOfErrorsIncludingMissingLetters(): Int {
-        return if (node.completes()) {
-            if (numberOfMatches + numberOfErrors < search.length) {
-                search.length - numberOfMatches
-            } else if (searchIndex < search.length) {
-                val additionalWrongLetters = search.length - numberOfMatches
-                search.length - numberOfMatches + additionalWrongLetters
-            } else {
-                numberOfErrors
-            }
-        } else {
-            numberOfErrors
-        }
+    private fun getActualNumberOfErrors(): Int {
+        val unmatchedCharacters = search.length - searchIndex
+        return numberOfErrors + unmatchedCharacters
     }
 
     private fun distanceToStartWordSeparatorIsPermissible(): Boolean {
