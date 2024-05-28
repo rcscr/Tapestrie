@@ -205,7 +205,7 @@ data class FuzzySubstringSearchState<T>(
         return nextStates
     }
 
-    fun buildSearchResult(matchingStrategy: FuzzySubstringMatchingStrategy): TrieSearchResult<T> {
+    fun buildSearchResult(): TrieSearchResult<T> {
         val actualErrors = getNumberOfErrorsIncludingMissingLetters()
 
         val actualEndMatchIndex = endMatchIndex ?: (sequence.length - 1)
@@ -217,36 +217,30 @@ data class FuzzySubstringSearchState<T>(
                 && matchedWholeWord(startMatchIndex!!, actualEndMatchIndex)
 
         val indexOfWordSeparatorBefore = sequence.subSequence(0, startMatchIndex!! + 1)
-            .indexOfLastWordSeparator()
+            .indexOfLastWordSeparator() ?: -1
 
-        val indexOfWordSeparatorAfter = sequence.subSequence(startMatchIndex, sequence.length)
-            .indexOfFirstWordSeparator()
+        val relativeIndexOfWordSeparatorAfter = sequence.subSequence(startMatchIndex, sequence.length)
+            .indexOfFirstWordSeparator() ?: (sequence.length - startMatchIndex)
+
+        val indexOfWordSeparatorAfter = startMatchIndex + relativeIndexOfWordSeparatorAfter
 
         val prefixDistance = when {
-            indexOfWordSeparatorBefore == -1 -> startMatchIndex
+            indexOfWordSeparatorBefore == -0 -> startMatchIndex
             else -> startMatchIndex - indexOfWordSeparatorBefore - 1
         }
 
-        val wordLength = when {
-            indexOfWordSeparatorAfter == -1 -> sequence.length - startMatchIndex + prefixDistance
-            else -> indexOfWordSeparatorAfter + prefixDistance
-        }
+        val matchedSubstring = sequence.substring(startMatchIndex, actualEndMatchIndex + 1)
 
-        val matchedSubstring = when(matchingStrategy) {
-            FuzzySubstringMatchingStrategy.ANCHOR_TO_PREFIX ->
-                sequence.substring(indexOfWordSeparatorBefore + 1, actualEndMatchIndex + 1)
-            else ->
-                sequence.substring(startMatchIndex, actualEndMatchIndex + 1)
-        }
+        val matchedWord = sequence.substring(indexOfWordSeparatorBefore + 1, indexOfWordSeparatorAfter)
 
         return TrieSearchResult(
             sequence.toString(),
             node.value!!,
             matchedSubstring,
+            matchedWord,
             numberOfMatches,
             actualErrors,
             prefixDistance,
-            wordLength,
             matchedWholeSequence,
             matchedWholeWord
         )
@@ -270,7 +264,7 @@ data class FuzzySubstringSearchState<T>(
     }
 
     private fun distanceToStartWordSeparatorIsPermissible(): Boolean {
-        val indexOfLastWordSeparator = sequence.indexOfLastWordSeparator()
+        val indexOfLastWordSeparator = sequence.indexOfLastWordSeparator() ?: -1
         val distanceToWordSeparator = sequence.length - 1 - indexOfLastWordSeparator
         return distanceToWordSeparator - 1 <= numberOfErrors
     }
@@ -292,21 +286,21 @@ data class FuzzySubstringSearchState<T>(
         return this == "" || this.matches(wordSeparatorRegex)
     }
 
-    private fun CharSequence.indexOfLastWordSeparator(): Int {
+    private fun CharSequence.indexOfLastWordSeparator(): Int? {
         for (i in this.indices.reversed()) {
             if (this[i].toString().matches(wordSeparatorRegex)) {
                 return i
             }
         }
-        return -1
+        return null
     }
 
-    private fun CharSequence.indexOfFirstWordSeparator(): Int {
+    private fun CharSequence.indexOfFirstWordSeparator(): Int? {
         for (i in this.indices) {
             if (this[i].toString().matches(wordSeparatorRegex)) {
                 return i
             }
         }
-        return -1
+        return null
     }
 }

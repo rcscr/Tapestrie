@@ -17,7 +17,7 @@ class TrieSearchResultComparator {
             compareBy(TrieSearchResult<*>::prefixDistance)
 
         private val byWordLengthShortestFirst: Comparator<TrieSearchResult<*>> =
-            compareBy(TrieSearchResult<*>::wordLength)
+            compareBy { it.matchedWord.length }
 
         private val byMatchedWholeWordTrueFirst: Comparator<TrieSearchResult<*>> =
             compareBy(TrieSearchResult<*>::matchedWholeWord).reversed()

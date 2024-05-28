@@ -20,11 +20,11 @@ The first three hits are intuitive matches, but then the results become less rel
 
 As you might have noticed, these results are sorted by best match, considering the following information:
     
-- matchSubstring (String): *the minimum portion of the string that matched the keyword, including errors*
+- matchedSubstring (String): *the minimum portion of the string that matched the keyword*
+- matchedWord (string): *the whole word where the match was found*
 - numberOfMatches (Int): *number of characters that matched*
 - numberOfErrors (Int): *number of characters that didn't match due to misspelling or letters missing*
 - prefixDistance (Int): *the distance from the start of the match to the beginning of the word*
-- wordLength (Int): *the length of the word where the match was found*
 - matchedWholeSequence (Boolean): *whether the keyword perfectly matched the entire string stored in the Trie*
 - matchedWholeWord (Boolean): *whether the keyword perfectly matched a whole word*
 
@@ -34,11 +34,11 @@ As an example, let's examine the last search hit above:
 TrieSearchResult(
     string=bindresvport, 
     value=[index3.html, htmlman3/bindresvport.3.html], 
-    matchSubstring=indres, 
+    matchedSubstring=indres, 
+    matchedWord=bindresvport
     numberOfMatches=5, 
     numberOfErrors=2, 
     prefixDistance=1, 
-    wordLength=12, 
     matchedWholeSequence=false, 
     matchedWholeWord=false
 )

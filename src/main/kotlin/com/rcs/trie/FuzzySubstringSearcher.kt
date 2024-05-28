@@ -24,7 +24,7 @@ class FuzzySubstringSearcher {
                 val state = queue.removeFirst()
 
                 if (state.sufficientlyMatches()) {
-                    val newMatches = gatherAll(state, matchingStrategy)
+                    val newMatches = gatherAll(state)
                     results.putOnlyNewOrBetterMatches(newMatches)
                     continue
                 }
@@ -40,8 +40,7 @@ class FuzzySubstringSearcher {
         }
 
         private fun <T> gatherAll(
-            initialState: FuzzySubstringSearchState<T>,
-            matchingStrategy: FuzzySubstringMatchingStrategy
+            initialState: FuzzySubstringSearchState<T>
         ): MutableMap<String, TrieSearchResult<T>> {
 
             val results = mutableMapOf<String, TrieSearchResult<T>>()
@@ -52,7 +51,7 @@ class FuzzySubstringSearcher {
                 val state = queue.removeFirst()
 
                 if (state.node.completes()) {
-                    val searchResult = state.buildSearchResult(matchingStrategy)
+                    val searchResult = state.buildSearchResult()
                     results[searchResult.string] = searchResult
                 }
 

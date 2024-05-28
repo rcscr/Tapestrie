@@ -7,8 +7,13 @@ data class TrieSearchResult<T>(
     // the value associated with the data
     val value: T,
 
-    // the minimum portion of the string that matched the keyword, including errors
-    val matchSubstring: String,
+    // the minimum portion of the string that matched the keyword,
+    // including errors in between (but not errors before or after)
+    val matchedSubstring: String,
+
+    // the whole word where the match was found
+    // useful if the data in the trie (string variable above) is composed of multiple words
+    val matchedWord: String,
 
     // number of characters that matched
     val numberOfMatches: Int,
@@ -16,15 +21,12 @@ data class TrieSearchResult<T>(
     // number of errors due to misspelling or letters missing
     val numberOfErrors: Int,
 
-    // the distance from the start of the match to the beginning of the word
+    // the distance from the start of the match (matchedSubstring) to the beginning of the word
     val prefixDistance: Int,
 
-    // the length of the word where the match was found
-    val wordLength: Int,
-
-    // whether the keyword perfectly matched the entire string stored in the Trie
+    // whether the keyword perfectly matched the entire string (matchedSubstring == string)
     val matchedWholeSequence: Boolean,
 
-    // whether the keyword perfectly matched a whole word
+    // whether the keyword perfectly matched a whole word (matchedSubstring == matchedWord)
     val matchedWholeWord: Boolean
 )
