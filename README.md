@@ -18,7 +18,7 @@ Searching the Linux manual (1,860 HTML pages and 21,181 unique tokens) for `indi
 [indices, indic, indexes, indicate, indirect, indicates, indicated, indicator, indicating, indication, indicators, indirectly, inacessible, inaccessble, inaccessible, indirections, indistinguishable, bindings, bindresvport]
 </pre>
 
-The first three hits are intuitive matches, but then the results become less relevant further down the list. However, these are still perfect matches given the `errorTolerance=2`.
+The first three hits are intuitive matches, but then the results become less relevant further down the list. However, these are still acceptable matches given the `errorTolerance=2`.
 
 As you might have noticed, these results are sorted by best match, considering the following information:
     
