@@ -71,8 +71,11 @@ class HtmlCrawler(
             .toList()
     }
 
-    // Pair.first = pages index
-    // Pair.second = unique words indexed
+    /**
+     * returns
+     * Pair.first = number of pages indexed
+     * Pair.second = number of unique words indexed
+     */
     private fun crawl(relativeUrl: String, visited: ConcurrentHashMap<String, Boolean?>): Pair<Int, Int> {
         // Use putIfAbsent to check and mark the URL atomically
         if (visited.putIfAbsent(relativeUrl, true) != null) {
@@ -100,14 +103,14 @@ class HtmlCrawler(
         return Pair(1 + newCounts.first, wordsIndexed + newCounts.second)
     }
 
-    private fun fixUrl(relativeUrl: String, u: String): String {
-        var fixedUrl = u
+    private fun fixUrl(relativeUrl: String, additionalPath: String): String {
+        var fixedUrl = additionalPath
         var prefixUrl = relativeUrl.substring(0, relativeUrl.lastIndexOf("/"))
         while (fixedUrl.startsWith("../")) {
             fixedUrl = fixedUrl.replace("../", "")
             prefixUrl = prefixUrl.substring(0, prefixUrl.lastIndexOf("/"))
         }
-        return fixedUrl
+        return prefixUrl + fixedUrl
     }
 
     private fun indexPage(relativeUrl: String, htmlContent: String): Int {
