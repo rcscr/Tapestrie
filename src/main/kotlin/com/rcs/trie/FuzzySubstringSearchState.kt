@@ -258,7 +258,7 @@ data class FuzzySubstringSearchState<T>(
         return if (node.completes()) {
             if (numberOfMatches + numberOfErrors < search.length) {
                 search.length - numberOfMatches
-            } else if (searchIndex < search.length ) {
+            } else if (searchIndex < search.length) {
                 val additionalWrongLetters = search.length - numberOfMatches
                 search.length - numberOfMatches + additionalWrongLetters
             } else {
@@ -272,7 +272,7 @@ data class FuzzySubstringSearchState<T>(
     private fun distanceToStartWordSeparatorIsPermissible(): Boolean {
         val indexOfLastWordSeparator = sequence.indexOfLastWordSeparator()
         val distanceToWordSeparator = sequence.length - 1 - indexOfLastWordSeparator
-        return distanceToWordSeparator - 2 <= numberOfErrors
+        return distanceToWordSeparator - 1 <= numberOfErrors
     }
 
     private fun matchedWholeSequence(startMatchIndex: Int, endMatchIndex: Int): Boolean {
