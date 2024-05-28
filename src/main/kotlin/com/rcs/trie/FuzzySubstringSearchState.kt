@@ -224,10 +224,7 @@ data class FuzzySubstringSearchState<T>(
 
         val indexOfWordSeparatorAfter = startMatchIndex + relativeIndexOfWordSeparatorAfter
 
-        val prefixDistance = when {
-            indexOfWordSeparatorBefore == -0 -> startMatchIndex
-            else -> startMatchIndex - indexOfWordSeparatorBefore - 1
-        }
+        val prefixDistance = startMatchIndex - indexOfWordSeparatorBefore - 1
 
         val matchedSubstring = sequence.substring(startMatchIndex, actualEndMatchIndex + 1)
 
