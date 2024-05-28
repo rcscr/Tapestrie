@@ -37,7 +37,7 @@ class FuzzySubstringSearcher {
                 }
             }
 
-            return results.values.sortedWith(TrieSearchResultComparator.sortByBestMatchFirst)
+            return results.values.sortedWith(TrieSearchResultComparator.byBestMatchFirst)
         }
 
         private fun <T> gatherAll(
@@ -72,8 +72,8 @@ class FuzzySubstringSearcher {
             newMatches.entries
                 .filter {
                     this[it.key] == null
-                            || this[it.key]!!.lengthOfMatch < it.value.lengthOfMatch
-                            || this[it.key]!!.errors > it.value.errors
+                            || this[it.key]!!.numberOfMatches < it.value.numberOfMatches
+                            || this[it.key]!!.numberOfErrors > it.value.numberOfErrors
                 }
                 .forEach { this[it.key] = it.value }
         }

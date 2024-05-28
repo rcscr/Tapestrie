@@ -3,34 +3,35 @@ package com.rcs.trie
 class TrieSearchResultComparator {
 
     companion object {
-        private val sortByLengthOfMatchLongestFirst: Comparator<TrieSearchResult<*>> =
-            compareBy(TrieSearchResult<*>::lengthOfMatch).reversed()
 
-        private val sortByLengthOfStringShortestFirst: Comparator<TrieSearchResult<*>> =
+        private val byNumberOfMatchesMoreFirst: Comparator<TrieSearchResult<*>> =
+            compareBy(TrieSearchResult<*>::numberOfMatches).reversed()
+
+        private val byLengthOfStringShortestFirst: Comparator<TrieSearchResult<*>> =
             compareBy { it.string.length }
 
-        private val sortByMatchedSequenceTrueFirst: Comparator<TrieSearchResult<*>> =
+        private val byMatchedSequenceTrueFirst: Comparator<TrieSearchResult<*>> =
             compareBy(TrieSearchResult<*>::matchedWholeWord).reversed()
 
-        private val sortByPrefixDistanceShortestFirst: Comparator<TrieSearchResult<*>> =
+        private val byPrefixDistanceShortestFirst: Comparator<TrieSearchResult<*>> =
             compareBy(TrieSearchResult<*>::prefixDistance)
 
-        private val sortByWordLengthShortestFirst: Comparator<TrieSearchResult<*>> =
+        private val byWordLengthShortestFirst: Comparator<TrieSearchResult<*>> =
             compareBy(TrieSearchResult<*>::wordLength)
 
-        private val sortByMatchedWholeWordTrueFirst: Comparator<TrieSearchResult<*>> =
+        private val byMatchedWholeWordTrueFirst: Comparator<TrieSearchResult<*>> =
             compareBy(TrieSearchResult<*>::matchedWholeWord).reversed()
 
-        private val sortByLessErrorsFirst: Comparator<TrieSearchResult<*>> =
-            compareBy { it.errors }
+        private val byNumberOfErrorsLessFirst: Comparator<TrieSearchResult<*>> =
+            compareBy { it.numberOfErrors }
 
-        val sortByBestMatchFirst: Comparator<TrieSearchResult<*>> =
-            sortByPrefixDistanceShortestFirst
-                .thenComparing(sortByLengthOfMatchLongestFirst)
-                .thenComparing(sortByWordLengthShortestFirst)
-                .thenComparing(sortByMatchedSequenceTrueFirst)
-                .thenComparing(sortByMatchedWholeWordTrueFirst)
-                .thenComparing(sortByLengthOfStringShortestFirst)
-                .thenComparing(sortByLessErrorsFirst)
+        val byBestMatchFirst: Comparator<TrieSearchResult<*>> =
+            byPrefixDistanceShortestFirst
+                .thenComparing(byNumberOfMatchesMoreFirst)
+                .thenComparing(byWordLengthShortestFirst)
+                .thenComparing(byMatchedSequenceTrueFirst)
+                .thenComparing(byMatchedWholeWordTrueFirst)
+                .thenComparing(byLengthOfStringShortestFirst)
+                .thenComparing(byNumberOfErrorsLessFirst)
     }
 }

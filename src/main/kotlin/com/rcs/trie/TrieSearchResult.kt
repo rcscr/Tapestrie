@@ -11,10 +11,10 @@ data class TrieSearchResult<T>(
     val matchSubstring: String,
 
     // number of characters that matched
-    val lengthOfMatch: Int,
+    val numberOfMatches: Int,
 
-    // number of characters that didn't match due to misspelling or letters missing
-    val errors: Int,
+    // number of errors due to misspelling or letters missing
+    val numberOfErrors: Int,
 
     // the distance from the start of the match to the beginning of the word
     val prefixDistance: Int,
