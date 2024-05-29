@@ -31,7 +31,7 @@ class FuzzySubstringSearcher {
 
                 synchronized(state.node.next) {
                     for (nextNode in state.node.next) {
-                        queue.addAll(state.nextSearchStates(nextNode, matchingStrategy))
+                        queue.addAll(state.nextSearchStates(nextNode))
                     }
                 }
             }
@@ -74,7 +74,7 @@ class FuzzySubstringSearcher {
 
             val initialStates = mutableListOf<FuzzySubstringSearchState<T>>()
 
-            val defaultInitialState = getInitialState(root, search, 0, errorTolerance)
+            val defaultInitialState = getInitialState(root, search, 0, errorTolerance, matchingStrategy)
             initialStates.add(defaultInitialState)
 
             // efficient way to match with errors in beginning
@@ -84,7 +84,8 @@ class FuzzySubstringSearcher {
                         root,
                         search.substring(i, search.length),
                         numberOfPredeterminedErrors = i,
-                        errorTolerance
+                        errorTolerance,
+                        matchingStrategy
                     )
                     initialStates.add(stateWithPredeterminedError)
                 }
@@ -97,10 +98,12 @@ class FuzzySubstringSearcher {
             root: TrieNode<T>,
             search: String,
             numberOfPredeterminedErrors: Int,
-            errorTolerance: Int
+            errorTolerance: Int,
+            matchingStrategy: FuzzySubstringMatchingStrategy
         ): FuzzySubstringSearchState<T> {
 
             return FuzzySubstringSearchState(
+                matchingStrategy = matchingStrategy,
                 search = search,
                 node = root,
                 startMatchIndex = null,

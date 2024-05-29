@@ -1,6 +1,7 @@
 package com.rcs.trie
 
 data class FuzzySubstringSearchState<T>(
+    val matchingStrategy: FuzzySubstringMatchingStrategy,
     val search: String,
     val node: TrieNode<T>,
     val startMatchIndex: Int?,
@@ -42,6 +43,7 @@ data class FuzzySubstringSearchState<T>(
             else null
 
         return FuzzySubstringSearchState(
+            matchingStrategy = matchingStrategy,
             search = search,
             node = nextNode,
             startMatchIndex = startMatchIndex,
@@ -55,11 +57,7 @@ data class FuzzySubstringSearchState<T>(
         )
     }
 
-    fun nextSearchStates(
-        nextNode: TrieNode<T>,
-        matchingStrategy: FuzzySubstringMatchingStrategy
-    ): Collection<FuzzySubstringSearchState<T>> {
-
+    fun nextSearchStates(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>> {
         val wasMatchingBefore = numberOfMatches > 0
 
         val matchingPreconditions = when (matchingStrategy) {
@@ -77,6 +75,7 @@ data class FuzzySubstringSearchState<T>(
         if (nextNodeMatches) {
             return listOf(
                 FuzzySubstringSearchState(
+                    matchingStrategy = matchingStrategy,
                     search = search,
                     node = nextNode,
                     startMatchIndex = startMatchIndex ?: sequence.length,
@@ -108,6 +107,7 @@ data class FuzzySubstringSearchState<T>(
             // increment searchIndex and go to the next node
             nextStates.add(
                 FuzzySubstringSearchState(
+                    matchingStrategy = matchingStrategy,
                     search = search,
                     node = nextNode,
                     startMatchIndex = startMatchIndex,
@@ -125,6 +125,7 @@ data class FuzzySubstringSearchState<T>(
             // increment searchIndex and stay at the previous node
             nextStates.add(
                 FuzzySubstringSearchState(
+                    matchingStrategy = matchingStrategy,
                     search = search,
                     node = node,
                     startMatchIndex = startMatchIndex,
@@ -142,6 +143,7 @@ data class FuzzySubstringSearchState<T>(
             // keep searchIndex the same and go to the next node
             nextStates.add(
                 FuzzySubstringSearchState(
+                    matchingStrategy = matchingStrategy,
                     search = search,
                     node = nextNode,
                     startMatchIndex = startMatchIndex,
@@ -161,6 +163,7 @@ data class FuzzySubstringSearchState<T>(
         // exhausted all attempts; reset matching
         return listOf(
             FuzzySubstringSearchState(
+                matchingStrategy = matchingStrategy,
                 search = search,
                 node = nextNode,
                 startMatchIndex = null,
