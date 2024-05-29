@@ -63,8 +63,6 @@ data class FuzzySubstringSearchState<T>(
         val wasMatchingBefore = numberOfMatches > 0
 
         val matchingPreconditions = when (matchingStrategy) {
-            FuzzySubstringMatchingStrategy.LIBERAL ->
-                true
             FuzzySubstringMatchingStrategy.MATCH_PREFIX ->
                 wasMatchingBefore || node.string.isWordSeparator()
             else ->
