@@ -25,8 +25,8 @@ data class TrieSearchResult<T>(
     val prefixDistance: Int,
 
     // whether the keyword perfectly matched the entire string (matchedSubstring == string)
-    val matchedWholeSequence: Boolean,
+    val matchedWholeString: Boolean,
 
-    // whether the keyword perfectly matched a whole word (matchedSubstring == matchedWord)
+    // whether the keyword perfectly matched a whole word within the string (matchedSubstring == matchedWord)
     val matchedWholeWord: Boolean
 )

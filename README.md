@@ -27,8 +27,8 @@ As you might have noticed, these results are sorted by best match, considering t
 - numberOfMatches (Int): *number of characters that matched*
 - numberOfErrors (Int): *number of errors due to misspelling or letters missing*
 - prefixDistance (Int): *the distance from the start of the match to the beginning of the word*
-- matchedWholeSequence (Boolean): *whether the keyword perfectly matched the entire string stored in the Trie*
-- matchedWholeWord (Boolean): *whether the keyword perfectly matched a whole word*
+- matchedWholeString (Boolean): *whether the keyword perfectly matched the entire string stored in the Trie*
+- matchedWholeWord (Boolean): *whether the keyword perfectly matched a whole word within the string*
 
 As an example, let's examine the best and worst search hits above:
 
@@ -42,7 +42,7 @@ TrieSearchResult(
     numberOfMatches=7, 
     numberOfErrors=0, 
     prefixDistance=0, 
-    matchedWholeSequence=true, 
+    matchedWholeString=true, 
     matchedWholeWord=true
 )
 </pre>
@@ -57,7 +57,7 @@ TrieSearchResult(
     numberOfMatches=5, 
     numberOfErrors=2, 
     prefixDistance=1, 
-    matchedWholeSequence=false, 
+    matchedWholeString=false, 
     matchedWholeWord=false
 )
 </pre>
