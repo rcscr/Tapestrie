@@ -8,6 +8,7 @@ data class FuzzySubstringSearchState<T>(
     val searchIndex: Int,
     val numberOfMatches: Int,
     val numberOfErrors: Int,
+    val numberOfPredeterminedErrors: Int,
     val errorTolerance: Int,
     val sequence: StringBuilder,
 ) {
@@ -32,6 +33,7 @@ data class FuzzySubstringSearchState<T>(
                 searchIndex = searchIndex,
                 numberOfMatches = numberOfMatches,
                 numberOfErrors = numberOfErrors,
+                numberOfPredeterminedErrors = numberOfPredeterminedErrors,
                 errorTolerance = errorTolerance,
                 sequence = StringBuilder(sequence).append(nextNode.string)
             )
@@ -49,6 +51,7 @@ data class FuzzySubstringSearchState<T>(
                 searchIndex = searchIndex + 1,
                 numberOfMatches = numberOfMatches + 1,
                 numberOfErrors = numberOfErrors,
+                numberOfPredeterminedErrors = numberOfPredeterminedErrors,
                 errorTolerance = errorTolerance,
                 sequence = StringBuilder(sequence).append(nextNode.string)
             )
@@ -62,6 +65,7 @@ data class FuzzySubstringSearchState<T>(
             searchIndex = searchIndex,
             numberOfMatches = numberOfMatches,
             numberOfErrors = numberOfErrors,
+            numberOfPredeterminedErrors = numberOfPredeterminedErrors,
             errorTolerance = errorTolerance,
             sequence = StringBuilder(sequence).append(nextNode.string)
         )
@@ -84,6 +88,7 @@ data class FuzzySubstringSearchState<T>(
         }
 
         val nextNodeMatches = matchingPreconditions
+                && searchIndex < search.length
                 && nextNode.string == search[searchIndex].toString()
 
         // happy path - continue matching
@@ -97,15 +102,23 @@ data class FuzzySubstringSearchState<T>(
                     searchIndex = searchIndex + 1,
                     numberOfMatches = numberOfMatches + 1,
                     numberOfErrors = numberOfErrors,
+                    numberOfPredeterminedErrors = numberOfPredeterminedErrors,
                     errorTolerance = errorTolerance,
                     sequence = StringBuilder(sequence).append(nextNode.string)
                 )
             )
         }
 
-        // was matching before, but no longer matches - however, there's some error tolerance to be used
+        val continueMatchingWithError = when(matchingStrategy) {
+            FuzzySubstringMatchingStrategy.ANCHOR_TO_PREFIX ->
+                distanceToStartWordSeparatorIsPermissible()
+            else ->
+                wasMatchingBefore
+        }
+
+        // No longer matches - however, there's some error tolerance to be used
         // there are three ways this can go: 1. misspelling, 2. missing letter in search input 3. missing letter in data
-        if (wasMatchingBefore && numberOfErrors < errorTolerance) {
+        if (continueMatchingWithError && numberOfErrors < errorTolerance) {
             val nextStates = mutableListOf<FuzzySubstringSearchState<T>>()
 
             // 1. misspelling
@@ -119,6 +132,7 @@ data class FuzzySubstringSearchState<T>(
                     searchIndex = searchIndex + 1,
                     numberOfMatches = numberOfMatches,
                     numberOfErrors = numberOfErrors + 1,
+                    numberOfPredeterminedErrors = numberOfPredeterminedErrors,
                     errorTolerance = errorTolerance,
                     sequence = StringBuilder(sequence).append(nextNode.string)
                 )
@@ -135,6 +149,7 @@ data class FuzzySubstringSearchState<T>(
                     searchIndex = searchIndex + 1,
                     numberOfMatches = numberOfMatches,
                     numberOfErrors = numberOfErrors + 1,
+                    numberOfPredeterminedErrors = numberOfPredeterminedErrors,
                     errorTolerance = errorTolerance,
                     sequence = StringBuilder(sequence)
                 )
@@ -151,6 +166,7 @@ data class FuzzySubstringSearchState<T>(
                     searchIndex = searchIndex,
                     numberOfMatches = numberOfMatches,
                     numberOfErrors = numberOfErrors + 1,
+                    numberOfPredeterminedErrors = numberOfPredeterminedErrors,
                     errorTolerance = errorTolerance,
                     sequence = StringBuilder(sequence).append(nextNode.string)
                 )
@@ -159,10 +175,8 @@ data class FuzzySubstringSearchState<T>(
             return nextStates
         }
 
-        val nextStates = mutableListOf<FuzzySubstringSearchState<T>>()
-
         // exhausted all attempts; reset matching
-        nextStates.add(
+        return listOf(
             FuzzySubstringSearchState(
                 search = search,
                 node = nextNode,
@@ -171,38 +185,11 @@ data class FuzzySubstringSearchState<T>(
                 searchIndex = 0,
                 numberOfMatches = 0,
                 numberOfErrors = 0,
+                numberOfPredeterminedErrors = numberOfPredeterminedErrors,
                 errorTolerance = errorTolerance,
                 sequence = StringBuilder(sequence).append(nextNode.string)
             )
         )
-
-        // case when the target data might be a match, but there are wrong letters in the beginning
-        val shouldConsiderMatchesWithWrongBeginning = when(matchingStrategy) {
-            FuzzySubstringMatchingStrategy.ANCHOR_TO_PREFIX ->
-                distanceToStartWordSeparatorIsPermissible()
-            else ->
-                false
-        }
-
-        if (shouldConsiderMatchesWithWrongBeginning) {
-            for (i in 1..errorTolerance - numberOfErrors) {
-                nextStates.add(
-                    FuzzySubstringSearchState(
-                        search = search,
-                        node = nextNode,
-                        startMatchIndex = null,
-                        endMatchIndex = null,
-                        searchIndex = i,
-                        numberOfMatches = 0,
-                        numberOfErrors = numberOfErrors + i,
-                        errorTolerance = errorTolerance,
-                        sequence = StringBuilder(sequence).append(nextNode.string)
-                    )
-                )
-            }
-        }
-
-        return nextStates
     }
 
     fun buildSearchResult(): TrieSearchResult<T> {
@@ -245,7 +232,7 @@ data class FuzzySubstringSearchState<T>(
 
     private fun getActualNumberOfErrors(): Int {
         val unmatchedCharacters = search.length - searchIndex
-        return numberOfErrors + unmatchedCharacters
+        return numberOfPredeterminedErrors + numberOfErrors + unmatchedCharacters
     }
 
     private fun distanceToStartWordSeparatorIsPermissible(): Boolean {

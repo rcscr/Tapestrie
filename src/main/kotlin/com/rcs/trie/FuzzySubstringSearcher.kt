@@ -18,7 +18,7 @@ class FuzzySubstringSearcher {
             val results = mutableMapOf<String, TrieSearchResult<T>>()
 
             val queue = ArrayDeque<FuzzySubstringSearchState<T>>()
-            queue.add(initialState(root, search, errorTolerance))
+            queue.addAll(getInitialStates(root, search, errorTolerance, matchingStrategy))
 
             while (queue.isNotEmpty()) {
                 val state = queue.removeFirst()
@@ -65,9 +65,38 @@ class FuzzySubstringSearcher {
             return results
         }
 
-        private fun <T> initialState(
+        private fun <T> getInitialStates(
             root: TrieNode<T>,
             search: String,
+            errorTolerance: Int,
+            matchingStrategy: FuzzySubstringMatchingStrategy
+        ): Collection<FuzzySubstringSearchState<T>> {
+
+            val initialStates = mutableListOf<FuzzySubstringSearchState<T>>()
+
+            val defaultInitialState = getInitialState(root, search, 0, errorTolerance)
+            initialStates.add(defaultInitialState)
+
+            // efficient way to match with errors in beginning
+            if (matchingStrategy == FuzzySubstringMatchingStrategy.LIBERAL) {
+                for (i in 1..errorTolerance) {
+                    val stateWithPredeterminedError = getInitialState(
+                        root,
+                        search.substring(i, search.length),
+                        numberOfPredeterminedErrors = i,
+                        errorTolerance
+                    )
+                    initialStates.add(stateWithPredeterminedError)
+                }
+            }
+
+            return initialStates
+        }
+
+        private fun <T> getInitialState(
+            root: TrieNode<T>,
+            search: String,
+            numberOfPredeterminedErrors: Int,
             errorTolerance: Int
         ): FuzzySubstringSearchState<T> {
 
@@ -79,6 +108,7 @@ class FuzzySubstringSearcher {
                 searchIndex = 0,
                 numberOfMatches = 0,
                 numberOfErrors = 0,
+                numberOfPredeterminedErrors,
                 errorTolerance,
                 sequence = StringBuilder()
             )

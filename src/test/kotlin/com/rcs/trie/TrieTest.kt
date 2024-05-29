@@ -416,6 +416,32 @@ class TrieTest {
     }
 
     @Test
+    fun testMatchBySubstringFuzzyErrorsInBeginning() {
+        // Arrange
+        val trie = Trie<Unit>()
+        trie.put("lala 000x23456789000 hehe", Unit)
+        trie.put("lala 000xx3456789000 hehe", Unit)
+        trie.put("lala 000xxx456789000 hehe", Unit)
+
+        // Act
+        val resultA = trie.matchBySubstringFuzzy("123456789", 0, FuzzySubstringMatchingStrategy.LIBERAL)
+        val resultB = trie.matchBySubstringFuzzy("123456789", 1, FuzzySubstringMatchingStrategy.LIBERAL)
+        val resultC = trie.matchBySubstringFuzzy("123456789", 2, FuzzySubstringMatchingStrategy.LIBERAL)
+
+        // Assert
+        assertThat(resultA).isEmpty()
+
+        assertThat(resultB).containsExactly(
+            TrieSearchResult("lala 000x23456789000 hehe", Unit, "23456789", "000x23456789000", 8, 1, 4, false, false)
+        )
+
+        assertThat(resultC).containsExactly(
+            TrieSearchResult("lala 000x23456789000 hehe", Unit, "23456789", "000x23456789000", 8, 1, 4, false, false),
+            TrieSearchResult("lala 000xx3456789000 hehe", Unit, "3456789", "000xx3456789000", 7, 2, 5, false, false)
+        )
+    }
+
+    @Test
     fun testConcurrency() {
         // Arrange
         val trie = Trie<Int>()
