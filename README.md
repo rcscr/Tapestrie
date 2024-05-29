@@ -23,7 +23,7 @@ The first three hits are intuitive matches, but then the results become less rel
 As you might have noticed, these results are sorted by best match, considering the following information:
     
 - matchedSubstring (String): *the minimum portion of the string that matched the keyword*
-- matchedWord (string): *the whole word where the match was found*
+- matchedWord (String): *the whole word where the match was found*
 - numberOfMatches (Int): *number of characters that matched*
 - numberOfErrors (Int): *number of errors due to misspelling or letters missing*
 - prefixDistance (Int): *the distance from the start of the match to the beginning of the word*
