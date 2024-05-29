@@ -101,63 +101,35 @@ data class FuzzySubstringSearchState<T>(
         // No longer matches - however, there's some error tolerance to be used
         // there are three ways this can go: 1. misspelling, 2. missing letter in search input 3. missing letter in data
         if (shouldContinueMatchingWithError) {
-            val nextStates = mutableListOf<FuzzySubstringSearchState<T>>()
+            val errorSearchStrategies = listOf(
+                // 1. misspelling
+                // increment searchIndex and go to the next node
+                Triple(nextNode, searchIndex + 1, StringBuilder(sequence).append(nextNode.string)),
 
-            // 1. misspelling
-            // increment searchIndex and go to the next node
-            nextStates.add(
+                // 2. missing letter in target data
+                // increment searchIndex and stay at the previous node
+                Triple(node, searchIndex + 1, StringBuilder(sequence)),
+
+                // 3. missing letter in search input
+                // keep searchIndex the same and go to the next node
+                Triple(nextNode, searchIndex, StringBuilder(sequence).append(nextNode.string)),
+            )
+
+            return errorSearchStrategies.map {
                 FuzzySubstringSearchState(
                     matchingStrategy = matchingStrategy,
                     search = search,
-                    node = nextNode,
+                    node = it.first,
                     startMatchIndex = startMatchIndex,
                     endMatchIndex = null,
-                    searchIndex = searchIndex + 1,
+                    searchIndex = it.second,
                     numberOfMatches = numberOfMatches,
                     numberOfErrors = numberOfErrors + 1,
                     numberOfPredeterminedErrors = numberOfPredeterminedErrors,
                     errorTolerance = errorTolerance,
-                    sequence = StringBuilder(sequence).append(nextNode.string)
+                    sequence = it.third
                 )
-            )
-
-            // 2. missing letter in target data
-            // increment searchIndex and stay at the previous node
-            nextStates.add(
-                FuzzySubstringSearchState(
-                    matchingStrategy = matchingStrategy,
-                    search = search,
-                    node = node,
-                    startMatchIndex = startMatchIndex,
-                    endMatchIndex = null,
-                    searchIndex = searchIndex + 1,
-                    numberOfMatches = numberOfMatches,
-                    numberOfErrors = numberOfErrors + 1,
-                    numberOfPredeterminedErrors = numberOfPredeterminedErrors,
-                    errorTolerance = errorTolerance,
-                    sequence = StringBuilder(sequence)
-                )
-            )
-
-            // 2. missing letter in search input
-            // keep searchIndex the same and go to the next node
-            nextStates.add(
-                FuzzySubstringSearchState(
-                    matchingStrategy = matchingStrategy,
-                    search = search,
-                    node = nextNode,
-                    startMatchIndex = startMatchIndex,
-                    endMatchIndex = null,
-                    searchIndex = searchIndex,
-                    numberOfMatches = numberOfMatches,
-                    numberOfErrors = numberOfErrors + 1,
-                    numberOfPredeterminedErrors = numberOfPredeterminedErrors,
-                    errorTolerance = errorTolerance,
-                    sequence = StringBuilder(sequence).append(nextNode.string)
-                )
-            )
-
-            return nextStates
+            }
         }
 
         // exhausted all attempts; reset matching
