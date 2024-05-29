@@ -155,7 +155,7 @@ class TrieFuzzySearchTest {
             TrieSearchResult("gogle", Unit, "gogle", "gogle", 5, 1, 0, false, false),
             TrieSearchResult("google", Unit, "google", "google", 5, 1, 0, false, false),
             TrieSearchResult("blah google blah", Unit, "google", "google", 5, 1, 0, false, false),
-            TrieSearchResult("googly", Unit, "googly", "googly", 4, 2, 0, false, false),
+            TrieSearchResult("googly", Unit, "googl", "googly", 4, 2, 0, false, false),
         )
     }
 
@@ -193,15 +193,15 @@ class TrieFuzzySearchTest {
             TrieSearchResult("this is raphael", Unit, "raphael", "raphael", 5, 2, 0, false, false))
         assertThat(r3).containsExactly(
             TrieSearchResult("this is raffaello", Unit, "raffaello", "raffaello", 9, 0, 0, false, true),
-            TrieSearchResult("this is raffaella", Unit, "raffaella", "raffaella", 8, 1, 0, false, false))
+            TrieSearchResult("this is raffaella", Unit, "raffaell", "raffaella", 8, 1, 0, false, false))
         assertThat(r4).containsExactly(
             TrieSearchResult("this is raffaello", Unit, "raffaello", "raffaello", 9, 0, 0, false, true),
-            TrieSearchResult("this is raffaella", Unit, "raffaella", "raffaella", 8, 1, 0, false, false),
+            TrieSearchResult("this is raffaella", Unit, "raffaell", "raffaella", 8, 1, 0, false, false),
             TrieSearchResult("this is rafael", Unit, "rafael", "rafael", 6, 3, 0, false, false),
             TrieSearchResult("this is rafaela", Unit, "rafael", "rafaela", 6, 3, 0, false, false))
         assertThat(r5).containsExactly(
             TrieSearchResult("this is raffaello", Unit, "raffaello", "raffaello", 9, 0, 0, false, true),
-            TrieSearchResult("this is raffaella", Unit, "raffaella", "raffaella", 8, 1, 0, false, false),
+            TrieSearchResult("this is raffaella", Unit, "raffaell", "raffaella", 8, 1, 0, false, false),
             TrieSearchResult("this is rafael", Unit, "rafael", "rafael", 6, 3, 0, false, false),
             TrieSearchResult("this is rafaela", Unit, "rafael", "rafaela", 6, 3, 0, false, false),
             TrieSearchResult("this is raphael", Unit, "raphael", "raphael", 5, 4, 0, false, false))

@@ -181,7 +181,18 @@ data class FuzzySubstringSearchState<T>(
     fun buildSearchResult(): TrieSearchResult<T> {
         val actualErrors = getActualNumberOfErrors()
 
-        val actualEndMatchIndex = endMatchIndex ?: (sequence.length - 1)
+        // endMatchIndex can happen when state.nextBuildState was not called
+        // prior to calling this method
+        val actualEndMatchIndex = when {
+            endMatchIndex == null -> {
+                val lastCharacterMatches = search[searchIndex - 1].toString() == node.string
+                sequence.length - when {
+                    lastCharacterMatches -> 1
+                    else -> 2
+                }
+            }
+            else -> endMatchIndex
+        }
 
         val matchedWholeSequence = actualErrors == 0
                 && matchedWholeSequence(startMatchIndex!!, actualEndMatchIndex)
