@@ -28,6 +28,23 @@ data class FuzzySubstringSearchState<T>(
                 && getActualNumberOfErrors() <= errorTolerance
     }
 
+    fun nextSearchStates(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>> {
+        val matchContinuationState = getMatchContinuationState(nextNode)
+        val searchWithErrorState = when {
+            matchContinuationState.isEmpty() ->
+                getSearchWithErrorState(nextNode)
+            else ->
+                listOf()
+        }
+        val searchResetState = when {
+            matchContinuationState.isEmpty() && searchWithErrorState.isEmpty() ->
+                getSearchResetState(nextNode)
+            else ->
+                listOf()
+        }
+        return listOf(matchContinuationState, searchWithErrorState, searchResetState).flatten()
+    }
+
     fun nextBuildState(nextNode: TrieNode<T>): FuzzySubstringSearchState<T> {
         val nextNodeMatches = searchIndex < search.length
                 && nextNode.string == search[searchIndex].toString()
@@ -57,99 +74,6 @@ data class FuzzySubstringSearchState<T>(
             numberOfPredeterminedErrors = numberOfPredeterminedErrors,
             errorTolerance = errorTolerance,
             sequence = StringBuilder(sequence).append(nextNode.string)
-        )
-    }
-
-    fun nextSearchStates(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>> {
-        val wasMatchingBefore = numberOfMatches > 0
-
-        val matchingPreconditions = when (matchingStrategy) {
-            FuzzySubstringMatchingStrategy.MATCH_PREFIX ->
-                wasMatchingBefore || node.string.isWordSeparator()
-            else ->
-                true
-        }
-
-        val nextNodeMatches = matchingPreconditions
-                && searchIndex < search.length
-                && nextNode.string == search[searchIndex].toString()
-
-        // happy path - continue matching
-        if (nextNodeMatches) {
-            return listOf(
-                FuzzySubstringSearchState(
-                    matchingStrategy = matchingStrategy,
-                    search = search,
-                    node = nextNode,
-                    startMatchIndex = startMatchIndex ?: sequence.length,
-                    endMatchIndex = sequence.length,
-                    searchIndex = searchIndex + 1,
-                    numberOfMatches = numberOfMatches + 1,
-                    numberOfErrors = numberOfErrors,
-                    numberOfPredeterminedErrors = numberOfPredeterminedErrors,
-                    errorTolerance = errorTolerance,
-                    sequence = StringBuilder(sequence).append(nextNode.string)
-                )
-            )
-        }
-
-        val shouldContinueMatchingWithError = numberOfErrors < errorTolerance
-                && when(matchingStrategy) {
-                    FuzzySubstringMatchingStrategy.ANCHOR_TO_PREFIX ->
-                        wasMatchingBefore || distanceToStartWordSeparatorIsPermissible()
-                    else ->
-                        wasMatchingBefore
-                }
-
-        // No longer matches - however, there's some error tolerance to be used
-        // there are three ways this can go: 1. misspelling, 2. missing letter in search input 3. missing letter in data
-        if (shouldContinueMatchingWithError) {
-            val errorSearchStrategies = listOf(
-                // 1. misspelling
-                // increment searchIndex and go to the next node
-                Triple(nextNode, searchIndex + 1, StringBuilder(sequence).append(nextNode.string)),
-
-                // 2. missing letter in target data
-                // increment searchIndex and stay at the previous node
-                Triple(node, searchIndex + 1, StringBuilder(sequence)),
-
-                // 3. missing letter in search input
-                // keep searchIndex the same and go to the next node
-                Triple(nextNode, searchIndex, StringBuilder(sequence).append(nextNode.string)),
-            )
-
-            return errorSearchStrategies.map {
-                FuzzySubstringSearchState(
-                    matchingStrategy = matchingStrategy,
-                    search = search,
-                    node = it.first,
-                    startMatchIndex = startMatchIndex,
-                    endMatchIndex = endMatchIndex,
-                    searchIndex = it.second,
-                    numberOfMatches = numberOfMatches,
-                    numberOfErrors = numberOfErrors + 1,
-                    numberOfPredeterminedErrors = numberOfPredeterminedErrors,
-                    errorTolerance = errorTolerance,
-                    sequence = it.third
-                )
-            }
-        }
-
-        // exhausted all attempts; reset matching
-        return listOf(
-            FuzzySubstringSearchState(
-                matchingStrategy = matchingStrategy,
-                search = search,
-                node = nextNode,
-                startMatchIndex = null,
-                endMatchIndex = null,
-                searchIndex = 0,
-                numberOfMatches = 0,
-                numberOfErrors = 0,
-                numberOfPredeterminedErrors = numberOfPredeterminedErrors,
-                errorTolerance = errorTolerance,
-                sequence = StringBuilder(sequence).append(nextNode.string)
-            )
         )
     }
 
@@ -188,6 +112,114 @@ data class FuzzySubstringSearchState<T>(
             prefixDistance,
             matchedWholeSequence,
             matchedWholeWord
+        )
+    }
+
+    private fun getMatchContinuationState(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>> {
+        val wasMatchingBefore = numberOfMatches > 0
+
+        val matchingPreconditions = when (matchingStrategy) {
+            FuzzySubstringMatchingStrategy.MATCH_PREFIX ->
+                wasMatchingBefore || node.string.isWordSeparator()
+            else ->
+                true
+        }
+
+        val nextNodeMatches = matchingPreconditions
+                && searchIndex < search.length
+                && nextNode.string == search[searchIndex].toString()
+
+        // happy path - continue matching
+        if (nextNodeMatches) {
+            return listOf(
+                FuzzySubstringSearchState(
+                    matchingStrategy = matchingStrategy,
+                    search = search,
+                    node = nextNode,
+                    startMatchIndex = startMatchIndex ?: sequence.length,
+                    endMatchIndex = sequence.length,
+                    searchIndex = searchIndex + 1,
+                    numberOfMatches = numberOfMatches + 1,
+                    numberOfErrors = numberOfErrors,
+                    numberOfPredeterminedErrors = numberOfPredeterminedErrors,
+                    errorTolerance = errorTolerance,
+                    sequence = StringBuilder(sequence).append(nextNode.string)
+                )
+            )
+        } else {
+            return listOf()
+        }
+    }
+
+    private fun getSearchWithErrorState(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>> {
+        val wasMatchingBefore = numberOfMatches > 0
+
+        val shouldContinueMatchingWithError = numberOfErrors < errorTolerance
+                && when (matchingStrategy) {
+                    FuzzySubstringMatchingStrategy.ANCHOR_TO_PREFIX ->
+                        wasMatchingBefore || distanceToStartWordSeparatorIsPermissible()
+                    else ->
+                        wasMatchingBefore
+                }
+
+        // No longer matches - however, there's some error tolerance to be used
+        // there are three ways this can go: 1. misspelling, 2. missing letter in search input 3. missing letter in data
+        if (shouldContinueMatchingWithError) {
+            data class SearchWithErrorStrategy(
+                val node: TrieNode<T>,
+                val searchIndex: Int,
+                val sequence: StringBuilder
+            )
+
+            val errorSearchStrategies = listOf(
+                // 1. misspelling
+                // increment searchIndex and go to the next node
+                SearchWithErrorStrategy(nextNode, searchIndex + 1, StringBuilder(sequence).append(nextNode.string)),
+
+                // 2. missing letter in target data
+                // increment searchIndex and stay at the previous node
+                SearchWithErrorStrategy(node, searchIndex + 1, StringBuilder(sequence)),
+
+                // 3. missing letter in search input
+                // keep searchIndex the same and go to the next node
+                SearchWithErrorStrategy(nextNode, searchIndex, StringBuilder(sequence).append(nextNode.string)),
+            )
+
+            return errorSearchStrategies.map {
+                FuzzySubstringSearchState(
+                    matchingStrategy = matchingStrategy,
+                    search = search,
+                    node = it.node,
+                    startMatchIndex = startMatchIndex,
+                    endMatchIndex = endMatchIndex,
+                    searchIndex = it.searchIndex,
+                    numberOfMatches = numberOfMatches,
+                    numberOfErrors = numberOfErrors + 1,
+                    numberOfPredeterminedErrors = numberOfPredeterminedErrors,
+                    errorTolerance = errorTolerance,
+                    sequence = it.sequence
+                )
+            }
+        } else {
+            return listOf()
+        }
+    }
+
+    private fun getSearchResetState(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>> {
+        return listOf(
+            FuzzySubstringSearchState(
+                matchingStrategy = matchingStrategy,
+                search = search,
+                node = nextNode,
+                startMatchIndex = null,
+                endMatchIndex = null,
+                searchIndex = 0,
+                numberOfMatches = 0,
+                numberOfErrors = 0,
+                numberOfPredeterminedErrors = numberOfPredeterminedErrors,
+                errorTolerance = errorTolerance,
+                sequence = StringBuilder(sequence).append(nextNode.string)
+            )
         )
     }
 
