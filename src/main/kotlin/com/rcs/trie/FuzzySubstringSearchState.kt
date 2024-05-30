@@ -16,10 +16,10 @@ data class FuzzySubstringSearchState<T>(
     private val wordSeparatorRegex = "[\\s\\p{P}]".toRegex()
 
     /**
-     * This function returns true if this state *sufficiently* matches
-     * this does not mean that the matching is finished
+     * Returns true if this state *sufficiently* matches.
+     * This does not necessarily mean that the matching is finished;
      * it is possible that more matching characters will be found
-     * when subsequently calling state.nextBuildState
+     * when calling state.nextBuildState next.
      */
     fun sufficientlyMatches(): Boolean {
         return startMatchIndex != null
