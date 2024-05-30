@@ -153,18 +153,7 @@ data class FuzzySubstringSearchState<T>(
     fun buildSearchResult(): TrieSearchResult<T> {
         val actualErrors = getActualNumberOfErrors()
 
-        // endMatchIndex == null can happen when state.nextBuildState was not called
-        // prior to calling this method, which is a valid flow
-        val actualEndMatchIndex = when {
-            endMatchIndex == null -> {
-                val lastCharacterMatches = search[searchIndex - 1].toString() == node.string
-                sequence.length - when {
-                    lastCharacterMatches -> 1
-                    else -> 2
-                }
-            }
-            else -> endMatchIndex
-        }
+        val actualEndMatchIndex = getActualEndMatchIndex()
 
         val matchedWholeSequence = actualErrors == 0
                 && matchedWholeSequence(startMatchIndex!!, actualEndMatchIndex)
@@ -197,6 +186,23 @@ data class FuzzySubstringSearchState<T>(
             matchedWholeSequence,
             matchedWholeWord
         )
+    }
+
+    private fun getActualEndMatchIndex(): Int {
+        // endMatchIndex == null can happen when state.nextBuildState was not called
+        // prior to calling state.buildSearchResult
+        // this is a valid flow because, while state.node may be a complete node,
+        // state.node.next is not empty - mean it serves other strings
+        return when {
+            endMatchIndex == null -> {
+                val lastCharacterMatches = search[searchIndex - 1].toString() == node.string
+                sequence.length - when {
+                    lastCharacterMatches -> 1
+                    else -> 2
+                }
+            }
+            else -> endMatchIndex
+        }
     }
 
     private fun getActualNumberOfErrors(): Int {
