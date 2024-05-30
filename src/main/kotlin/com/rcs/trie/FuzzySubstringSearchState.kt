@@ -164,10 +164,8 @@ data class FuzzySubstringSearchState<T>(
         val indexOfWordSeparatorBefore = sequence.subSequence(0, startMatchIndex!! + 1)
             .indexOfLastWordSeparator() ?: -1
 
-        val relativeIndexOfWordSeparatorAfter = sequence.subSequence(startMatchIndex, sequence.length)
-            .indexOfFirstWordSeparator() ?: (sequence.length - startMatchIndex)
-
-        val indexOfWordSeparatorAfter = startMatchIndex + relativeIndexOfWordSeparatorAfter
+        val indexOfWordSeparatorAfter = sequence
+            .indexOfFirstWordSeparator(startMatchIndex) ?: sequence.length
 
         val prefixDistance = startMatchIndex - indexOfWordSeparatorBefore - 1
 
@@ -242,8 +240,8 @@ data class FuzzySubstringSearchState<T>(
         return null
     }
 
-    private fun CharSequence.indexOfFirstWordSeparator(): Int? {
-        for (i in this.indices) {
+    private fun CharSequence.indexOfFirstWordSeparator(startIndex: Int): Int? {
+        for (i in startIndex..<this.length) {
             if (this[i].toString().matches(wordSeparatorRegex)) {
                 return i
             }
