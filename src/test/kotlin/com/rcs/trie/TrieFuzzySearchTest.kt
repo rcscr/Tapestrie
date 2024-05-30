@@ -1,6 +1,7 @@
 package com.rcs.trie
 
 import org.assertj.core.api.Assertions.*
+import org.assertj.core.api.SoftAssertions
 import kotlin.test.Test
 
 class TrieFuzzySearchTest {
@@ -111,7 +112,7 @@ class TrieFuzzySearchTest {
 
         scenarios.addAll(listOf(
             FuzzySearchScenario(
-                "3a. LIBERAL strategy matches errors in beginning",
+                "MatchingStrategy=LIBERAL matches errors in beginning with errorTolerance=0",
                 setOf("lala 000123456789000 hehe", "lala 000x23456789000 hehe", "lala 000xx3456789000 hehe", "lala 000xxx456789000 hehe"),
                 "123456789",
                 0,
@@ -119,7 +120,7 @@ class TrieFuzzySearchTest {
                 listOf(TrieSearchResult("lala 000123456789000 hehe", Unit, "123456789", "000123456789000", 9, 0, 3, false, false))
             ),
             FuzzySearchScenario(
-                "3b. LIBERAL strategy matches errors in beginning",
+                "MatchingStrategy=LIBERAL matches errors in beginning with errorTolerance=1",
                 setOf("lala 000x23456789000 hehe", "lala 000x23456789000 hehe", "lala 000xx3456789000 hehe", "lala 000xxx456789000 hehe"),
                 "123456789",
                 1,
@@ -127,7 +128,7 @@ class TrieFuzzySearchTest {
                 listOf(TrieSearchResult("lala 000x23456789000 hehe", Unit, "23456789", "000x23456789000", 8, 1, 4, false, false))
             ),
             FuzzySearchScenario(
-                "3c. LIBERAL strategy matches errors in beginning",
+                "MatchingStrategy=LIBERAL matches errors in beginning with errorTolerance=2",
                 setOf("lala 000x23456789000 hehe", "lala 000x23456789000 hehe", "lala 000xx3456789000 hehe", "lala 000xxx456789000 hehe"),
                 "123456789",
                 2,
@@ -141,7 +142,7 @@ class TrieFuzzySearchTest {
 
         scenarios.addAll(listOf(
             FuzzySearchScenario(
-                "4. MATCH_PREFIX only matches exact beginning of word",
+                "MatchingStrategy=MATCH_PREFIX only matches exact beginning of word",
                 setOf("lalala index", "lalala indix", "lalala ondex"),
                 "index",
                 1,
@@ -155,7 +156,7 @@ class TrieFuzzySearchTest {
 
         scenarios.addAll(listOf(
             FuzzySearchScenario(
-                "5. ANCHOR_TO_PREFIX matches beginning of word with error tolerance",
+                "MatchingStrategy=ANCHOR_TO_PREFIX matches beginning of word with error tolerance",
                 setOf("index", "ondex", "oldex", "omtex", "lalala index", "lalala ondex", "lalala oldex", "lalala omtex"),
                 "index",
                 2,
@@ -176,6 +177,8 @@ class TrieFuzzySearchTest {
 
     @Test
     fun `test matchBySubstringFuzzy with predefined scenarios`(): Unit = with(fuzzySearchScenarios())  {
+        val softAssertions = SoftAssertions()
+
         this.forEach { scenario ->
             // Arrange
             val trie = Trie<Unit>()
@@ -188,10 +191,12 @@ class TrieFuzzySearchTest {
                 scenario.search, scenario.errorTolerance, scenario.matchingStrategy)
 
             // Assert
-            assertThat(result)
+            softAssertions.assertThat(result)
                 .`as`(scenario.description)
                 .isEqualTo(scenario.expectedResults)
         }
+
+        softAssertions.assertAll()
     }
 
     @Test
