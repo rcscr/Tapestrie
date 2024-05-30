@@ -5,63 +5,129 @@ import kotlin.test.Test
 
 class TrieFuzzySearchTest {
 
-    @Test
-    fun testDoesNotMatchEdgeCase() {
-        // Arrange
-        val trie = Trie<Unit>()
-        trie.put("ionice", Unit)
+    data class FuzzySearchScenario(
+        val description: String,
+        val entries: Set<String>,
+        val search: String,
+        val errorTolerance: Int,
+        val matchingStrategy: FuzzySubstringMatchingStrategy,
+        val expectedResults: List<TrieSearchResult<Unit>>
+    )
 
-        // Act
-        val result = trie.matchBySubstringFuzzy("indices", 2, FuzzySubstringMatchingStrategy.LIBERAL)
+    private fun fuzzySearchScenarios(): List<FuzzySearchScenario> {
+        val scenarios = mutableListOf<FuzzySearchScenario>()
 
-        // Assert
-        assertThat(result).isEmpty()
-    }
-
-    @Test
-    fun testMatchBySubstringFuzzyAnchorToPrefix() {
-        // Arrange
-        val trie = Trie<Unit>()
-        trie.put("index", Unit)
-        trie.put("ondex", Unit) // will match because it has 1 wrong first letter
-        trie.put("oldex", Unit) // will match because it has 2 wrong first letter
-        trie.put("omtex", Unit) // will match because it has 2 wrong first letter
-        trie.put("lalala index", Unit)
-        trie.put("lalala ondex", Unit) // will match because it has 1 wrong first letter
-        trie.put("lalala oldex", Unit) // will match because it has 2 wrong first letter
-        trie.put("lalala omtex", Unit) // will not match because it has 3 wrong first letter
-
-        // Act
-        val result = trie.matchBySubstringFuzzy("index", 2, FuzzySubstringMatchingStrategy.ANCHOR_TO_PREFIX)
-
-        // Assert
-        assertThat(result).containsExactly(
-            TrieSearchResult("index", Unit, "index", "index", 5, 0, 0, true, true),
-            TrieSearchResult("lalala index", Unit, "index", "index", 5, 0, 0, false, true),
-            TrieSearchResult("ondex", Unit, "ndex", "ondex", 4, 1, 1, false, false),
-            TrieSearchResult("lalala ondex", Unit, "ndex", "ondex", 4, 1, 1, false, false),
-            TrieSearchResult("oldex", Unit, "dex", "oldex", 3, 2, 2, false, false),
-            TrieSearchResult("lalala oldex", Unit, "dex", "oldex", 3, 2, 2, false, false)
+        scenarios.add(
+            FuzzySearchScenario(
+                "1. An edge case that I observed",
+                setOf("ionice"),
+                "indices",
+                2,
+                FuzzySubstringMatchingStrategy.LIBERAL,
+                listOf()
+            )
         )
+
+        scenarios.add(
+            FuzzySearchScenario(
+                "2. Matches a super long word",
+                setOf("the data is indistinguishable from the results"),
+                "indices",
+                2,
+                FuzzySubstringMatchingStrategy.LIBERAL,
+                listOf(TrieSearchResult("the data is indistinguishable from the results", Unit, "indis", "indistinguishable", 5, 2, 0, false, false))
+            )
+        )
+
+        scenarios.addAll(listOf(
+            FuzzySearchScenario(
+                "3a. LIBERAL strategy matches errors in beginning",
+                setOf("lala 000123456789000 hehe", "lala 000x23456789000 hehe", "lala 000xx3456789000 hehe", "lala 000xxx456789000 hehe"),
+                "123456789",
+                0,
+                FuzzySubstringMatchingStrategy.LIBERAL,
+                listOf(TrieSearchResult("lala 000123456789000 hehe", Unit, "123456789", "000123456789000", 9, 0, 3, false, false))
+            ),
+            FuzzySearchScenario(
+                "3b. LIBERAL strategy matches errors in beginning",
+                setOf("lala 000x23456789000 hehe", "lala 000x23456789000 hehe", "lala 000xx3456789000 hehe", "lala 000xxx456789000 hehe"),
+                "123456789",
+                1,
+                FuzzySubstringMatchingStrategy.LIBERAL,
+                listOf(TrieSearchResult("lala 000x23456789000 hehe", Unit, "23456789", "000x23456789000", 8, 1, 4, false, false))
+            ),
+            FuzzySearchScenario(
+                "3c. LIBERAL strategy matches errors in beginning",
+                setOf("lala 000x23456789000 hehe", "lala 000x23456789000 hehe", "lala 000xx3456789000 hehe", "lala 000xxx456789000 hehe"),
+                "123456789",
+                2,
+                FuzzySubstringMatchingStrategy.LIBERAL,
+                listOf(
+                    TrieSearchResult("lala 000x23456789000 hehe", Unit, "23456789", "000x23456789000", 8, 1, 4, false, false),
+                    TrieSearchResult("lala 000xx3456789000 hehe", Unit, "3456789", "000xx3456789000", 7, 2, 5, false, false)
+                )
+            )
+        ))
+
+        scenarios.addAll(listOf(
+            FuzzySearchScenario(
+                "4. MATCH_PREFIX only matches exact beginning of word",
+                setOf("lalala index", "lalala indix", "lalala ondex"),
+                "index",
+                1,
+                FuzzySubstringMatchingStrategy.MATCH_PREFIX,
+                listOf(
+                    TrieSearchResult("lalala index", Unit, "index", "index", 5, 0, 0, false, true),
+                    TrieSearchResult("lalala indix", Unit, "indix", "indix", 4, 1, 0, false, false)
+                )
+            )
+        ))
+
+        scenarios.addAll(listOf(
+            FuzzySearchScenario(
+                "5. ANCHOR_TO_PREFIX matches beginning or word with error tolerance",
+                setOf("index", "ondex", "oldex", "omtex", "lalala index", "lalala ondex", "lalala oldex", "lalala omtex"),
+                "index",
+                2,
+                FuzzySubstringMatchingStrategy.ANCHOR_TO_PREFIX,
+                listOf(
+                    TrieSearchResult("index", Unit, "index", "index", 5, 0, 0, true, true),
+                    TrieSearchResult("lalala index", Unit, "index", "index", 5, 0, 0, false, true),
+                    TrieSearchResult("ondex", Unit, "ndex", "ondex", 4, 1, 1, false, false),
+                    TrieSearchResult("lalala ondex", Unit, "ndex", "ondex", 4, 1, 1, false, false),
+                    TrieSearchResult("oldex", Unit, "dex", "oldex", 3, 2, 2, false, false),
+                    TrieSearchResult("lalala oldex", Unit, "dex", "oldex", 3, 2, 2, false, false)
+                )
+            )
+        ))
+
+        return scenarios
     }
 
     @Test
-    fun testMatchBySubstringFuzzyMatchPrefix() {
-        // Arrange
-        val trie = Trie<Unit>()
-        trie.put("lalala index", Unit)
-        trie.put("lalala indix", Unit)
-        trie.put("lalala ondex", Unit) // will not match because it doesn't match first letter in keyword
+    fun `test matchBySubstringFuzzy with predefined scenarios`(): Unit = with(fuzzySearchScenarios())  {
+        this.forEach { scenario ->
+            // Arrange
+            val trie = Trie<Unit>()
+            scenario.entries.forEach {
+                trie.put(it, Unit)
+            }
 
-        // Act
-        val result = trie.matchBySubstringFuzzy("index", 1, FuzzySubstringMatchingStrategy.MATCH_PREFIX)
+            // Act
+            val result = trie.matchBySubstringFuzzy(
+                scenario.search, scenario.errorTolerance, scenario.matchingStrategy)
 
-        // Assert
-        assertThat(result).containsExactly(
-            TrieSearchResult("lalala index", Unit, "index", "index", 5, 0, 0, false, true),
-            TrieSearchResult("lalala indix", Unit, "indix", "indix", 4, 1, 0, false, false)
-        )
+            // Assert
+            assertThat(result)
+                .`as`(scenario.description)
+                .isEqualTo(scenario.expectedResults)
+        }
     }
+
+    /**
+     * TODO: check if unit tests below are still needed
+     * if yes, convert to new scenario pattern, else delete
+     */
 
     @Test
     fun testMatchBySubstringFuzzyCommonCase() {
@@ -205,46 +271,5 @@ class TrieFuzzySearchTest {
             TrieSearchResult("this is rafael", Unit, "rafael", "rafael", 6, 3, 0, false, false),
             TrieSearchResult("this is rafaela", Unit, "rafael", "rafaela", 6, 3, 0, false, false),
             TrieSearchResult("this is raphael", Unit, "raphael", "raphael", 5, 4, 0, false, false))
-    }
-
-    @Test
-    fun testMatchesLongWord() {
-        // Arrange
-        val trie = Trie<Unit>()
-        trie.put("indistinguishable", Unit)
-
-        // Act
-        val result = trie.matchBySubstringFuzzy("indices", 2, FuzzySubstringMatchingStrategy.MATCH_PREFIX)
-
-        // Assert
-        assertThat(result).containsExactly(
-            TrieSearchResult("indistinguishable", Unit, "indis", "indistinguishable", 5, 2, 0, false, false)
-        )
-    }
-
-    @Test
-    fun testMatchBySubstringFuzzyErrorsInBeginning() {
-        // Arrange
-        val trie = Trie<Unit>()
-        trie.put("lala 000x23456789000 hehe", Unit)
-        trie.put("lala 000xx3456789000 hehe", Unit)
-        trie.put("lala 000xxx456789000 hehe", Unit)
-
-        // Act
-        val resultA = trie.matchBySubstringFuzzy("123456789", 0, FuzzySubstringMatchingStrategy.LIBERAL)
-        val resultB = trie.matchBySubstringFuzzy("123456789", 1, FuzzySubstringMatchingStrategy.LIBERAL)
-        val resultC = trie.matchBySubstringFuzzy("123456789", 2, FuzzySubstringMatchingStrategy.LIBERAL)
-
-        // Assert
-        assertThat(resultA).isEmpty()
-
-        assertThat(resultB).containsExactly(
-            TrieSearchResult("lala 000x23456789000 hehe", Unit, "23456789", "000x23456789000", 8, 1, 4, false, false)
-        )
-
-        assertThat(resultC).containsExactly(
-            TrieSearchResult("lala 000x23456789000 hehe", Unit, "23456789", "000x23456789000", 8, 1, 4, false, false),
-            TrieSearchResult("lala 000xx3456789000 hehe", Unit, "3456789", "000xx3456789000", 7, 2, 5, false, false)
-        )
     }
 }
