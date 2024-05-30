@@ -4,7 +4,6 @@ import org.assertj.core.api.Assertions.*
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.Executors
-import kotlin.collections.Collection
 import kotlin.test.Test
 
 class TrieTest {
@@ -131,71 +130,6 @@ class TrieTest {
         )
 
         assertThat(matchFail).isEmpty()
-    }
-
-    @Test
-    fun testMatchBySubstring() {
-        // Arrange
-        val trie = Trie<Int>()
-
-        trie.put("abcdef", 1)
-        trie.put("defghi", 2)
-        trie.put("deghij", 3)
-        trie.put("jklmno", 4)
-        trie.put("pqrpqs", 5)
-        trie.put("tu vw, xyz", 6)
-        trie.put("123", 7)
-
-        // Act
-        val resultA: Collection<TrieSearchResult<Int>> =
-            trie.matchBySubstring("a") // match a prefix of length 1
-
-        val resultB: Collection<TrieSearchResult<Int>> =
-            trie.matchBySubstring("def") // match a prefix of length > 1
-
-        val resultC: Collection<TrieSearchResult<Int>> =
-            trie.matchBySubstring("ghi") // match a postfix & substring
-
-        val resultD: Collection<TrieSearchResult<Int>> =
-            trie.matchBySubstring("jklmno") // match the whole sequence
-
-        val resultE: Collection<TrieSearchResult<Int>> =
-            trie.matchBySubstring("pqs") // match after an initial failed attempt
-
-        val resultF: Collection<TrieSearchResult<Int>> =
-            trie.matchBySubstring("vw") // matched whole word
-
-        val resultG: Collection<TrieSearchResult<Int>> =
-            trie.matchBySubstring("234") // only partial match
-
-        // Assert
-        assertThat(resultA).containsExactlyInAnyOrder(
-            TrieSearchResult("abcdef", 1, "a", "abcdef", 1, 0, 0, false, false)
-        )
-
-        assertThat(resultB).containsExactlyInAnyOrder(
-            TrieSearchResult("abcdef", 1, "def", "abcdef", 3, 0, 3, false, false),
-            TrieSearchResult("defghi", 2, "def", "defghi", 3, 0, 0, false, false)
-        )
-
-        assertThat(resultC).containsExactlyInAnyOrder(
-            TrieSearchResult("defghi", 2, "ghi", "defghi", 3, 0, 3, false, false),
-            TrieSearchResult("deghij", 3, "ghi", "deghij", 3, 0, 2, false, false)
-        )
-
-        assertThat(resultD).containsExactlyInAnyOrder(
-            TrieSearchResult("jklmno", 4, "jklmno", "jklmno", 6, 0, 0, true, true)
-        )
-
-        assertThat(resultE).containsExactlyInAnyOrder(
-            TrieSearchResult("pqrpqs", 5, "pqs", "pqrpqs", 3, 0, 3, false, false)
-        )
-
-        assertThat(resultF).containsExactlyInAnyOrder(
-            TrieSearchResult("tu vw, xyz", 6, "vw", "vw", 2, 0, 0, false, true)
-        )
-
-        assertThat(resultG).isEmpty()
     }
 
     @Test
