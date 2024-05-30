@@ -153,8 +153,8 @@ data class FuzzySubstringSearchState<T>(
     fun buildSearchResult(): TrieSearchResult<T> {
         val actualErrors = getActualNumberOfErrors()
 
-        // endMatchIndex can happen when state.nextBuildState was not called
-        // prior to calling this method
+        // endMatchIndex == null can happen when state.nextBuildState was not called
+        // prior to calling this method, which is a valid flow
         val actualEndMatchIndex = when {
             endMatchIndex == null -> {
                 val lastCharacterMatches = search[searchIndex - 1].toString() == node.string
