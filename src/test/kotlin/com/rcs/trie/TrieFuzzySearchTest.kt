@@ -17,26 +17,96 @@ class TrieFuzzySearchTest {
     private fun fuzzySearchScenarios(): List<FuzzySearchScenario> {
         val scenarios = mutableListOf<FuzzySearchScenario>()
 
-        scenarios.add(
-            FuzzySearchScenario(
-                "1. An edge case that I observed",
-                setOf("ionice"),
-                "indices",
-                2,
-                FuzzySubstringMatchingStrategy.LIBERAL,
-                listOf()
-            )
+        scenarios.addAll(
+            FuzzySubstringMatchingStrategy.entries
+                .map {
+                    FuzzySearchScenario(
+                        "MatchingStrategy=$it does not match an edge case",
+                        setOf("ionice"),
+                        "indices",
+                        2,
+                        it,
+                        listOf()
+                    )
+                }
         )
 
-        scenarios.add(
-            FuzzySearchScenario(
-                "2. Matches a super long word",
-                setOf("the data is indistinguishable from the results"),
-                "indices",
-                2,
-                FuzzySubstringMatchingStrategy.LIBERAL,
-                listOf(TrieSearchResult("the data is indistinguishable from the results", Unit, "indis", "indistinguishable", 5, 2, 0, false, false))
-            )
+        scenarios.addAll(
+            FuzzySubstringMatchingStrategy.entries
+                .map {
+                    FuzzySearchScenario(
+                        "MatchingStrategy=$it matches an incomplete string",
+                        setOf("man", "manu", "many"),
+                        "manual",
+                        3,
+                        it,
+                        listOf(
+                            TrieSearchResult("manu", Unit, "manu", "manu", 4, 2, 0, false, false),
+                            TrieSearchResult("man", Unit, "man", "man", 3, 3, 0, false, false),
+                            TrieSearchResult("many", Unit, "man", "many", 3, 3, 0, false, false),
+                        )
+                    )
+                }
+        )
+
+        scenarios.addAll(
+            FuzzySubstringMatchingStrategy.entries
+                .map {
+                    FuzzySearchScenario(
+                        "MatchingStrategy=$it matches a super long word",
+                        setOf("blah blah indistinguishable blah blah"),
+                        "indic",
+                        1,
+                        it,
+                        listOf(TrieSearchResult("blah blah indistinguishable blah blah", Unit, "indi", "indistinguishable", 4, 1, 0, false, false))
+                    )
+                }
+        )
+
+        scenarios.addAll(
+            FuzzySubstringMatchingStrategy.entries
+                .map {
+                    FuzzySearchScenario(
+                        "MatchingStrategy=$it matches after an initial failed attempt, returning only the best possible match",
+                        setOf("lalala0 lalala1 lalala2 lalala3"),
+                        "lalala2",
+                        2,
+                        it,
+                        listOf(TrieSearchResult("lalala0 lalala1 lalala2 lalala3", Unit, "lalala2", "lalala2", 7, 0, 0, false, true))
+                    )
+                }
+        )
+
+        scenarios.addAll(listOf(
+            FuzzySubstringMatchingStrategy.entries
+                .map {
+                    FuzzySearchScenario(
+                        "MatchingStrategy=$it matches with error between matching characters",
+                        setOf("indexes", "indices"),
+                        "indices",
+                        2,
+                        it,
+                        listOf(
+                            TrieSearchResult("indices", Unit, "indices", "indices", 7, 0, 0, true, true),
+                            TrieSearchResult("indexes", Unit, "indexes", "indexes", 5, 2, 0, false, false),
+                        )
+                    )
+                },
+            FuzzySubstringMatchingStrategy.entries
+                .map {
+                    FuzzySearchScenario(
+                        "MatchingStrategy=$it matches with error between matching characters",
+                        setOf("indexes", "indices"),
+                        "indexes",
+                        2,
+                        it,
+                        listOf(
+                            TrieSearchResult("indexes", Unit, "indexes", "indexes", 7, 0, 0, true, true),
+                            TrieSearchResult("indices", Unit, "indices", "indices", 5, 2, 0, false, false)
+                        )
+                    )
+                },
+            ).flatten()
         )
 
         scenarios.addAll(listOf(
@@ -85,7 +155,7 @@ class TrieFuzzySearchTest {
 
         scenarios.addAll(listOf(
             FuzzySearchScenario(
-                "5. ANCHOR_TO_PREFIX matches beginning or word with error tolerance",
+                "5. ANCHOR_TO_PREFIX matches beginning of word with error tolerance",
                 setOf("index", "ondex", "oldex", "omtex", "lalala index", "lalala ondex", "lalala oldex", "lalala omtex"),
                 "index",
                 2,
@@ -122,107 +192,6 @@ class TrieFuzzySearchTest {
                 .`as`(scenario.description)
                 .isEqualTo(scenario.expectedResults)
         }
-    }
-
-    /**
-     * TODO: check if unit tests below are still needed
-     * if yes, convert to new scenario pattern, else delete
-     */
-
-    @Test
-    fun testMatchBySubstringFuzzyCommonCase() {
-        // Arrange
-        val trie = Trie<Unit>()
-        trie.put("indexes", Unit)
-        trie.put("indices", Unit)
-
-        // Act
-        val resultIndexes = trie.matchBySubstringFuzzy("indexes", 2, FuzzySubstringMatchingStrategy.LIBERAL)
-        val resultIndices = trie.matchBySubstringFuzzy("indices", 2, FuzzySubstringMatchingStrategy.LIBERAL)
-
-        // Assert
-        assertThat(resultIndexes).containsExactly(
-            TrieSearchResult("indexes", Unit, "indexes", "indexes", 7, 0, 0, true, true),
-            TrieSearchResult("indices", Unit, "indices", "indices", 5, 2, 0, false, false)
-        )
-        assertThat(resultIndices).containsExactly(
-            TrieSearchResult("indices", Unit, "indices", "indices", 7, 0, 0, true, true),
-            TrieSearchResult("indexes", Unit, "indexes", "indexes", 5, 2, 0, false, false)
-        )
-    }
-
-    @Test
-    fun testMatchBySubstringFuzzyWithSort() {
-        // Arrange
-        val trie = Trie<Unit>()
-        trie.put("man", Unit)
-        trie.put("manu", Unit)
-        trie.put("many", Unit)
-        trie.put("manual", Unit)
-        trie.put("emanuel", Unit)
-        trie.put("lemanuel", Unit)
-        trie.put("lemanuell", Unit)
-        trie.put("manually", Unit)
-        trie.put("manuals", Unit)
-        trie.put("linux manual", Unit)
-
-        // Act
-        val result = trie.matchBySubstringFuzzy("manual", 3, FuzzySubstringMatchingStrategy.LIBERAL)
-
-        // Assert
-        assertThat(result).containsExactly(
-            // matches whole sequence is highest ranking
-            TrieSearchResult("manual", Unit, "manual", "manual", 6, 0, 0, true, true),
-            // matches a whole word is second highest ranking
-            TrieSearchResult("linux manual", Unit, "manual", "manual", 6, 0, 0, false, true),
-            // matches the highest possible number of characters, but it's neither the whole sequence nor a whole word
-            TrieSearchResult("manuals", Unit, "manual", "manuals", 6, 0, 0, false, false),
-            // same as above, but the string is longer, so is ranked lower
-            TrieSearchResult("manually", Unit, "manual", "manually", 6, 0, 0, false, false),
-            // partial match, with two errors
-            TrieSearchResult("manu", Unit, "manu", "manu", 4, 2, 0, false, false),
-            // partial match, with three errors
-            TrieSearchResult("man", Unit, "man", "man", 3, 3, 0, false, false),
-            // partial match, with three errors but a longer string
-            TrieSearchResult("many", Unit, "man", "many", 3, 3, 0, false, false),
-            // prefix match = 1
-            TrieSearchResult("emanuel", Unit, "manuel", "emanuel", 5, 1, 1, false, false),
-            // prefix match = 2
-            TrieSearchResult("lemanuel", Unit, "manuel", "lemanuel", 5, 1, 2, false, false),
-            // prefix match = 2 but word is longer
-            TrieSearchResult("lemanuell", Unit, "manuel", "lemanuell", 5, 1, 2, false, false)
-        )
-    }
-
-    @Test
-    fun testMatchBySubstringFuzzy() {
-        // Arrange
-        val trie = Trie<Unit>()
-        trie.put("goggle", Unit)
-        trie.put("google", Unit)
-        trie.put("googly", Unit)
-        trie.put("giegly", Unit) // will not match any
-        trie.put("gogle", Unit)  // missing letter
-        trie.put("blah google blah", Unit) // good match with chars before and after
-
-        // Act
-        val resultOne = trie.matchBySubstringFuzzy("goggle", 1, FuzzySubstringMatchingStrategy.LIBERAL)
-        val resultTwo = trie.matchBySubstringFuzzy("goggle", 2, FuzzySubstringMatchingStrategy.LIBERAL)
-
-        // Assert
-        assertThat(resultOne).containsExactly(
-            TrieSearchResult("goggle", Unit, "goggle", "goggle", 6, 0, 0, true, true),
-            TrieSearchResult("gogle", Unit, "gogle", "gogle", 5, 1, 0, false, false),
-            TrieSearchResult("google", Unit, "google", "google", 5, 1, 0, false, false),
-            TrieSearchResult("blah google blah", Unit, "google", "google", 5, 1, 0, false, false)
-        )
-        assertThat(resultTwo).containsExactly(
-            TrieSearchResult("goggle", Unit, "goggle", "goggle", 6, 0, 0, true, true),
-            TrieSearchResult("gogle", Unit, "gogle", "gogle", 5, 1, 0, false, false),
-            TrieSearchResult("google", Unit, "google", "google", 5, 1, 0, false, false),
-            TrieSearchResult("blah google blah", Unit, "google", "google", 5, 1, 0, false, false),
-            TrieSearchResult("googly", Unit, "googl", "googly", 4, 2, 0, false, false),
-        )
     }
 
     @Test
@@ -271,5 +240,45 @@ class TrieFuzzySearchTest {
             TrieSearchResult("this is rafael", Unit, "rafael", "rafael", 6, 3, 0, false, false),
             TrieSearchResult("this is rafaela", Unit, "rafael", "rafaela", 6, 3, 0, false, false),
             TrieSearchResult("this is raphael", Unit, "raphael", "raphael", 5, 4, 0, false, false))
+    }
+
+    @Test
+    fun `test matchBySubstringFuzzy - sort`() {
+        // Arrange
+        val trie = Trie<Unit>()
+        trie.put("manual", Unit)
+        trie.put("manuel", Unit)
+        trie.put("manuem", Unit)
+        trie.put("emanuel", Unit)
+        trie.put("lemanuel", Unit)
+        trie.put("lemanuell", Unit)
+        trie.put("manually", Unit)
+        trie.put("manuals", Unit)
+        trie.put("linux manual", Unit)
+
+        // Act
+        val result = trie.matchBySubstringFuzzy("manual", 3, FuzzySubstringMatchingStrategy.LIBERAL)
+
+        // Assert
+        assertThat(result).containsExactly(
+            // matches whole sequence is highest ranking
+            TrieSearchResult("manual", Unit, "manual", "manual", 6, 0, 0, true, true),
+            // matches a whole word is second-highest ranking
+            TrieSearchResult("linux manual", Unit, "manual", "manual", 6, 0, 0, false, true),
+            // matches the highest possible number of characters, but it's neither the whole sequence nor a whole word
+            TrieSearchResult("manuals", Unit, "manual", "manuals", 6, 0, 0, false, false),
+            // same as above, but the string is longer, so is ranked lower
+            TrieSearchResult("manually", Unit, "manual", "manually", 6, 0, 0, false, false),
+            // partial match, with one error
+            TrieSearchResult("manuel", Unit, "manuel", "manuel", 5, 1, 0, false, false),
+            // partial match, with two errors
+            TrieSearchResult("manuem", Unit, "manu", "manuem", 4, 2, 0, false, false),
+            // prefix match = 1
+            TrieSearchResult("emanuel", Unit, "manuel", "emanuel", 5, 1, 1, false, false),
+            // prefix match = 2
+            TrieSearchResult("lemanuel", Unit, "manuel", "lemanuel", 5, 1, 2, false, false),
+            // prefix match = 2 but word is longer
+            TrieSearchResult("lemanuell", Unit, "manuel", "lemanuell", 5, 1, 2, false, false)
+        )
     }
 }
