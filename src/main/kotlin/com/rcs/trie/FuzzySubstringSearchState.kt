@@ -190,9 +190,9 @@ data class FuzzySubstringSearchState<T>(
 
     private fun getActualEndMatchIndex(): Int {
         // endMatchIndex == null can happen when state.nextBuildState was not called
-        // prior to calling state.buildSearchResult
-        // this is a valid flow because, while state.node may be a complete node,
-        // state.node.next is not empty - mean it serves other strings
+        // prior to calling state.buildSearchResult.
+        // This happens when state.node.completes() but nevertheless, we cannot set endMatchIndex
+        // because though the node completes it may also lead to other strings (node.next is not empty)
         return when {
             endMatchIndex == null -> {
                 val lastCharacterMatches = search[searchIndex - 1].toString() == node.string
