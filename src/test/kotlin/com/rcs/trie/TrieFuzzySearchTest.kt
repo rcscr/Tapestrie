@@ -36,8 +36,8 @@ class TrieFuzzySearchTest {
             FuzzySubstringMatchingStrategy.entries
                 .map {
                     FuzzySearchScenario(
-                        "MatchingStrategy=$it matches an incomplete string",
-                        setOf("man", "manu", "many"),
+                        "MatchingStrategy=$it matches an incomplete string, but only if it has enough characters to satisfy match",
+                        setOf("ma", "man", "manu", "many"),
                         "manual",
                         3,
                         it,
@@ -112,7 +112,7 @@ class TrieFuzzySearchTest {
 
         scenarios.addAll(listOf(
             FuzzySearchScenario(
-                "MatchingStrategy=LIBERAL matches errors in beginning with errorTolerance=0",
+                "MatchingStrategy=LIBERAL matches substring with errorTolerance=0",
                 setOf("lala 000123456789000 hehe", "lala 000x23456789000 hehe", "lala 000xx3456789000 hehe", "lala 000xxx456789000 hehe"),
                 "123456789",
                 0,
@@ -156,7 +156,20 @@ class TrieFuzzySearchTest {
 
         scenarios.addAll(listOf(
             FuzzySearchScenario(
-                "MatchingStrategy=ANCHOR_TO_PREFIX matches beginning of word with error tolerance",
+                "MatchingStrategy=ANCHOR_TO_PREFIX matches beginning of word with errorTolerance=1",
+                setOf("index", "ondex", "oldex", "omtex", "lalala index", "lalala ondex", "lalala oldex", "lalala omtex"),
+                "index",
+                1,
+                FuzzySubstringMatchingStrategy.ANCHOR_TO_PREFIX,
+                listOf(
+                    TrieSearchResult("index", Unit, "index", "index", 5, 0, 0, true, true),
+                    TrieSearchResult("lalala index", Unit, "index", "index", 5, 0, 0, false, true),
+                    TrieSearchResult("ondex", Unit, "ndex", "ondex", 4, 1, 1, false, false),
+                    TrieSearchResult("lalala ondex", Unit, "ndex", "ondex", 4, 1, 1, false, false),
+                )
+            ),
+            FuzzySearchScenario(
+                "MatchingStrategy=ANCHOR_TO_PREFIX matches beginning of word with errorTolerance=2",
                 setOf("index", "ondex", "oldex", "omtex", "lalala index", "lalala ondex", "lalala oldex", "lalala omtex"),
                 "index",
                 2,
