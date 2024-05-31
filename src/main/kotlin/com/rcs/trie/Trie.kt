@@ -12,7 +12,10 @@ class Trie<T> {
         root = TrieNode("", null, mutableSetOf())
     }
 
-    fun put(input: String, value: T) {
+    /**
+     * returns the previous value, if any, associated with this key
+     */
+    fun put(input: String, value: T): T? {
         if (input.isEmpty()) {
             throw IllegalArgumentException("Cannot add an empty string")
         }
@@ -43,10 +46,11 @@ class Trie<T> {
                 // we have a string going this far, so we modify it, setting it to complete
                 // (if its already complete, that means we have already inserted the same input before)
                 // see TrieTest.testAddShorterAfter
-                } else if (reachedEndOfInput && nextMatchingNode.value == null) {
+                } else if (reachedEndOfInput) {
                     val completed = TrieNode(nextMatchingNode.string, value, nextMatchingNode.next)
                     current.next.removeIf { it.string == nextMatchingNode.string }
                     current.next.add(completed)
+                    return nextMatchingNode.value
 
                 // there is a matching node, but we're not at the end of the input yet,
                 // so go on to the next character
@@ -55,6 +59,7 @@ class Trie<T> {
                 }
             }
         }
+        return null
     }
 
     fun remove(input: String): T? {
