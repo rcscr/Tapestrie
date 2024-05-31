@@ -47,10 +47,9 @@ class Trie<T> {
                 // (if its already complete, that means we have already inserted the same input before)
                 // see TrieTest.testAddShorterAfter
                 } else if (reachedEndOfInput) {
-                    val completed = TrieNode(nextMatchingNode.string, value, nextMatchingNode.next)
-                    current.next.removeIf { it.string == nextMatchingNode.string }
-                    current.next.add(completed)
-                    return nextMatchingNode.value
+                    val previousValue = nextMatchingNode.value
+                    nextMatchingNode.value = value
+                    return previousValue
 
                 // there is a matching node, but we're not at the end of the input yet,
                 // so go on to the next character

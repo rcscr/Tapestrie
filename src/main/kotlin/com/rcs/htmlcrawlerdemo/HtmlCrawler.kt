@@ -43,7 +43,7 @@ class HtmlCrawler(
             throw IllegalStateException("Crawler has not been initialized; call HtmlCrawler.init() first")
         }
 
-        val normalizedKeyword: String = searchRequest.normalizedKeyword()
+        val normalizedKeyword = searchRequest.normalizedKeyword()
 
         var resultsWithoutBaseUrl: Collection<HtmlIndexEntry>
 
@@ -98,9 +98,7 @@ class HtmlCrawler(
             .parallelStream()
             .map { u -> fixUrl("/$relativeUrl", u) }
             .map { u -> crawl(u, visited) }
-            .reduce(Pair(0, 0)) { a, b ->
-                Pair(Integer.sum(a.first, b.first), Integer.sum(a.second, b.second))
-            }
+            .reduce(Pair(0, 0)) { a, b -> Pair(a.first + b.first, a.second + b.second) }
 
         return Pair(1 + newCounts.first, wordsIndexed + newCounts.second)
     }
@@ -118,7 +116,7 @@ class HtmlCrawler(
     private fun indexPage(relativeUrl: String, htmlContent: String): Int {
         println("Indexing ${baseUrl + relativeUrl}")
 
-        var wordsIndex = 0
+        var newWordsIndexed = 0
 
         htmlTokenizer.tokenize(htmlContent)
             .forEach { entry ->
@@ -128,21 +126,23 @@ class HtmlCrawler(
                 synchronized(token) {
                     val newKeys = trie.getExactly(token) ?: LinkedList()
 
-                    if (newKeys.isEmpty()) {
-                        wordsIndex++
+                    synchronized(newKeys) {
+                        if (newKeys.isEmpty()) {
+                            newWordsIndexed++
+                        }
+
+                        // stores only relative URLs in order to minimize storage space
+                        // the full URL must then be reconstructed on retrieval!
+                        val newEntry = HtmlIndexEntry(relativeUrl, occurrences)
+                        newKeys.add(newEntry)
+
+                        newKeys.sortByDescending { it.occurrences }
+
+                        trie.put(token, newKeys)
                     }
-
-                    // stores only relative URLs in order to minimize storage space
-                    // the full URL must then be reconstructed on retrieval!
-                    val newEntry = HtmlIndexEntry(relativeUrl, occurrences)
-                    newKeys.add(newEntry)
-
-                    newKeys.sortByDescending { it.occurrences }
-
-                    trie.put(token, newKeys)
                 }
             }
 
-        return wordsIndex
+        return newWordsIndexed
     }
 }
