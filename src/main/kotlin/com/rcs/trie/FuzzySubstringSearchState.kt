@@ -29,20 +29,9 @@ data class FuzzySubstringSearchState<T>(
     }
 
     fun nextSearchStates(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>> {
-        val matchContinuationState = getMatchContinuationState(nextNode)
-        val searchWithErrorState = when {
-            matchContinuationState.isEmpty() ->
-                getSearchWithErrorState(nextNode)
-            else ->
-                listOf()
-        }
-        val searchResetState = when {
-            matchContinuationState.isEmpty() && searchWithErrorState.isEmpty() ->
-                getSearchResetState(nextNode)
-            else ->
-                listOf()
-        }
-        return listOf(matchContinuationState, searchWithErrorState, searchResetState).flatten()
+        buildSearchMatchState(nextNode)?.let { return it }
+        buildSearchErrorState(nextNode)?.let { return it }
+        return buildSearchResetState(nextNode)
     }
 
     fun nextBuildState(nextNode: TrieNode<T>): FuzzySubstringSearchState<T> {
@@ -115,7 +104,7 @@ data class FuzzySubstringSearchState<T>(
         )
     }
 
-    private fun getMatchContinuationState(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>> {
+    private fun buildSearchMatchState(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>>? {
         val wasMatchingBefore = numberOfMatches > 0
 
         val matchingPreconditions = when (matchingStrategy) {
@@ -147,11 +136,11 @@ data class FuzzySubstringSearchState<T>(
                 )
             )
         } else {
-            return listOf()
+            return null
         }
     }
 
-    private fun getSearchWithErrorState(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>> {
+    private fun buildSearchErrorState(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>>? {
         val wasMatchingBefore = numberOfMatches > 0
 
         val shouldContinueMatchingWithError = numberOfErrors < errorTolerance
@@ -201,11 +190,11 @@ data class FuzzySubstringSearchState<T>(
                 )
             }
         } else {
-            return listOf()
+            return null
         }
     }
 
-    private fun getSearchResetState(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>> {
+    private fun buildSearchResetState(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>> {
         return listOf(
             FuzzySubstringSearchState(
                 matchingStrategy = matchingStrategy,
