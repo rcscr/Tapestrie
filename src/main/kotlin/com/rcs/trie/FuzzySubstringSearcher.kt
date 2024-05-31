@@ -66,15 +66,15 @@ class FuzzySubstringSearcher {
 
             val initialStates = mutableListOf<FuzzySubstringSearchState<T>>()
 
-            val defaultInitialState = FuzzySubstringSearchState
-                .getInitialState(root, search, 0, errorTolerance, matchingStrategy)
+            val defaultInitialState = FuzzySubstringSearchState(
+                root, search, 0, errorTolerance, matchingStrategy)
 
             initialStates.add(defaultInitialState)
 
             // efficient way to match with errors in beginning
             if (matchingStrategy == FuzzySubstringMatchingStrategy.LIBERAL) {
                 for (i in 1..errorTolerance) {
-                    val stateWithPredeterminedError = FuzzySubstringSearchState.getInitialState(
+                    val stateWithPredeterminedError = FuzzySubstringSearchState(
                         root,
                         search.substring(i, search.length),
                         numberOfPredeterminedErrors = i,

@@ -18,9 +18,9 @@ class FuzzySubstringSearchState<T> private constructor(
 
         /**
          * Emulates a public constructor, keeping some properties private as part of
-         * its implementation details
+         * this class's implementation details
          */
-        fun <T> getInitialState(
+        operator fun <T> invoke(
             root: TrieNode<T>,
             search: String,
             numberOfPredeterminedErrors: Int,
