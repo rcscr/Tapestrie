@@ -3,7 +3,7 @@ package com.rcs.trie
 import org.assertj.core.api.Assertions.*
 import kotlin.test.Test
 
-class TrieTest {
+class TrieBasicTest {
 
     @Test
     fun testClear() {
