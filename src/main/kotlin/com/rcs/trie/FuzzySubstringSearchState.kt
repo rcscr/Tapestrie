@@ -55,6 +55,8 @@ class FuzzySubstringSearchState<T> private constructor(
      * This does not necessarily mean that the matching is finished;
      * it is possible that more matching characters will be found
      * when calling state.nextBuildState next.
+     * This is because state.node.next can lead to multiple strings,
+     * all of which will have different matching outcomes.
      */
     fun sufficientlyMatches(): Boolean {
         return startMatchIndex != null
@@ -76,6 +78,8 @@ class FuzzySubstringSearchState<T> private constructor(
     }
 
     fun buildSearchResult(): TrieSearchResult<T> {
+        assert(completes() && sufficientlyMatches())
+
         val actualErrors = getActualNumberOfErrors()
 
         val assertedStartMatchIndex = startMatchIndex!!
