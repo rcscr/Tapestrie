@@ -29,11 +29,7 @@ class FuzzySubstringSearcher {
                     continue
                 }
 
-                synchronized(state.node.next) {
-                    for (nextNode in state.node.next) {
-                        queue.addAll(state.nextSearchStates(nextNode))
-                    }
-                }
+                queue.addAll(state.nextSearchStates())
             }
 
             return results.values.sortedWith(TrieSearchResultComparator.byBestMatchFirst)
@@ -50,16 +46,12 @@ class FuzzySubstringSearcher {
             while (queue.isNotEmpty()) {
                 val state = queue.removeFirst()
 
-                if (state.node.completes()) {
+                if (state.completes()) {
                     val searchResult = state.buildSearchResult()
                     results[searchResult.string] = searchResult
                 }
 
-                synchronized(state.node.next) {
-                    for (nextNode in state.node.next) {
-                        queue.add(state.nextBuildState(nextNode))
-                    }
-                }
+                queue.addAll(state.nextBuildStates())
             }
 
             return results
@@ -74,13 +66,15 @@ class FuzzySubstringSearcher {
 
             val initialStates = mutableListOf<FuzzySubstringSearchState<T>>()
 
-            val defaultInitialState = getInitialState(root, search, 0, errorTolerance, matchingStrategy)
+            val defaultInitialState = FuzzySubstringSearchState
+                .getInitialState(root, search, 0, errorTolerance, matchingStrategy)
+
             initialStates.add(defaultInitialState)
 
             // efficient way to match with errors in beginning
             if (matchingStrategy == FuzzySubstringMatchingStrategy.LIBERAL) {
                 for (i in 1..errorTolerance) {
-                    val stateWithPredeterminedError = getInitialState(
+                    val stateWithPredeterminedError = FuzzySubstringSearchState.getInitialState(
                         root,
                         search.substring(i, search.length),
                         numberOfPredeterminedErrors = i,
@@ -94,28 +88,7 @@ class FuzzySubstringSearcher {
             return initialStates
         }
 
-        private fun <T> getInitialState(
-            root: TrieNode<T>,
-            search: String,
-            numberOfPredeterminedErrors: Int,
-            errorTolerance: Int,
-            matchingStrategy: FuzzySubstringMatchingStrategy
-        ): FuzzySubstringSearchState<T> {
 
-            return FuzzySubstringSearchState(
-                matchingStrategy = matchingStrategy,
-                search = search,
-                node = root,
-                startMatchIndex = null,
-                endMatchIndex =  null,
-                searchIndex = 0,
-                numberOfMatches = 0,
-                numberOfErrors = 0,
-                numberOfPredeterminedErrors,
-                errorTolerance,
-                sequence = StringBuilder()
-            )
-        }
 
         private fun <T> MutableMap<String, TrieSearchResult<T>>
                 .putOnlyNewOrBetterMatches(newMatches: MutableMap<String, TrieSearchResult<T>>) {
