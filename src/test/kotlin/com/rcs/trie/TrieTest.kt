@@ -64,6 +64,36 @@ class TrieTest {
     }
 
     @Test
+    fun testGetExactly() {
+        // Arrange
+        val trie = Trie<Int>()
+        trie.put("123", 1)
+        trie.put("456", 4)
+        trie.put("789", 7)
+
+        // Act
+        val result = trie.getExactly("456")
+
+        // Assert
+        assertThat(result).isEqualTo(4)
+    }
+
+    @Test
+    fun testGetExactlyNonExistent() {
+        // Arrange
+        val trie = Trie<Int>()
+        trie.put("123", 1)
+        trie.put("456", 4)
+        trie.put("789", 7)
+
+        // Act
+        val result = trie.getExactly("000")
+
+        // Assert
+        assertThat(result).isNull()
+    }
+
+    @Test
     fun testRemove() {
         // Arrange
         val trie = Trie<Int>()
