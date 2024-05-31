@@ -37,7 +37,8 @@ class TriePrefixMatchTest {
         val sharedData = mapOf(
             "Hello, Nomads!" to 1,
             "Hello, World!" to 2,
-            "Hi there!" to 3
+            "Hi there!" to 3,
+            "Well, Hello" to 4
         )
 
         return listOf(
@@ -71,7 +72,8 @@ class TriePrefixMatchTest {
                 mapOf(
                     "Hello, Nomads!" to 1,
                     "Hello, World!" to 2,
-                    "Hi there!" to 3
+                    "Hi there!" to 3,
+                    "Well, Hello" to 4
                 )
             ),
             PrefixMatchScenario(
