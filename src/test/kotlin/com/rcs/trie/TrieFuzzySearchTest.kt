@@ -211,8 +211,8 @@ class TrieFuzzySearchTest {
 
         scenarios.addAll(listOf(
             FuzzySearchScenario(
-                "MatchingStrategy=ANCHOR_TO_PREFIX matches beginning of word with errorTolerance=1",
-                setOf("index", "ondex", "oldex", "omtex", "lalala index", "lalala ondex", "lalala oldex", "lalala omtex"),
+                "MatchingStrategy=ANCHOR_TO_PREFIX only matches beginning of word with errorTolerance=1",
+                setOf("lalaindex", "index", "ondex", "oldex", "omtex", "lalala index", "lalala ondex", "lalala oldex", "lalala omtex"),
                 "index",
                 1,
                 FuzzySubstringMatchingStrategy.ANCHOR_TO_PREFIX,
@@ -224,8 +224,8 @@ class TrieFuzzySearchTest {
                 )
             ),
             FuzzySearchScenario(
-                "MatchingStrategy=ANCHOR_TO_PREFIX matches beginning of word with errorTolerance=2",
-                setOf("index", "ondex", "oldex", "omtex", "lalala index", "lalala ondex", "lalala oldex", "lalala omtex"),
+                "MatchingStrategy=ANCHOR_TO_PREFIX only matches beginning of word with errorTolerance=2",
+                setOf("lalaindex", "index", "ondex", "oldex", "omtex", "lalala index", "lalala ondex", "lalala oldex", "lalala omtex"),
                 "index",
                 2,
                 FuzzySubstringMatchingStrategy.ANCHOR_TO_PREFIX,
