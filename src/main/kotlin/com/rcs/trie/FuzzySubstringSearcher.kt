@@ -93,7 +93,10 @@ class FuzzySubstringSearcher {
         }
 
         /**
-         * Only necessary for FuzzySubstringMatchingStrategy.LIBERAL
+         * Only necessary for FuzzySubstringMatchingStrategy.LIBERAL, because in this strategy,
+         * we also search for strings with error in the beginning - see method `getInitialStates`.
+         * Such shortened strings might match, but they might not be the best match, so we
+         * discard them here.
          */
         private fun <T> MutableMap<String, TrieSearchResult<T>>
                 .putOnlyNewOrBetterMatches(newMatches: MutableMap<String, TrieSearchResult<T>>) {
