@@ -14,7 +14,8 @@ class FuzzySubstringSearchState<T> private constructor(
     private val numberOfErrors: Int,
     private val numberOfPredeterminedErrors: Int,
     private val errorTolerance: Int,
-    private val sequence: StringBuilder
+    private val sequence: StringBuilder,
+    private val isFinisherState: Boolean
 ) {
 
     companion object {
@@ -41,9 +42,10 @@ class FuzzySubstringSearchState<T> private constructor(
                 searchIndex = 0,
                 numberOfMatches = 0,
                 numberOfErrors = 0,
-                numberOfPredeterminedErrors,
-                errorTolerance,
-                sequence = StringBuilder()
+                numberOfPredeterminedErrors = numberOfPredeterminedErrors,
+                errorTolerance = errorTolerance,
+                sequence = StringBuilder(),
+                isFinisherState = false
             )
         }
     }
@@ -57,45 +59,23 @@ class FuzzySubstringSearchState<T> private constructor(
 
     private val wordSeparatorRegex = "[\\s\\p{P}]".toRegex()
 
-    fun completes(): Boolean {
-        return node.completes()
-    }
-
-    /**
-     * Returns true if this state *sufficiently* matches.
-     *
-     * For the string ending at this.node (assuming this.node.completes()),
-     * the matching is finished and the result can be obtained via this.buildSearchResult().
-     *
-     * For other strings that stem from this.node.next, it is possible that more
-     * matching characters will be found when subsequently calling state.nextBuildState.
-     */
-    fun sufficientlyMatches(): Boolean {
-        return startMatchIndex != null
-                && (node.completes() || searchIndex == search.length)
-                && numberOfMatches >= search.length - errorTolerance
-                && getActualNumberOfErrors() <= errorTolerance
-    }
-
-    fun nextSearchStates(): Collection<FuzzySubstringSearchState<T>> {
+    fun nextStates(): Collection<FuzzySubstringSearchState<T>> {
         synchronized(node.next) {
             return node.next
                 .filter {
                     nextNodeToSkip == null || it != nextNodeToSkip
                 }
-                .map { nextSearchStates(it) }
+                .map { nextStates(it) }
                 .flatten()
         }
     }
 
-    fun nextBuildStates(): Collection<FuzzySubstringSearchState<T>> {
-        synchronized(node.next) {
-            return node.next.map { nextBuildState(it) }
-        }
+    fun hasSearchResult(): Boolean {
+        return node.completes() && sufficientlyMatches()
     }
 
     fun buildSearchResult(): TrieSearchResult<T> {
-        assert(completes() && sufficientlyMatches())
+        assert(hasSearchResult())
 
         val actualErrors = getActualNumberOfErrors()
 
@@ -134,13 +114,24 @@ class FuzzySubstringSearchState<T> private constructor(
         )
     }
 
-    private fun nextSearchStates(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>> {
-        return buildSearchMatchState(nextNode)
+    private fun sufficientlyMatches(): Boolean {
+        return startMatchIndex != null
+                && numberOfMatches >= search.length - errorTolerance
+                && getActualNumberOfErrors() <= errorTolerance
+    }
+
+    private fun nextStates(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>> {
+        return buildFinisherState(nextNode)
+            ?: buildSearchMatchState(nextNode)
             ?: buildSearchErrorState(nextNode)
             ?: buildSearchResetState(nextNode)
     }
 
-    private fun nextBuildState(nextNode: TrieNode<T>): FuzzySubstringSearchState<T> {
+    private fun buildFinisherState(nextNode: TrieNode<T>): List<FuzzySubstringSearchState<T>>? {
+        if (!sufficientlyMatches()) {
+            return null
+        }
+
         val nextNodeMatches = searchIndex < search.length
                 && nextNode.string == search[searchIndex].toString()
 
@@ -162,20 +153,30 @@ class FuzzySubstringSearchState<T> private constructor(
             else -> endMatchIndex
         }
 
-        return FuzzySubstringSearchState(
-            matchingStrategy = matchingStrategy,
-            search = search,
-            node = nextNode,
-            nextNodeToSkip = null,
-            startMatchIndex = startMatchIndex,
-            endMatchIndex = newEndMatchIndex,
-            searchIndex = newSearchIndex,
-            numberOfMatches = newNumberOfMatches,
-            numberOfErrors = newNumberOfErrors,
-            numberOfPredeterminedErrors = numberOfPredeterminedErrors,
-            errorTolerance = errorTolerance,
-            sequence = StringBuilder(sequence).append(nextNode.string)
+        val finisherStates = mutableListOf(
+            FuzzySubstringSearchState(
+                matchingStrategy = matchingStrategy,
+                search = search,
+                node = nextNode,
+                nextNodeToSkip = null,
+                startMatchIndex = startMatchIndex,
+                endMatchIndex = newEndMatchIndex,
+                searchIndex = newSearchIndex,
+                numberOfMatches = newNumberOfMatches,
+                numberOfErrors = newNumberOfErrors,
+                numberOfPredeterminedErrors = numberOfPredeterminedErrors,
+                errorTolerance = errorTolerance,
+                sequence = StringBuilder(sequence).append(nextNode.string),
+                isFinisherState = true
+            )
         )
+
+        // in case we find a better match further in the string
+        if (!isFinisherState && search.length != numberOfMatches) {
+            finisherStates.addAll(buildSearchResetState(nextNode))
+        }
+
+        return finisherStates
     }
 
     private fun buildSearchMatchState(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>>? {
@@ -208,7 +209,8 @@ class FuzzySubstringSearchState<T> private constructor(
                     numberOfErrors = numberOfErrors,
                     numberOfPredeterminedErrors = numberOfPredeterminedErrors,
                     errorTolerance = errorTolerance,
-                    sequence = StringBuilder(sequence).append(nextNode.string)
+                    sequence = StringBuilder(sequence).append(nextNode.string),
+                    isFinisherState = false
                 )
             )
         } else {
@@ -219,7 +221,9 @@ class FuzzySubstringSearchState<T> private constructor(
     private fun buildSearchErrorState(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>>? {
         val wasMatchingBefore = numberOfMatches > 0
 
-        val shouldContinueMatchingWithError = numberOfErrors < errorTolerance
+        val hasErrorAllowance = numberOfErrors < errorTolerance
+
+        val shouldContinueMatchingWithError = hasErrorAllowance
                 && when (matchingStrategy) {
                     FuzzySubstringMatchingStrategy.ANCHOR_TO_PREFIX ->
                         wasMatchingBefore || distanceToStartWordSeparatorIsPermissible()
@@ -227,7 +231,6 @@ class FuzzySubstringSearchState<T> private constructor(
                         wasMatchingBefore
                 }
 
-        // No longer matches - however, there's some error tolerance to be used
         if (shouldContinueMatchingWithError) {
             return getErrorStrategies(nextNode).map {
                 FuzzySubstringSearchState(
@@ -242,7 +245,8 @@ class FuzzySubstringSearchState<T> private constructor(
                     numberOfErrors = numberOfErrors + 1,
                     numberOfPredeterminedErrors = numberOfPredeterminedErrors,
                     errorTolerance = errorTolerance,
-                    sequence = it.sequence
+                    sequence = it.sequence,
+                    isFinisherState = false
                 )
             }
         } else {
@@ -294,7 +298,8 @@ class FuzzySubstringSearchState<T> private constructor(
                 numberOfErrors = 0,
                 numberOfPredeterminedErrors = numberOfPredeterminedErrors,
                 errorTolerance = errorTolerance,
-                sequence = StringBuilder(sequence).append(nextNode.string)
+                sequence = StringBuilder(sequence).append(nextNode.string),
+                isFinisherState = false
             )
         )
     }

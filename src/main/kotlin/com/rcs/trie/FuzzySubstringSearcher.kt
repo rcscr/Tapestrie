@@ -23,42 +23,15 @@ class FuzzySubstringSearcher {
             while (queue.isNotEmpty()) {
                 val state = queue.removeFirst()
 
-                if (state.sufficientlyMatches()) {
-                    val newMatches = gatherAll(state)
-                    when (matchingStrategy) {
-                        FuzzySubstringMatchingStrategy.LIBERAL ->
-                            results.putOnlyNewOrBetterMatches(newMatches)
-                        else ->
-                            results.putAll(newMatches)
-                    }
-                } else {
-                    queue.addAll(state.nextSearchStates())
+                if (state.hasSearchResult()) {
+                    val searchResult = state.buildSearchResult()
+                    results.putOnlyNewOrBetter(searchResult)
                 }
+
+                queue.addAll(state.nextStates())
             }
 
             return results.values.sortedWith(TrieSearchResultComparator.byBestMatchFirst)
-        }
-
-        private fun <T> gatherAll(
-            initialState: FuzzySubstringSearchState<T>
-        ): MutableMap<String, TrieSearchResult<T>> {
-
-            val results = mutableMapOf<String, TrieSearchResult<T>>()
-            val queue = ArrayDeque<FuzzySubstringSearchState<T>>()
-            queue.add(initialState)
-
-            while (queue.isNotEmpty()) {
-                val state = queue.removeFirst()
-
-                if (state.completes()) {
-                    val searchResult = state.buildSearchResult()
-                    results[searchResult.string] = searchResult
-                }
-
-                queue.addAll(state.nextBuildStates())
-            }
-
-            return results
         }
 
         private fun <T> getInitialStates(
@@ -92,21 +65,16 @@ class FuzzySubstringSearcher {
             return initialStates
         }
 
-        /**
-         * Only necessary for FuzzySubstringMatchingStrategy.LIBERAL, because in this strategy,
-         * we also search for strings with error in the beginning - see method `getInitialStates`.
-         * Such shortened strings might match, but they might not be the best match, so we
-         * discard them here.
-         */
-        private fun <T> MutableMap<String, TrieSearchResult<T>>
-                .putOnlyNewOrBetterMatches(newMatches: MutableMap<String, TrieSearchResult<T>>) {
-            newMatches.entries
-                .filter {
-                    this[it.key] == null
-                            || this[it.key]!!.numberOfMatches < it.value.numberOfMatches
-                            || this[it.key]!!.numberOfErrors > it.value.numberOfErrors
-                }
-                .forEach { this[it.key] = it.value }
+        private fun <T> MutableMap<String, TrieSearchResult<T>>.putOnlyNewOrBetter(match: TrieSearchResult<T>) {
+            val existing = this[match.string]
+
+            val isNewOrBetter = existing == null
+                    || existing.numberOfMatches < match.numberOfMatches
+                    || existing.numberOfErrors > match.numberOfErrors
+
+            if (isNewOrBetter) {
+                this[match.string] = match
+            }
         }
     }
 }
