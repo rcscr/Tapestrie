@@ -119,27 +119,30 @@ class FuzzySubstringSearchState<T> private constructor(
     }
 
     private fun nextSearchStates(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>> {
-        buildSearchMatchState(nextNode)?.let { return it }
-        buildSearchErrorState(nextNode)?.let { return it }
-        return buildSearchResetState(nextNode)
+        return buildSearchMatchState(nextNode)
+            ?: buildSearchErrorState(nextNode)
+            ?: buildSearchResetState(nextNode)
     }
 
     private fun nextBuildState(nextNode: TrieNode<T>): FuzzySubstringSearchState<T> {
         val nextNodeMatches = searchIndex < search.length
                 && nextNode.string == search[searchIndex].toString()
 
-        val newSearchIndex =
-            if (nextNodeMatches) searchIndex + 1
-            else searchIndex
+        val newSearchIndex = when {
+            nextNodeMatches -> searchIndex + 1
+            else -> searchIndex
+        }
 
-        val newNumberOfMatches =
-            if (nextNodeMatches) numberOfMatches + 1
-            else numberOfMatches
+        val newNumberOfMatches = when {
+            nextNodeMatches -> numberOfMatches + 1
+            else -> numberOfMatches
+        }
 
-        val newEndMatchIndex =
-            if (nextNodeMatches) sequence.length
-            else if (endMatchIndex == null) sequence.length - 1
-            else endMatchIndex
+        val newEndMatchIndex = when {
+            nextNodeMatches -> sequence.length
+            endMatchIndex == null -> sequence.length - 1
+            else -> endMatchIndex
+        }
 
         return FuzzySubstringSearchState(
             matchingStrategy = matchingStrategy,
@@ -213,16 +216,13 @@ class FuzzySubstringSearchState<T> private constructor(
             )
 
             val errorSearchStrategies = listOf(
-                // 1. misspelling
-                // increment searchIndex and go to the next node
+                // 1. misspelling: increment searchIndex and go to the next node
                 SearchWithErrorStrategy(nextNode, searchIndex + 1, StringBuilder(sequence).append(nextNode.string)),
 
-                // 2. missing letter in target data
-                // increment searchIndex and stay at the previous node
+                // 2. missing letter in data: increment searchIndex and stay at the previous node
                 SearchWithErrorStrategy(node, searchIndex + 1, StringBuilder(sequence)),
 
-                // 3. missing letter in search input
-                // keep searchIndex the same and go to the next node
+                // 3. missing letter in search keyword: keep searchIndex the same and go to the next node
                 SearchWithErrorStrategy(nextNode, searchIndex, StringBuilder(sequence).append(nextNode.string)),
             )
 
@@ -293,20 +293,14 @@ class FuzzySubstringSearchState<T> private constructor(
     }
 
     private fun CharSequence.indexOfLastWordSeparator(endIndex: Int = this.length - 1): Int? {
-        for (i in (0..endIndex).reversed()) {
-            if (this[i].toString().matches(wordSeparatorRegex)) {
-                return i
-            }
+        return (0..endIndex).reversed().firstOrNull {
+            this[it].toString().matches(wordSeparatorRegex)
         }
-        return null
     }
 
     private fun CharSequence.indexOfFirstWordSeparator(startIndex: Int = 0): Int? {
-        for (i in startIndex..<this.length) {
-            if (this[i].toString().matches(wordSeparatorRegex)) {
-                return i
-            }
+        return (startIndex..<this.length).firstOrNull {
+            this[it].toString().matches(wordSeparatorRegex)
         }
-        return null
     }
 }
