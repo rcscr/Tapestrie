@@ -1,6 +1,6 @@
 package com.rcs.trie
 
-import kotlin.math.max
+import kotlin.math.min
 
 class FuzzySubstringSearchState<T> private constructor(
     private val searchRequest: SearchRequest,
@@ -125,7 +125,7 @@ class FuzzySubstringSearchState<T> private constructor(
 
         val nextNodeMatches = searchCoordinatesMatch(nextNode)
 
-        val newSearchIndex = searchCoordinates.searchIndex + 1
+        val newSearchIndex = min(searchRequest.search.length, searchCoordinates.searchIndex + 1)
 
         val newNumberOfErrors = when {
             searchCoordinates.searchIndex < searchRequest.search.length && !nextNodeMatches ->
@@ -253,34 +253,47 @@ class FuzzySubstringSearchState<T> private constructor(
     }
 
     private fun getErrorStrategies(nextNode: TrieNode<T>): List<SearchWithErrorStrategy<T>> {
-        return listOf(
-            // 1. misspelling: increment searchIndex and go to the next node
-            SearchWithErrorStrategy(
-                nextNode,
-                null,
-                searchCoordinates.searchIndex + 1,
-                StringBuilder(searchVariables.sequence).append(nextNode.string)),
+        val strategies = mutableListOf<SearchWithErrorStrategy<T>>()
 
-            // 2. missing letter in data: increment searchIndex and stay at the previous node
-            SearchWithErrorStrategy(
-                searchVariables.node,
-                // Optimization: if any node in this.node.next matches current string,
-                // do not continue this error search strategy at that node
-                searchVariables.nextNodeToSkip
-                    ?: searchVariables.node.next.firstOrNull {
-                        searchCoordinates.searchIndex < searchRequest.search.length
-                                && it.string == searchRequest.search[searchCoordinates.searchIndex].toString()
-                    },
-                searchCoordinates.searchIndex + 1,
-                StringBuilder(searchVariables.sequence)),
+        if (searchCoordinates.searchIndex + 1 < searchRequest.search.length) {
+            strategies.add(
+                // 1. misspelling: increment searchIndex and go to the next node
+                SearchWithErrorStrategy(
+                    nextNode,
+                    null,
+                    searchCoordinates.searchIndex + 1,
+                    StringBuilder(searchVariables.sequence).append(nextNode.string)
+                )
+            )
 
+            strategies.add(
+                // 2. missing letter in data: increment searchIndex and stay at the previous node
+                SearchWithErrorStrategy(
+                    searchVariables.node,
+                    // Optimization: if any node in this.node.next matches current string,
+                    // do not continue this error search strategy at that node
+                    searchVariables.nextNodeToSkip
+                        ?: searchVariables.node.next.firstOrNull {
+                            searchCoordinates.searchIndex < searchRequest.search.length
+                                    && it.string == searchRequest.search[searchCoordinates.searchIndex].toString()
+                        },
+                    searchCoordinates.searchIndex + 1,
+                    StringBuilder(searchVariables.sequence)
+                )
+            )
+        }
+
+        strategies.add(
             // 3. missing letter in search keyword: keep searchIndex the same and go to the next node
             SearchWithErrorStrategy(
                 nextNode,
                 null,
                 searchCoordinates.searchIndex,
-                StringBuilder(searchVariables.sequence).append(nextNode.string)),
+                StringBuilder(searchVariables.sequence).append(nextNode.string)
+            )
         )
+
+        return strategies
     }
 
     private fun buildSearchResetState(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>> {
@@ -305,7 +318,8 @@ class FuzzySubstringSearchState<T> private constructor(
     }
 
     private fun getActualNumberOfErrors(): Int {
-        val unmatchedCharacters = max(0, searchRequest.search.length - searchCoordinates.searchIndex)
+        val unmatchedCharacters = searchRequest.search.length - searchCoordinates.searchIndex
+        assert(unmatchedCharacters >= 0)
         return searchRequest.numberOfPredeterminedErrors +
                 searchCoordinates.numberOfErrors +
                 unmatchedCharacters
