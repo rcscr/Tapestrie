@@ -25,7 +25,12 @@ class FuzzySubstringSearcher {
 
                 if (state.sufficientlyMatches()) {
                     val newMatches = gatherAll(state)
-                    results.putOnlyNewOrBetterMatches(newMatches)
+                    when (matchingStrategy) {
+                        FuzzySubstringMatchingStrategy.LIBERAL ->
+                            results.putOnlyNewOrBetterMatches(newMatches)
+                        else ->
+                            results.putAll(newMatches)
+                    }
                 } else {
                     queue.addAll(state.nextSearchStates())
                 }
@@ -87,6 +92,9 @@ class FuzzySubstringSearcher {
             return initialStates
         }
 
+        /**
+         * Only necessary for FuzzySubstringMatchingStrategy.LIBERAL
+         */
         private fun <T> MutableMap<String, TrieSearchResult<T>>
                 .putOnlyNewOrBetterMatches(newMatches: MutableMap<String, TrieSearchResult<T>>) {
             newMatches.entries
