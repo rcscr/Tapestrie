@@ -38,9 +38,7 @@ class FuzzySubstringSearchState<T> private constructor(
     fun nextStates(): Collection<FuzzySubstringSearchState<T>> {
         synchronized(node.next) {
             return node.next
-                .filter {
-                    nextNodeToSkip == null || it != nextNodeToSkip
-                }
+                .filter { nextNodeToSkip == null || it != nextNodeToSkip }
                 .map { nextStates(it) }
                 .flatten()
         }
@@ -92,6 +90,7 @@ class FuzzySubstringSearchState<T> private constructor(
 
     private fun sufficientlyMatches(): Boolean {
         return searchCoordinates.startMatchIndex != null
+                && searchCoordinates.endMatchIndex != null
                 && searchCoordinates.numberOfMatches >= searchInvariables.search.length - searchInvariables.errorTolerance
                 && getActualNumberOfErrors() <= searchInvariables.errorTolerance
     }
@@ -108,8 +107,7 @@ class FuzzySubstringSearchState<T> private constructor(
             return null
         }
 
-        val nextNodeMatches = searchCoordinates.searchIndex < searchInvariables.search.length
-                && nextNode.string == searchInvariables.search[searchCoordinates.searchIndex].toString()
+        val nextNodeMatches = searchCoordinatesMatch(nextNode)
 
         val newSearchIndex = searchCoordinates.searchIndex + 1
 
@@ -168,9 +166,7 @@ class FuzzySubstringSearchState<T> private constructor(
                 true
         }
 
-        val nextNodeMatches = matchingPreconditions
-                && searchCoordinates.searchIndex < searchInvariables.search.length
-                && nextNode.string == searchInvariables.search[searchCoordinates.searchIndex].toString()
+        val nextNodeMatches = matchingPreconditions && searchCoordinatesMatch(nextNode)
 
         if (nextNodeMatches) {
             return listOf(
@@ -192,6 +188,11 @@ class FuzzySubstringSearchState<T> private constructor(
         } else {
             return null
         }
+    }
+
+    private fun searchCoordinatesMatch(nextNode: TrieNode<T>): Boolean {
+        return searchCoordinates.searchIndex < searchInvariables.search.length
+                && nextNode.string == searchInvariables.search[searchCoordinates.searchIndex].toString()
     }
 
     private fun buildSearchErrorState(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>>? {
