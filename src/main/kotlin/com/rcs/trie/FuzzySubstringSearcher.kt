@@ -26,10 +26,9 @@ class FuzzySubstringSearcher {
                 if (state.sufficientlyMatches()) {
                     val newMatches = gatherAll(state)
                     results.putOnlyNewOrBetterMatches(newMatches)
-                    continue
+                } else {
+                    queue.addAll(state.nextSearchStates())
                 }
-
-                queue.addAll(state.nextSearchStates())
             }
 
             return results.values.sortedWith(TrieSearchResultComparator.byBestMatchFirst)
