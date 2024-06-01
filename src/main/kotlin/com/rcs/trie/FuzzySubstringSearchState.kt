@@ -144,9 +144,11 @@ class FuzzySubstringSearchState<T> private constructor(
         val nextNodeMatches = searchIndex < search.length
                 && nextNode.string == search[searchIndex].toString()
 
-        val newSearchIndex = when {
-            nextNodeMatches -> searchIndex + 1
-            else -> searchIndex
+        val newSearchIndex = searchIndex + 1
+
+        val newNumberOfErrors = when {
+            searchIndex < search.length && !nextNodeMatches -> numberOfErrors + 1
+            else -> numberOfErrors
         }
 
         val newNumberOfMatches = when {
@@ -169,7 +171,7 @@ class FuzzySubstringSearchState<T> private constructor(
             endMatchIndex = newEndMatchIndex,
             searchIndex = newSearchIndex,
             numberOfMatches = newNumberOfMatches,
-            numberOfErrors = numberOfErrors,
+            numberOfErrors = newNumberOfErrors,
             numberOfPredeterminedErrors = numberOfPredeterminedErrors,
             errorTolerance = errorTolerance,
             sequence = StringBuilder(sequence).append(nextNode.string)
