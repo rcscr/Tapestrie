@@ -68,12 +68,12 @@ class FuzzySubstringSearcher {
         private fun <T> MutableMap<String, TrieSearchResult<T>>.putOnlyNewOrBetter(match: TrieSearchResult<T>) {
             val existing = this[match.string]
 
-            val isNewOrBetter = existing == null
-                    || existing.numberOfMatches < match.numberOfMatches
-                    || existing.numberOfErrors > match.numberOfErrors
-
-            if (isNewOrBetter) {
+            if (existing == null) {
                 this[match.string] = match
+            } else {
+                val bestFirst = mutableListOf(existing, match)
+                    .sortedWith(TrieSearchResultComparator.byBestMatchFirst)
+                this[match.string] = bestFirst.first()
             }
         }
     }
