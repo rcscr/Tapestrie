@@ -165,7 +165,8 @@ class FuzzySubstringSearchState<T> private constructor(
         )
 
         // in case we find a better match further in the string
-        if (!searchVariables.isFinisherState && searchRequest.search.length != searchCoordinates.numberOfMatches) {
+        val perfectMatch = searchRequest.search.length == searchCoordinates.numberOfMatches
+        if (!searchVariables.isFinisherState && !perfectMatch) {
             finisherStates.addAll(buildResetState(nextNode))
         }
 
