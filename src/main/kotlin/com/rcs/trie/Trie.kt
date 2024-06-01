@@ -13,19 +13,19 @@ class Trie<T> {
     }
 
     /**
-     * returns the previous value, if any, associated with this key
+     * Returns the previous value, if any, associated with this key (inputString)
      */
-    fun put(input: String, value: T): T? {
-        if (input.isEmpty()) {
+    fun put(inputString: String, value: T): T? {
+        if (inputString.isEmpty()) {
             throw IllegalArgumentException("Cannot add an empty string")
         }
 
         var current = root
 
-        for (i in input.indices) {
-            val reachedEndOfInput = i == input.length - 1
+        for (i in inputString.indices) {
+            val reachedEndOfInput = i == inputString.length - 1
 
-            val currentCharacter = input[i].toString()
+            val currentCharacter = inputString[i].toString()
 
             synchronized(current.next) {
                 val nextMatchingNode = current.next
@@ -61,13 +61,16 @@ class Trie<T> {
         return null
     }
 
-    fun remove(input: String): T? {
+    /**
+     * Returns the previous value, if any, associated with this key (inputString)
+     */
+    fun remove(inputString: String): T? {
         var current = root
 
-        val deque = ArrayDeque<TrieNode<T>>(input.length + 1)
+        val deque = ArrayDeque<TrieNode<T>>(inputString.length + 1)
         deque.add(root)
 
-        for (element in input) {
+        for (element in inputString) {
             val currentCharacter = element.toString()
 
             var nextMatchingNode: TrieNode<T>?
@@ -88,13 +91,13 @@ class Trie<T> {
 
         if (last.completes()) {
             // look back until you first the last character that is not used for other strings
-            var j = input.length - 1
+            var j = inputString.length - 1
             var nodeToUnlink: TrieNode<T>
             while (!deque.removeLast().also { nodeToUnlink = it }.isUsedForOtherStrings()) {
                 j--
             }
             // unlink this last character, thus completing the removal
-            val charToUnlink = input[j].toString()
+            val charToUnlink = inputString[j].toString()
             synchronized(nodeToUnlink.next) {
                 nodeToUnlink.next.removeIf { it.string == charToUnlink }
             }
