@@ -54,9 +54,9 @@ class FuzzySubstringSearchState<T> private constructor(
      * Returns true if this state *sufficiently* matches.
      *
      * For the string ending at this.node (assuming this.node.completes()),
-     * the matching is finished and the result can be obtained (this.buildSearchResult())
+     * the matching is finished and the result can be obtained via this.buildSearchResult().
      *
-     * For strings that stem from this.node.next, it is possible that more
+     * For other strings that stem from this.node.next, it is possible that more
      * matching characters will be found when subsequently calling state.nextBuildState.
      */
     fun sufficientlyMatches(): Boolean {
