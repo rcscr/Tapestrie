@@ -2,8 +2,10 @@ package com.rcs.trie
 
 fun main() {
     val trie = Trie<Unit>()
-    trie.put("lalala0 lalala1 lalala2 lalala3", Unit)
 
-    trie.matchBySubstringFuzzy("lalala2", 2, FuzzySubstringMatchingStrategy.ANCHOR_TO_PREFIX)
+    trie.put("this is rafael", Unit)
+
+    // results in two duplicate search results!
+    trie.matchBySubstringFuzzy("raphael", 2, FuzzySubstringMatchingStrategy.LIBERAL)
         .forEach { println(it) }
 }
