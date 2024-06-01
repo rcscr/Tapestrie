@@ -3,44 +3,21 @@ package com.rcs.trie
 import kotlin.math.max
 
 class FuzzySubstringSearchState<T> private constructor(
-    private val matchingStrategy: FuzzySubstringMatchingStrategy,
-    private val search: String,
+    private val searchInvariables: SearchInvariables,
     private val node: TrieNode<T>,
     private val nextNodeToSkip: TrieNode<T>?,
-    private val numberOfPredeterminedErrors: Int,
-    private val errorTolerance: Int,
     private val sequence: StringBuilder,
     private val isFinisherState: Boolean,
     private val searchCoordinates: SearchCoordinates
 ) {
 
-    companion object {
+    data class SearchInvariables(
+        val matchingStrategy: FuzzySubstringMatchingStrategy,
+        val search: String,
+        val numberOfPredeterminedErrors: Int,
+        val errorTolerance: Int,
+    )
 
-        /**
-         * Emulates a public constructor, keeping some properties private as part of
-         * this class's implementation details
-         */
-        operator fun <T> invoke(
-            root: TrieNode<T>,
-            search: String,
-            numberOfPredeterminedErrors: Int,
-            errorTolerance: Int,
-            matchingStrategy: FuzzySubstringMatchingStrategy
-        ): FuzzySubstringSearchState<T> {
-
-            return FuzzySubstringSearchState(
-                matchingStrategy = matchingStrategy,
-                search = search,
-                node = root,
-                nextNodeToSkip = null,
-                numberOfPredeterminedErrors = numberOfPredeterminedErrors,
-                errorTolerance = errorTolerance,
-                sequence = StringBuilder(),
-                isFinisherState = false,
-                searchCoordinates = SearchCoordinates(0, 0, 0, null, null)
-            )
-        }
-    }
     data class SearchCoordinates(
         val searchIndex: Int,
         val numberOfMatches: Int,
@@ -115,8 +92,8 @@ class FuzzySubstringSearchState<T> private constructor(
 
     private fun sufficientlyMatches(): Boolean {
         return searchCoordinates.startMatchIndex != null
-                && searchCoordinates.numberOfMatches >= search.length - errorTolerance
-                && getActualNumberOfErrors() <= errorTolerance
+                && searchCoordinates.numberOfMatches >= searchInvariables.search.length - searchInvariables.errorTolerance
+                && getActualNumberOfErrors() <= searchInvariables.errorTolerance
     }
 
     private fun nextStates(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>> {
@@ -131,13 +108,13 @@ class FuzzySubstringSearchState<T> private constructor(
             return null
         }
 
-        val nextNodeMatches = searchCoordinates.searchIndex < search.length
-                && nextNode.string == search[searchCoordinates.searchIndex].toString()
+        val nextNodeMatches = searchCoordinates.searchIndex < searchInvariables.search.length
+                && nextNode.string == searchInvariables.search[searchCoordinates.searchIndex].toString()
 
         val newSearchIndex = searchCoordinates.searchIndex + 1
 
         val newNumberOfErrors = when {
-            searchCoordinates.searchIndex < search.length && !nextNodeMatches ->
+            searchCoordinates.searchIndex < searchInvariables.search.length && !nextNodeMatches ->
                 searchCoordinates.numberOfErrors + 1
             else ->
                 searchCoordinates.numberOfErrors
@@ -156,12 +133,9 @@ class FuzzySubstringSearchState<T> private constructor(
 
         val finisherStates = mutableListOf(
             FuzzySubstringSearchState(
-                matchingStrategy = matchingStrategy,
-                search = search,
+                searchInvariables = searchInvariables,
                 node = nextNode,
                 nextNodeToSkip = null,
-                numberOfPredeterminedErrors = numberOfPredeterminedErrors,
-                errorTolerance = errorTolerance,
                 sequence = StringBuilder(sequence).append(nextNode.string),
                 isFinisherState = true,
                 searchCoordinates = SearchCoordinates(
@@ -175,7 +149,7 @@ class FuzzySubstringSearchState<T> private constructor(
         )
 
         // in case we find a better match further in the string
-        if (!isFinisherState && search.length != searchCoordinates.numberOfMatches) {
+        if (!isFinisherState && searchInvariables.search.length != searchCoordinates.numberOfMatches) {
             finisherStates.addAll(buildSearchResetState(nextNode))
         }
 
@@ -185,7 +159,7 @@ class FuzzySubstringSearchState<T> private constructor(
     private fun buildSearchMatchState(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>>? {
         val wasMatchingBefore = searchCoordinates.numberOfMatches > 0
 
-        val matchingPreconditions = when (matchingStrategy) {
+        val matchingPreconditions = when (searchInvariables.matchingStrategy) {
             FuzzySubstringMatchingStrategy.ANCHOR_TO_PREFIX ->
                 wasMatchingBefore || distanceToStartWordSeparatorIsPermissible()
             FuzzySubstringMatchingStrategy.MATCH_PREFIX ->
@@ -195,18 +169,15 @@ class FuzzySubstringSearchState<T> private constructor(
         }
 
         val nextNodeMatches = matchingPreconditions
-                && searchCoordinates.searchIndex < search.length
-                && nextNode.string == search[searchCoordinates.searchIndex].toString()
+                && searchCoordinates.searchIndex < searchInvariables.search.length
+                && nextNode.string == searchInvariables.search[searchCoordinates.searchIndex].toString()
 
         if (nextNodeMatches) {
             return listOf(
                 FuzzySubstringSearchState(
-                    matchingStrategy = matchingStrategy,
-                    search = search,
+                    searchInvariables = searchInvariables,
                     node = nextNode,
                     nextNodeToSkip = null,
-                    numberOfPredeterminedErrors = numberOfPredeterminedErrors,
-                    errorTolerance = errorTolerance,
                     sequence = StringBuilder(sequence).append(nextNode.string),
                     isFinisherState = false,
                     searchCoordinates = SearchCoordinates(
@@ -226,10 +197,10 @@ class FuzzySubstringSearchState<T> private constructor(
     private fun buildSearchErrorState(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>>? {
         val wasMatchingBefore = searchCoordinates.numberOfMatches > 0
 
-        val hasErrorAllowance = searchCoordinates.numberOfErrors < errorTolerance
+        val hasErrorAllowance = searchCoordinates.numberOfErrors < searchInvariables.errorTolerance
 
         val shouldContinueMatchingWithError = hasErrorAllowance
-                && when (matchingStrategy) {
+                && when (searchInvariables.matchingStrategy) {
                     FuzzySubstringMatchingStrategy.ANCHOR_TO_PREFIX ->
                         wasMatchingBefore || distanceToStartWordSeparatorIsPermissible()
                     else ->
@@ -239,12 +210,9 @@ class FuzzySubstringSearchState<T> private constructor(
         if (shouldContinueMatchingWithError) {
             return getErrorStrategies(nextNode).map {
                 FuzzySubstringSearchState(
-                    matchingStrategy = matchingStrategy,
-                    search = search,
+                    searchInvariables = searchInvariables,
                     node = it.node,
                     nextNodeToSkip = it.nextNodeToSkip,
-                    numberOfPredeterminedErrors = numberOfPredeterminedErrors,
-                    errorTolerance = errorTolerance,
                     sequence = it.sequence,
                     isFinisherState = false,
                     searchCoordinates = SearchCoordinates(
@@ -277,8 +245,8 @@ class FuzzySubstringSearchState<T> private constructor(
                 // do not continue this error search strategy at that node
                 nextNodeToSkip
                     ?: node.next.firstOrNull {
-                        searchCoordinates.searchIndex < search.length
-                                && it.string == search[searchCoordinates.searchIndex].toString()
+                        searchCoordinates.searchIndex < searchInvariables.search.length
+                                && it.string == searchInvariables.search[searchCoordinates.searchIndex].toString()
                     },
                 searchCoordinates.searchIndex + 1,
                 StringBuilder(sequence)),
@@ -295,12 +263,9 @@ class FuzzySubstringSearchState<T> private constructor(
     private fun buildSearchResetState(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>> {
         return listOf(
             FuzzySubstringSearchState(
-                matchingStrategy = matchingStrategy,
-                search = search,
+                searchInvariables = searchInvariables,
                 node = nextNode,
                 nextNodeToSkip = null,
-                numberOfPredeterminedErrors = numberOfPredeterminedErrors,
-                errorTolerance = errorTolerance,
                 sequence = StringBuilder(sequence).append(nextNode.string),
                 isFinisherState = false,
                 searchCoordinates = SearchCoordinates(
@@ -315,8 +280,10 @@ class FuzzySubstringSearchState<T> private constructor(
     }
 
     private fun getActualNumberOfErrors(): Int {
-        val unmatchedCharacters = max(0, search.length - searchCoordinates.searchIndex)
-        return numberOfPredeterminedErrors + searchCoordinates.numberOfErrors + unmatchedCharacters
+        val unmatchedCharacters = max(0, searchInvariables.search.length - searchCoordinates.searchIndex)
+        return searchInvariables.numberOfPredeterminedErrors +
+                searchCoordinates.numberOfErrors +
+                unmatchedCharacters
     }
 
     private fun distanceToStartWordSeparatorIsPermissible(): Boolean {
@@ -351,6 +318,36 @@ class FuzzySubstringSearchState<T> private constructor(
     private fun CharSequence.indexOfFirstWordSeparator(startIndex: Int = 0): Int? {
         return (startIndex..<this.length).firstOrNull {
             this[it].toString().matches(wordSeparatorRegex)
+        }
+    }
+
+    companion object {
+
+        /**
+         * Emulates a public constructor, keeping some properties private as part of
+         * this class's implementation details
+         */
+        operator fun <T> invoke(
+            root: TrieNode<T>,
+            search: String,
+            numberOfPredeterminedErrors: Int,
+            errorTolerance: Int,
+            matchingStrategy: FuzzySubstringMatchingStrategy
+        ): FuzzySubstringSearchState<T> {
+
+            return FuzzySubstringSearchState(
+                searchInvariables = SearchInvariables(
+                    matchingStrategy = matchingStrategy,
+                    search = search,
+                    numberOfPredeterminedErrors = numberOfPredeterminedErrors,
+                    errorTolerance = errorTolerance,
+                ),
+                node = root,
+                nextNodeToSkip = null,
+                sequence = StringBuilder(),
+                isFinisherState = false,
+                searchCoordinates = SearchCoordinates(0, 0, 0, null, null)
+            )
         }
     }
 }
