@@ -12,13 +12,13 @@ The `Trie` implemented here is thread-safe, unit-tested, and able to efficiently
 
 A demo of an `HtmlCrawler` has also been provided to illustrate the usage of the `Trie`.
 
-Searching the Linux manual (1,860 HTML pages and 21,181 unique tokens) for `indices` with `errorTolerance=2` takes only 1.5 minutes and will return all of these hits:
+Searching the Linux manual (1,860 HTML pages and 21,181 unique tokens) for `computer` with `errorTolerance=2` takes 25 seconds (on an i5 processor) and will return all of these hits:
 
 <pre>
-[indices, indic, indexes, indicate, indirect, indicates, indicated, indicator, indicating, indication, indicators, indirectly, inacessible, inaccessble, inaccessible, indirections, indistinguishable, bindings, bindresvport]
+[computer, computers, computerr1, compute, computed, computes, compuserve, comput, compiler, compugen, competes, compilers, computing, computation, compatgroup, computations, recomputes, minicomputer, deepcomputing]
 </pre>
 
-The first three hits are intuitive matches, but then the results become less relevant further down the list. However, these are still acceptable matches given the `errorTolerance=2`.
+Some results, like `competes`, might seem irrelevant, but they are still acceptable matches given the `errorTolerance=2`: if you swap out the first `e` and `s` for `u` and `r` respectively, you'll have your keyword - with only two errors.
 
 As you might have noticed, these results are sorted by best match, considering the following information:
     
@@ -35,11 +35,11 @@ As an example, let's examine the best and worst search hits above:
 #### Best
 <pre>
 TrieSearchResult(
-    string=indices, 
-    value=[htmlman8/mount.8.html, htmlman5/elf.5.html, htmlman5/tzfile.5.html, htmlman7/locale.7.html, htmlman3/termios.3.html, htmlman5/slapd.conf.5.html, htmlman5/slapd-config.5.html, htmlman5/slapo-pcache.5.html, htmlman8/slapindex.8.html, htmlman5/slapd-bdb.5.html], 
-    matchedSubstring=indices, 
-    matchedWord=indices
-    numberOfMatches=7, 
+    string=computer, 
+    value=[HtmlIndexEntry(url=htmlman8/agetty.8.html, occurrences=2), HtmlIndexEntry(url=htmlman3/rtime.3.html, occurrences=2), HtmlIndexEntry(url=gfdl-3.html, occurrences=1), ...], 
+    matchedSubstring=computer, 
+    matchedWord=computer, 
+    numberOfMatches=8, 
     numberOfErrors=0, 
     prefixDistance=0, 
     matchedWholeString=true, 
@@ -50,13 +50,13 @@ TrieSearchResult(
 #### Worst
 <pre>
 TrieSearchResult(
-    string=bindresvport, 
-    value=[index3.html, htmlman3/bindresvport.3.html], 
-    matchedSubstring=indres, 
-    matchedWord=bindresvport
-    numberOfMatches=5, 
+    string=deepcomputing, 
+    value=[HtmlIndexEntry(url=htmlman2/spu_run.2.html, occurrences=1), HtmlIndexEntry(url=htmlman2/spu_create.2.html, occurrences=1)], 
+    matchedSubstring=comput, 
+    matchedWord=deepcomputing, 
+    numberOfMatches=6, 
     numberOfErrors=2, 
-    prefixDistance=1, 
+    prefixDistance=4, 
     matchedWholeString=false, 
     matchedWholeWord=false
 )
@@ -64,6 +64,8 @@ TrieSearchResult(
 
 ### Other notes
 
-The greater the error tolerance, the slower the performance. The same search with `errorTolerance=1` returned instantly, because there were no matches other than `indices`.
+The greater the error tolerance, the slower the performance. The same search with `errorTolerance=1` returned instantly, because there were fewer paths to explore.
+
+This in-memory `Trie` certainly has its limitations. It's great for short amounts of data and for precise searches. The example above is quite extreme with than 20,000 strings; and 25 seconds for a search, fuzzy or otherwise, is not exactly user-friendly. In real scenarios, a solution like `ElasticSearch` would be used instead.
 
 A shallow `Trie`, where each entry is short (i.e. words) offers the best performance, but with the limitation that you can only search for short strings. A `Trie` that stores longer text (i.e. sentences) allows searching for phrases (multiple words chained together), but is slower.
