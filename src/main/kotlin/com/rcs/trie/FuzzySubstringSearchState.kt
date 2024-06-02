@@ -6,47 +6,6 @@ class FuzzySubstringSearchState<T> private constructor(
     private val searchCoordinates: SearchCoordinates
 ) {
 
-    /**
-     * Invariable properties of the search request - these never change.
-     */
-    private data class SearchRequest(
-        val matchingStrategy: FuzzySubstringMatchingStrategy,
-        val search: String,
-        val numberOfPredeterminedErrors: Int,
-        val errorTolerance: Int,
-    )
-
-    /**
-     * Variable properties that change depending on what TrieNode we're looking at.
-     */
-    private data class SearchVariables<T>(
-        val node: TrieNode<T>,
-        val sequence: StringBuilder,
-        val isGatherState: Boolean,
-    )
-
-    /**
-     * The search coordinates, which may or may not lead to a successful match.
-     */
-    private data class SearchCoordinates(
-        val searchIndex: Int,
-        val numberOfMatches: Int,
-        val numberOfErrors: Int,
-        val startMatchIndex: Int?,
-        var endMatchIndex: Int?,
-    )
-
-    /**
-     * A convenience class for passing around new search error states.
-     */
-    private data class SearchWithErrorStrategy<T>(
-        val node: TrieNode<T>,
-        val searchIndex: Int,
-        val sequence: StringBuilder
-    )
-
-    private val wordSeparatorRegex = "[\\s\\p{P}]".toRegex()
-
     fun nextStates(): Collection<FuzzySubstringSearchState<T>> {
         synchronized(searchVariables.node.next) {
             return searchVariables.node.next.map { nextStates(it) }.flatten()
@@ -346,3 +305,44 @@ class FuzzySubstringSearchState<T> private constructor(
         }
     }
 }
+
+/**
+ * Invariable properties of the search request - these never change.
+ */
+private data class SearchRequest(
+    val matchingStrategy: FuzzySubstringMatchingStrategy,
+    val search: String,
+    val numberOfPredeterminedErrors: Int,
+    val errorTolerance: Int,
+)
+
+/**
+ * Variable properties that change depending on what TrieNode we're looking at.
+ */
+private data class SearchVariables<T>(
+    val node: TrieNode<T>,
+    val sequence: StringBuilder,
+    val isGatherState: Boolean,
+)
+
+/**
+ * The search coordinates, which may or may not lead to a successful match.
+ */
+private data class SearchCoordinates(
+    val searchIndex: Int,
+    val numberOfMatches: Int,
+    val numberOfErrors: Int,
+    val startMatchIndex: Int?,
+    var endMatchIndex: Int?,
+)
+
+/**
+ * A convenience class for passing around new search error states.
+ */
+private data class SearchWithErrorStrategy<T>(
+    val node: TrieNode<T>,
+    val searchIndex: Int,
+    val sequence: StringBuilder
+)
+
+private val wordSeparatorRegex = "[\\s\\p{P}]".toRegex()
