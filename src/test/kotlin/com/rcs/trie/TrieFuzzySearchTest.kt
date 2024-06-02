@@ -92,14 +92,33 @@ class TrieFuzzySearchTest {
                 .map {
                     FuzzySearchScenario(
                         "MatchingStrategy=$it matches an incomplete string, but only if it has enough characters to satisfy match",
-                        setOf("ma", "man", "manu", "many"),
+                        setOf("ma", "man", "manu", "many", "manXXXual", "manXuXal"),
                         "manual",
                         3,
                         it,
                         listOf(
+                            TrieSearchResult("manXuXal", Unit, "manXuXal", "manXuXal", 6, 2, 0, false, false),
+                            TrieSearchResult("manXXXual", Unit, "manXXXual", "manXXXual",  6, 3, 0, false, false),
                             TrieSearchResult("manu", Unit, "manu", "manu", 4, 2, 0, false, false),
                             TrieSearchResult("man", Unit, "man", "man", 3, 3, 0, false, false),
                             TrieSearchResult("many", Unit, "man", "many", 3, 3, 0, false, false),
+                        )
+                    )
+                }
+        )
+
+        scenarios.addAll(
+            FuzzySubstringMatchingStrategy.entries
+                .map {
+                    FuzzySearchScenario(
+                        "MatchingStrategy=$it matches strings that stem from shorter, incomplete string",
+                        setOf("m", "ma", "man", "manXuXal"),
+                        "manual",
+                        3,
+                        it,
+                        listOf(
+                            TrieSearchResult("manXuXal", Unit, "manXuXal", "manXuXal", 6, 2, 0, false, false),
+                            TrieSearchResult("man", Unit, "man", "man", 3, 3, 0, false, false),
                         )
                     )
                 }
