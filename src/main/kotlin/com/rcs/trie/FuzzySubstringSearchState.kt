@@ -23,7 +23,6 @@ class FuzzySubstringSearchState<T> private constructor(
      */
     private data class SearchVariables<T>(
         val node: TrieNode<T>,
-        val nextNodeToSkip: TrieNode<T>?,
         val sequence: StringBuilder,
         val isFinisherState: Boolean,
     )
@@ -44,7 +43,6 @@ class FuzzySubstringSearchState<T> private constructor(
      */
     private data class SearchWithErrorStrategy<T>(
         val node: TrieNode<T>,
-        val nextNodeToSkip: TrieNode<T>?,
         val searchIndex: Int,
         val sequence: StringBuilder
     )
@@ -53,10 +51,7 @@ class FuzzySubstringSearchState<T> private constructor(
 
     fun nextStates(): Collection<FuzzySubstringSearchState<T>> {
         synchronized(searchVariables.node.next) {
-            return searchVariables.node.next
-                .filter { searchVariables.nextNodeToSkip == null || it != searchVariables.nextNodeToSkip }
-                .map { nextStates(it) }
-                .flatten()
+            return searchVariables.node.next.map { nextStates(it) }.flatten()
         }
     }
 
@@ -150,7 +145,6 @@ class FuzzySubstringSearchState<T> private constructor(
                 searchRequest = searchRequest,
                 searchVariables = SearchVariables(
                     node = nextNode,
-                    nextNodeToSkip = null,
                     sequence = StringBuilder(searchVariables.sequence).append(nextNode.string),
                     isFinisherState = true,
                 ),
@@ -193,7 +187,6 @@ class FuzzySubstringSearchState<T> private constructor(
                     searchRequest = searchRequest,
                     searchVariables = SearchVariables(
                         node = nextNode,
-                        nextNodeToSkip = null,
                         sequence = StringBuilder(searchVariables.sequence).append(nextNode.string),
                         isFinisherState = false
                     ),
@@ -230,12 +223,11 @@ class FuzzySubstringSearchState<T> private constructor(
                 }
 
         if (shouldContinueMatchingWithError) {
-            return getErrorStrategies(nextNode).map {
+            return getErrorStrategies(nextNode).mapIndexed { i, it ->
                 FuzzySubstringSearchState(
                     searchRequest = searchRequest,
                     searchVariables = SearchVariables(
                         node = it.node,
-                        nextNodeToSkip = it.nextNodeToSkip,
                         sequence = it.sequence,
                         isFinisherState = false
                     ),
@@ -261,7 +253,6 @@ class FuzzySubstringSearchState<T> private constructor(
                 // 1. misspelling: increment searchIndex and go to the next node
                 SearchWithErrorStrategy(
                     nextNode,
-                    null,
                     searchCoordinates.searchIndex + 1,
                     StringBuilder(searchVariables.sequence).append(nextNode.string)
                 )
@@ -271,13 +262,6 @@ class FuzzySubstringSearchState<T> private constructor(
                 // 2. missing letter in data: increment searchIndex and stay at the previous node
                 SearchWithErrorStrategy(
                     searchVariables.node,
-                    // Optimization: if any node in this.node.next matches current string,
-                    // do not continue this error search strategy at that node
-                    searchVariables.nextNodeToSkip
-                        ?: searchVariables.node.next.firstOrNull {
-                            searchCoordinates.searchIndex < searchRequest.search.length
-                                    && it.string == searchRequest.search[searchCoordinates.searchIndex].toString()
-                        },
                     searchCoordinates.searchIndex + 1,
                     StringBuilder(searchVariables.sequence)
                 )
@@ -288,7 +272,6 @@ class FuzzySubstringSearchState<T> private constructor(
             // 3. missing letter in search keyword: keep searchIndex the same and go to the next node
             SearchWithErrorStrategy(
                 nextNode,
-                null,
                 searchCoordinates.searchIndex,
                 StringBuilder(searchVariables.sequence).append(nextNode.string)
             )
@@ -303,7 +286,6 @@ class FuzzySubstringSearchState<T> private constructor(
                 searchRequest = searchRequest,
                 searchVariables = SearchVariables(
                     node = nextNode,
-                    nextNodeToSkip = null,
                     sequence = StringBuilder(searchVariables.sequence).append(nextNode.string),
                     isFinisherState = false
                 ),
@@ -384,7 +366,6 @@ class FuzzySubstringSearchState<T> private constructor(
                 ),
                 searchVariables = SearchVariables(
                     node = root,
-                    nextNodeToSkip = null,
                     sequence = StringBuilder(),
                     isFinisherState = false,
                 ),
