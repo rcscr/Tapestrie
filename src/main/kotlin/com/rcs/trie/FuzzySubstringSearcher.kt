@@ -24,7 +24,6 @@ class FuzzySubstringSearcher {
                 val state = queue.removeFirst()
 
                 if (state.hasSearchResult()) {
-                    // TODO: figure out why I'm getting duplicate search results
                     val searchResult = state.buildSearchResult()
                     results.putOnlyNewOrBetter(searchResult)
                 }
