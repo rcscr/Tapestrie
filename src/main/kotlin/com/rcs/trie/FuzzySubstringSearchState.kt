@@ -195,29 +195,19 @@ class FuzzySubstringSearchState<T> private constructor(
     }
 
     private fun getErrorStrategies(nextNode: TrieNode<T>): List<SearchWithErrorStrategy<T>> {
-        val strategies = mutableListOf<SearchWithErrorStrategy<T>>()
-
-        if (searchCoordinates.searchIndex + 1 < searchRequest.search.length) {
-            strategies.add(
-                // 1. misspelling: increment searchIndex and go to the next node
-                SearchWithErrorStrategy(
-                    nextNode,
-                    searchCoordinates.searchIndex + 1,
-                    StringBuilder(searchVariables.sequence).append(nextNode.string)
-                )
-            )
-
-            strategies.add(
-                // 2. missing letter in data: increment searchIndex and stay at the previous node
-                SearchWithErrorStrategy(
-                    searchVariables.node,
-                    searchCoordinates.searchIndex + 1,
-                    StringBuilder(searchVariables.sequence)
-                )
-            )
-        }
-
-        strategies.add(
+        return listOf(
+            // 1. misspelling: increment searchIndex and go to the next node
+            SearchWithErrorStrategy(
+                nextNode,
+                searchCoordinates.searchIndex + 1,
+                StringBuilder(searchVariables.sequence).append(nextNode.string)
+            ),
+            // 2. missing letter in data: increment searchIndex and stay at the previous node
+            SearchWithErrorStrategy(
+                searchVariables.node,
+                searchCoordinates.searchIndex + 1,
+                StringBuilder(searchVariables.sequence)
+            ),
             // 3. missing letter in search keyword: keep searchIndex the same and go to the next node
             SearchWithErrorStrategy(
                 nextNode,
@@ -225,8 +215,6 @@ class FuzzySubstringSearchState<T> private constructor(
                 StringBuilder(searchVariables.sequence).append(nextNode.string)
             )
         )
-
-        return strategies
     }
 
     private fun buildResetState(
