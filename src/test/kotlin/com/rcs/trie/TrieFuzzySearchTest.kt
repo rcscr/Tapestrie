@@ -2,6 +2,7 @@ package com.rcs.trie
 
 import org.assertj.core.api.SoftAssertions
 import kotlin.test.Test
+import com.rcs.trie.FuzzySubstringMatchingStrategy.*
 
 class TrieFuzzySearchTest {
 
@@ -42,7 +43,7 @@ class TrieFuzzySearchTest {
         val scenarios = mutableListOf<FuzzySearchScenario>()
 
         scenarios.addAll(
-            FuzzySubstringMatchingStrategy.entries
+            arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
                 .map {
                     FuzzySearchScenario(
                         "MatchingStrategy=$it does not match an edge case",
@@ -56,7 +57,7 @@ class TrieFuzzySearchTest {
         )
 
         scenarios.addAll(
-            FuzzySubstringMatchingStrategy.entries
+            arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
                 .map {
                     FuzzySearchScenario(
                         "MatchingStrategy=$it matches missing characters in the data",
@@ -72,7 +73,7 @@ class TrieFuzzySearchTest {
         )
 
         scenarios.addAll(
-            FuzzySubstringMatchingStrategy.entries
+            arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
                 .map {
                     FuzzySearchScenario(
                         "MatchingStrategy=$it matches missing characters in the search keyword",
@@ -88,7 +89,7 @@ class TrieFuzzySearchTest {
         )
 
         scenarios.addAll(
-            FuzzySubstringMatchingStrategy.entries
+            arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
                 .map {
                     FuzzySearchScenario(
                         "MatchingStrategy=$it matches an incomplete string, but only if it has enough characters to satisfy match",
@@ -108,7 +109,7 @@ class TrieFuzzySearchTest {
         )
 
         scenarios.addAll(
-            FuzzySubstringMatchingStrategy.entries
+            arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
                 .map {
                     FuzzySearchScenario(
                         "MatchingStrategy=$it matches strings that stem from shorter, incomplete string",
@@ -125,7 +126,7 @@ class TrieFuzzySearchTest {
         )
 
         scenarios.addAll(
-            FuzzySubstringMatchingStrategy.entries
+            arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
                 .map {
                     FuzzySearchScenario(
                         "MatchingStrategy=$it matches a super long word",
@@ -139,7 +140,7 @@ class TrieFuzzySearchTest {
         )
 
         scenarios.addAll(
-            FuzzySubstringMatchingStrategy.entries
+            arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
                 .map {
                     FuzzySearchScenario(
                         "MatchingStrategy=$it matches after an initial failed attempt, returning only the best possible match",
@@ -153,7 +154,7 @@ class TrieFuzzySearchTest {
         )
 
         scenarios.addAll(listOf(
-            FuzzySubstringMatchingStrategy.entries
+            arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
                 .map {
                     FuzzySearchScenario(
                         "MatchingStrategy=$it matches with error between matching characters",
@@ -167,7 +168,7 @@ class TrieFuzzySearchTest {
                         )
                     )
                 },
-            FuzzySubstringMatchingStrategy.entries
+            arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
                 .map {
                     FuzzySearchScenario(
                         "MatchingStrategy=$it matches with error between matching characters",
@@ -186,27 +187,27 @@ class TrieFuzzySearchTest {
 
         scenarios.addAll(listOf(
             FuzzySearchScenario(
-                "MatchingStrategy=LIBERAL matches substring with errorTolerance=0",
+                "MatchingStrategy=${LIBERAL} matches substring with errorTolerance=0",
                 setOf("lala 000123456789000 hehe", "lala 000x23456789000 hehe", "lala 000xx3456789000 hehe", "lala 000xxx456789000 hehe"),
                 "123456789",
                 0,
-                FuzzySubstringMatchingStrategy.LIBERAL,
+                LIBERAL,
                 listOf(TrieSearchResult("lala 000123456789000 hehe", Unit, "123456789", "000123456789000", 9, 0, 3, false, false))
             ),
             FuzzySearchScenario(
-                "MatchingStrategy=LIBERAL matches errors in beginning with errorTolerance=1",
+                "MatchingStrategy=${LIBERAL} matches errors in beginning with errorTolerance=1",
                 setOf("lala 000x23456789000 hehe", "lala 000x23456789000 hehe", "lala 000xx3456789000 hehe", "lala 000xxx456789000 hehe"),
                 "123456789",
                 1,
-                FuzzySubstringMatchingStrategy.LIBERAL,
+                LIBERAL,
                 listOf(TrieSearchResult("lala 000x23456789000 hehe", Unit, "23456789", "000x23456789000", 8, 1, 4, false, false))
             ),
             FuzzySearchScenario(
-                "MatchingStrategy=LIBERAL matches errors in beginning with errorTolerance=2",
+                "MatchingStrategy=${LIBERAL} matches errors in beginning with errorTolerance=2",
                 setOf("lala 000x23456789000 hehe", "lala 000x23456789000 hehe", "lala 000xx3456789000 hehe", "lala 000xxx456789000 hehe"),
                 "123456789",
                 2,
-                FuzzySubstringMatchingStrategy.LIBERAL,
+                LIBERAL,
                 listOf(
                     TrieSearchResult("lala 000x23456789000 hehe", Unit, "23456789", "000x23456789000", 8, 1, 4, false, false),
                     TrieSearchResult("lala 000xx3456789000 hehe", Unit, "3456789", "000xx3456789000", 7, 2, 5, false, false)
@@ -216,11 +217,11 @@ class TrieFuzzySearchTest {
 
         scenarios.addAll(listOf(
             FuzzySearchScenario(
-                "MatchingStrategy=MATCH_PREFIX only matches exact beginning of word",
+                "MatchingStrategy=${EXACT_PREFIX} only matches exact beginning of word",
                 setOf("lalala index", "lalala indix", "lalala ondex"),
                 "index",
                 1,
-                FuzzySubstringMatchingStrategy.MATCH_PREFIX,
+                EXACT_PREFIX,
                 listOf(
                     TrieSearchResult("lalala index", Unit, "index", "index", 5, 0, 0, false, true),
                     TrieSearchResult("lalala indix", Unit, "indix", "indix", 4, 1, 0, false, false)
@@ -230,11 +231,11 @@ class TrieFuzzySearchTest {
 
         scenarios.addAll(listOf(
             FuzzySearchScenario(
-                "MatchingStrategy=ANCHOR_TO_PREFIX only matches beginning of word with errorTolerance=1",
+                "MatchingStrategy=${FUZZY_PREFIX} only matches beginning of word with errorTolerance=1",
                 setOf("lalaindex", "index", "ondex", "oldex", "omtex", "lalala index", "lalala ondex", "lalala oldex", "lalala omtex"),
                 "index",
                 1,
-                FuzzySubstringMatchingStrategy.ANCHOR_TO_PREFIX,
+                FUZZY_PREFIX,
                 listOf(
                     TrieSearchResult("index", Unit, "index", "index", 5, 0, 0, true, true),
                     TrieSearchResult("lalala index", Unit, "index", "index", 5, 0, 0, false, true),
@@ -243,11 +244,11 @@ class TrieFuzzySearchTest {
                 )
             ),
             FuzzySearchScenario(
-                "MatchingStrategy=ANCHOR_TO_PREFIX only matches beginning of word with errorTolerance=2",
+                "MatchingStrategy=${FUZZY_PREFIX} only matches beginning of word with errorTolerance=2",
                 setOf("lalaindex", "index", "ondex", "oldex", "omtex", "lalala index", "lalala ondex", "lalala oldex", "lalala omtex"),
                 "index",
                 2,
-                FuzzySubstringMatchingStrategy.ANCHOR_TO_PREFIX,
+                FUZZY_PREFIX,
                 listOf(
                     TrieSearchResult("index", Unit, "index", "index", 5, 0, 0, true, true),
                     TrieSearchResult("lalala index", Unit, "index", "index", 5, 0, 0, false, true),
@@ -261,11 +262,11 @@ class TrieFuzzySearchTest {
 
         scenarios.add(
             FuzzySearchScenario(
-                "MatchingStrategy=LIBERAL will return results sorted by best match",
+                "MatchingStrategy=${LIBERAL} will return results sorted by best match",
                 setOf("manual", "manuel", "manuem", "emanuel", "lemanuel", "lemanuell", "manually", "manuals", "linux manual"),
                 "manual",
                 3,
-                FuzzySubstringMatchingStrategy.LIBERAL,
+                LIBERAL,
                 listOf(
                     // matches whole sequence is highest ranking
                     TrieSearchResult("manual", Unit, "manual", "manual", 6, 0, 0, true, true),
@@ -285,6 +286,23 @@ class TrieFuzzySearchTest {
                     TrieSearchResult("lemanuel", Unit, "manuel", "lemanuel", 5, 1, 2, false, false),
                     // prefix match = 2 but word is longer, so ranked lower
                     TrieSearchResult("lemanuell", Unit, "manuel", "lemanuell", 5, 1, 2, false, false)
+                )
+            )
+        )
+
+        scenarios.add(
+            FuzzySearchScenario(
+                "MatchingStrategy=${FUZZY_POSTFIX} will only match errors at the end",
+                setOf("rafael", "raphael", "raffael", "laraffael", "raffaell", "raffaella", "raffaello"),
+                "raffaello",
+                2,
+                FUZZY_POSTFIX,
+                listOf(
+                    TrieSearchResult("raffaello", Unit, "raffaello", "raffaello", 9, 0, 0, true, true),
+                    TrieSearchResult("raffaell", Unit, "raffaell", "raffaell", 8, 1, 0, false, false),
+                    TrieSearchResult("raffaella", Unit, "raffaell", "raffaella", 8, 1, 0, false, false),
+                    TrieSearchResult("raffael", Unit, "raffael", "raffael", 7, 2, 0, false, false),
+                    TrieSearchResult("laraffael", Unit, "raffael", "laraffael", 7, 2, 2, false, false)
                 )
             )
         )

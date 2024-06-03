@@ -78,9 +78,9 @@ class FuzzySubstringSearchState<T> private constructor(
         val wasMatchingBefore = searchCoordinates.numberOfMatches > 0
 
         val matchingPreconditions = when (searchRequest.matchingStrategy) {
-            FuzzySubstringMatchingStrategy.ANCHOR_TO_PREFIX ->
+            FuzzySubstringMatchingStrategy.FUZZY_PREFIX ->
                 wasMatchingBefore || distanceToStartWordSeparatorIsPermissible()
-            FuzzySubstringMatchingStrategy.MATCH_PREFIX ->
+            FuzzySubstringMatchingStrategy.EXACT_PREFIX ->
                 wasMatchingBefore || searchVariables.node.string.isWordSeparator()
             else ->
                 true
@@ -122,9 +122,12 @@ class FuzzySubstringSearchState<T> private constructor(
 
         val hasErrorAllowance = searchCoordinates.numberOfErrors < searchRequest.errorTolerance
 
-        val shouldContinueMatchingWithError = hasSearchCharacters && hasErrorAllowance
+        val shouldContinueMatchingWithError = hasSearchCharacters
+                && hasErrorAllowance
                 && when (searchRequest.matchingStrategy) {
-                    FuzzySubstringMatchingStrategy.ANCHOR_TO_PREFIX ->
+                    FuzzySubstringMatchingStrategy.FUZZY_POSTFIX ->
+                        searchCoordinates.numberOfMatches >= searchRequest.search.length - searchRequest.errorTolerance
+                    FuzzySubstringMatchingStrategy.FUZZY_PREFIX ->
                         wasMatchingBefore || distanceToStartWordSeparatorIsPermissible()
                     else ->
                         wasMatchingBefore

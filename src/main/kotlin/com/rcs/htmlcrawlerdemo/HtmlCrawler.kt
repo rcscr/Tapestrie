@@ -61,7 +61,7 @@ class HtmlCrawler(
                     // for this large data set, it's better to limit the
                     // fuzzy strategy to the more restrictive MATCH_PREFIX
                     // other strategies will still work, but will be slow
-                    trie.matchBySubstringFuzzy(normalizedKeyword, 2, FuzzySubstringMatchingStrategy.MATCH_PREFIX)
+                    trie.matchBySubstringFuzzy(normalizedKeyword, 2, FuzzySubstringMatchingStrategy.EXACT_PREFIX)
                         .flatMap { it.value }
                 }
             }

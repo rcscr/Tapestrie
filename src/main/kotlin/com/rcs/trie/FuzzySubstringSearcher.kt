@@ -62,6 +62,20 @@ class FuzzySubstringSearcher {
                 }
             }
 
+            // efficient way to match with errors in the end
+            if (matchingStrategy == FuzzySubstringMatchingStrategy.FUZZY_POSTFIX) {
+                for (i in 1..errorTolerance) {
+                    val stateWithPredeterminedError = FuzzySubstringSearchState(
+                        root,
+                        search.substring(0, search.length - i),
+                        numberOfPredeterminedErrors = i,
+                        errorTolerance,
+                        matchingStrategy
+                    )
+                    initialStates.add(stateWithPredeterminedError)
+                }
+            }
+
             return initialStates
         }
 

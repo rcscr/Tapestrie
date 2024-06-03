@@ -5,8 +5,11 @@ enum class FuzzySubstringMatchingStrategy {
     LIBERAL,
 
     // matches only words that start with the first letter of the keyword
-    MATCH_PREFIX,
+    EXACT_PREFIX,
 
-    // similar to MATCH_PREFIX, but allows applying error tolerance in the beginning
-    ANCHOR_TO_PREFIX,
+    // similar to EXACT_PREFIX, but allows applying error tolerance in the beginning
+    FUZZY_PREFIX,
+
+    // allows errors only at the end
+    FUZZY_POSTFIX
 }
