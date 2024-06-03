@@ -18,7 +18,7 @@ Searching the Linux manual (1,860 HTML pages and 21,181 unique tokens) for `comp
 [computer, computers, computerr1, compute, computed, computes, compuserve, comput, compiler, compugen, competes, compilers, computing, computation, compatgroup, computations, recomputes, minicomputer, deepcomputing]
 </pre>
 
-Some results, like `competes`, might seem irrelevant, but they are still acceptable matches given the `errorTolerance=2`: if you swap out the first `e` and `s` for `u` and `r` respectively, you'll have your keyword - with only two errors.
+Some results, like `competes`, might seem irrelevant, but they are still acceptable matches given the `errorTolerance=2`: if you swap out the first `e` and `s` for `u` and `r` respectively, you'll have your keyword - with only two errors, as required.
 
 As you might have noticed, these results are sorted by best match, considering the following information:
     
@@ -66,6 +66,6 @@ TrieSearchResult(
 
 The greater the error tolerance, the slower the performance. The same search with `errorTolerance=1` returned instantly, because there were fewer paths to explore.
 
-This in-memory `Trie` certainly has its limitations. It's great for short amounts of data and for precise searches. The example above is quite extreme with than 20,000 strings; and 25 seconds for a search, fuzzy or otherwise, is not exactly user-friendly. In real scenarios, a solution like `ElasticSearch` would be used instead.
+This in-memory `Trie` certainly has its limitations. It's great for short amounts of data and for precise searches. The example above is quite extreme with more than 20,000 strings; and 25 seconds for a search, fuzzy or otherwise, is not exactly user-friendly. In real scenarios, a solution like `ElasticSearch` would be used instead.
 
 A shallow `Trie`, where each entry is short (i.e. words) offers the best performance, but with the limitation that you can only search for short strings. A `Trie` that stores longer text (i.e. sentences) allows searching for phrases (multiple words chained together), but is slower.
