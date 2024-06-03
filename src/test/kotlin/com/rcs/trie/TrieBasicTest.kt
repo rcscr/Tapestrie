@@ -64,6 +64,22 @@ class TrieBasicTest {
     }
 
     @Test
+    fun testAddLongerAfter() {
+        // Arrange
+        val trie = Trie<Int>()
+
+        // Act
+        trie.put("1234", 1)
+        trie.put("12345", 2)
+        trie.put("123456", 3)
+
+        // Assert
+        assertThat(trie.containsExactly("1234")).isTrue()
+        assertThat(trie.containsExactly("12345")).isTrue()
+        assertThat(trie.containsExactly("123456")).isTrue()
+    }
+
+    @Test
     fun testGetExactly() {
         // Arrange
         val trie = Trie<Int>()
