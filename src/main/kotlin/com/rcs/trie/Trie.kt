@@ -140,13 +140,7 @@ class Trie<T> {
     }
 
     fun getExactly(string: String): T? {
-        return prefixMatchUpTo(string)?.let {
-            if (it.completes()) {
-                it.value
-            } else {
-                null
-            }
-        }
+        return prefixMatchUpTo(string)?.value
     }
 
     fun containsExactly(string: String): Boolean {
