@@ -32,12 +32,13 @@ class Trie<T> {
             throw IllegalArgumentException("Cannot add an empty string")
         }
 
-        var current = root
         var previousValue: T? = null
         var lastNode: TrieNode<T>? = null
         var nextNodeWithMaxDepth: TrieNode<T>? = null
 
         synchronized(sizeUpdateLock) {
+            var current = root
+
             for (i in inputString.indices) {
                 val reachedEndOfInput = i == inputString.length - 1
 
