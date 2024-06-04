@@ -27,6 +27,8 @@ class HtmlCrawler(
 
     private var initialized = false
 
+    private var crawlingLock = Any()
+
     fun init() {
         println("Initializing crawler with baseURL=${this.baseUrl}")
 
@@ -35,7 +37,7 @@ class HtmlCrawler(
         var counts: IndexCounts
 
         // synchronization prevents searching while crawling/indexing
-        synchronized(this.trie) {
+        synchronized(crawlingLock) {
             trie.clear()
             counts = crawl("", ConcurrentHashMap())
         }
@@ -59,7 +61,7 @@ class HtmlCrawler(
         var resultsWithoutBaseUrl: Collection<HtmlIndexEntry>
 
         // synchronization prevents searching while crawling/indexing
-        synchronized(this.trie) {
+        synchronized(crawlingLock) {
             resultsWithoutBaseUrl = when(searchRequest.strategy) {
                 SearchStrategy.EXACT -> {
                     trie.getExactly(normalizedKeyword) ?: setOf()
