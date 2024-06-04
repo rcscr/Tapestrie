@@ -22,7 +22,8 @@ class HtmlCrawler(
     private val executorService: ExecutorService
 ) {
 
-    private val trie: Trie<LinkedList<HtmlIndexEntry>> = Trie() // maps a token to a set of URLs where the token can be found
+    // maps a token to a set of URLs where the token can be found
+    private val trie: Trie<LinkedList<HtmlIndexEntry>> = Trie()
 
     private var initialized = false
 
