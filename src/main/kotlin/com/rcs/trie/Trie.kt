@@ -62,7 +62,7 @@ class Trie<T> {
                     // we are at the last character of the input
                     // we have a string going this far, so we modify it, setting it to complete
                     // (if its already complete, that means we have already inserted the same input before)
-                    // see TrieTest.testAddShorterAfter
+                    // see TrieBasicTest.testAddShorterAfter
                     } else if (reachedEndOfInput) {
                         previousValue = nextMatchingNode.value
                         nextMatchingNode.value = value
