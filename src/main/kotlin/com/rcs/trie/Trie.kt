@@ -33,8 +33,6 @@ class Trie<T> {
         }
 
         var previousValue: T? = null
-        var lastNode: TrieNode<T>? = null
-        var nextNodeWithMaxDepth: TrieNode<T>? = null
 
         synchronized(sizeUpdateLock) {
             var current = root
@@ -74,16 +72,10 @@ class Trie<T> {
                     } else {
                         current = nextMatchingNode
                     }
-
-                    // to be used for updating sizes below
-                    if (reachedEndOfInput) {
-                        lastNode = current
-                        nextNodeWithMaxDepth = current.next.maxByOrNull { it.size }
-                    }
                 }
             }
 
-            updateSizes(lastNode!!, nextNodeWithMaxDepth)
+            updateSizes(current, current.next.maxByOrNull { it.size })
         }
 
         return previousValue
