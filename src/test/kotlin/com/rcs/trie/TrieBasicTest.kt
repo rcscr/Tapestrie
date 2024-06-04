@@ -140,4 +140,42 @@ class TrieBasicTest {
         assertThat(trie.containsExactly("Hello, Nomads!")).isTrue()
         assertThat(trie.containsExactly("Hello, World!")).isTrue()
     }
+
+    @Test
+    fun testDepthOnAdd() {
+        // Arrange
+        val trie = Trie<Unit>()
+        trie.put("1", Unit)
+        trie.put("12", Unit)
+        trie.put("123", Unit)
+        trie.put("1234", Unit)
+        trie.put("a", Unit)
+        trie.put("ab", Unit)
+
+        // Act
+        val result = trie.depth()
+
+        // Assert
+        assertThat(result).isEqualTo(4)
+    }
+
+    @Test
+    fun testDepthOnRemove() {
+        // Arrange
+        val trie = Trie<Unit>()
+        trie.put("1", Unit)
+        trie.put("12", Unit)
+        trie.put("123", Unit)
+        trie.put("1234", Unit)
+        trie.put("a", Unit)
+        trie.put("ab", Unit)
+
+        // Act
+        val removed = trie.remove("1234")
+        val result = trie.depth()
+
+        // Assert
+        assertThat(removed).isNotNull()
+        assertThat(result).isEqualTo(3)
+    }
 }

@@ -8,7 +8,7 @@ class FuzzySubstringSearchState<T> private constructor(
 
     fun nextStates(): Collection<FuzzySubstringSearchState<T>> {
         synchronized(searchVariables.node.next) {
-            return searchVariables.node.next.map { nextStates(it) }.flatten()
+            return searchVariables.node.next.map { nextStates(it) ?: listOf() }.flatten()
         }
     }
 
@@ -63,11 +63,23 @@ class FuzzySubstringSearchState<T> private constructor(
                 && getActualNumberOfErrors() <= searchRequest.errorTolerance
     }
 
-    private fun nextStates(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>> {
+    private fun nextStates(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>>? {
+        if (shouldCull(nextNode)) {
+            return null
+        }
+
         return buildMatchState(nextNode)
             ?: buildErrorState(nextNode)
             ?: buildResetState(nextNode)
             ?: buildGatherState(nextNode)
+    }
+
+    private fun shouldCull(nextNode: TrieNode<T>): Boolean {
+        val numberOfMatchingCharactersNeeded = searchRequest.search.length -
+                searchRequest.errorTolerance -
+                searchCoordinates.numberOfMatches
+
+        return nextNode.size < numberOfMatchingCharactersNeeded
     }
 
     private fun buildMatchState(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>>? {

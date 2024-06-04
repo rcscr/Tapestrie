@@ -1,6 +1,13 @@
 package com.rcs.trie
 
-data class TrieNode<T>(val string: String, var value: T?, val next: MutableSet<TrieNode<T>>) {
+class TrieNode<T>(
+    val string: String,
+    var value: T?,
+    var size: Int,
+    val next: MutableSet<TrieNode<T>>,
+    val previous: TrieNode<T>?
+) {
+
     fun completes(): Boolean {
         return value != null
     }

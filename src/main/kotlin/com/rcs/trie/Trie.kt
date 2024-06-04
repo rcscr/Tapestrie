@@ -1,6 +1,10 @@
 package com.rcs.trie
 
+import kotlin.math.max
+
 class Trie<T> {
+
+    private val sizeUpdateLock = Any()
 
     private lateinit var root: TrieNode<T>
 
@@ -9,7 +13,11 @@ class Trie<T> {
     }
 
     fun clear() {
-        root = TrieNode("", null, mutableSetOf())
+        root = TrieNode("", null, 0, mutableSetOf(), null)
+    }
+
+    fun depth(): Int {
+        return root.size - 1
     }
 
     fun isEmpty(): Boolean {
@@ -25,90 +33,110 @@ class Trie<T> {
         }
 
         var current = root
+        var previousValue: T? = null
+        var lastNode: TrieNode<T>? = null
+        var nextNodeWithMaxDepth: TrieNode<T>? = null
 
-        for (i in inputString.indices) {
-            val reachedEndOfInput = i == inputString.length - 1
+        synchronized(sizeUpdateLock) {
+            for (i in inputString.indices) {
+                val reachedEndOfInput = i == inputString.length - 1
 
-            val currentCharacter = inputString[i].toString()
+                val currentCharacter = inputString[i].toString()
 
-            synchronized(current.next) {
-                val nextMatchingNode = current.next
-                    .stream()
-                    .filter { it.string == currentCharacter }
-                    .findAny()
-                    .orElse(null)
+                synchronized(current.next) {
+                    val nextMatchingNode = current.next
+                        .stream()
+                        .filter { it.string == currentCharacter }
+                        .findAny()
+                        .orElse(null)
 
-                // we do not have a string going this far, so we create a new node,
-                // and then keep appending the remaining characters of the input to it
-                if (null == nextMatchingNode) {
-                    val valueToInsert = if (reachedEndOfInput) value else null
-                    val next = TrieNode(currentCharacter, valueToInsert, mutableSetOf())
-                    current.next.add(next)
-                    current = next
+                    // we do not have a string going this far, so we create a new node,
+                    // and then keep appending the remaining characters of the input to it
+                    if (null == nextMatchingNode) {
+                        val valueToInsert = if (reachedEndOfInput) value else null
+                        val size = inputString.length - i - 1
+                        val previous = current
+                        val nextNode = TrieNode(currentCharacter, valueToInsert, size, mutableSetOf(), previous)
+                        current.next.add(nextNode)
+                        current = nextNode
 
-                // we are at the last character of the input
-                // we have a string going this far, so we modify it, setting it to complete
-                // (if its already complete, that means we have already inserted the same input before)
-                // see TrieTest.testAddShorterAfter
-                } else if (reachedEndOfInput) {
-                    val previousValue = nextMatchingNode.value
-                    nextMatchingNode.value = value
-                    return previousValue
+                        // we are at the last character of the input
+                        // we have a string going this far, so we modify it, setting it to complete
+                        // (if its already complete, that means we have already inserted the same input before)
+                        // see TrieTest.testAddShorterAfter
+                    } else if (reachedEndOfInput) {
+                        previousValue = nextMatchingNode.value
+                        nextMatchingNode.value = value
 
-                // there is a matching node, but we're not at the end of the input yet,
-                // so go on to the next character
-                } else {
-                    current = nextMatchingNode
+                        // there is a matching node, but we're not at the end of the input yet,
+                        // so go on to the next character
+                    } else {
+                        current = nextMatchingNode
+                    }
+
+                    // to be used for updating sizes below
+                    if (reachedEndOfInput) {
+                        lastNode = current
+                        nextNodeWithMaxDepth = current.next.maxByOrNull { it.size }
+                    }
                 }
             }
+
+            updateSizes(lastNode!!, nextNodeWithMaxDepth)
         }
-        return null
+
+        return previousValue
     }
 
     /**
      * Returns the previous value, if any, associated with this key (inputString)
      */
     fun remove(inputString: String): T? {
-        var current = root
+        synchronized(sizeUpdateLock) {
+            val deque = ArrayDeque<TrieNode<T>>(inputString.length + 1)
+            deque.add(root)
 
-        val deque = ArrayDeque<TrieNode<T>>(inputString.length + 1)
-        deque.add(root)
+            var current = root
 
-        for (element in inputString) {
-            val currentCharacter = element.toString()
+            for (element in inputString) {
+                val currentCharacter = element.toString()
 
-            var nextMatchingNode: TrieNode<T>?
-            synchronized(current.next) {
-                nextMatchingNode = current.next.firstOrNull { it.string == currentCharacter }
+                var nextMatchingNode: TrieNode<T>?
+                synchronized(current.next) {
+                    nextMatchingNode = current.next.firstOrNull { it.string == currentCharacter }
+                }
+
+                if (nextMatchingNode == null) {
+                    return null // input does not exist
+                } else {
+                    current = nextMatchingNode!!
+                    deque.add(current)
+                }
             }
 
-            if (nextMatchingNode == null) {
-                return null // input does not exist
-            } else {
-                current = nextMatchingNode!!
-                deque.add(current)
+            // this is the node to remove - but only if it completes
+            val last = deque.removeLast()
+
+            if (last.completes()) {
+                // look back until we find the first the last character that is not used for other strings
+                var j = inputString.length - 1
+                var nodeFromWhichToUnlink: TrieNode<T>
+                while (!deque.removeLast().also { nodeFromWhichToUnlink = it }.isUsedForOtherStrings()) {
+                    j--
+                }
+
+                // unlink this last character and update sizes
+                val charToUnlink = inputString[j].toString()
+                synchronized(nodeFromWhichToUnlink.next) {
+                    nodeFromWhichToUnlink.next.removeIf { it.string == charToUnlink }
+                    updateSizes(nodeFromWhichToUnlink, nodeFromWhichToUnlink.next.maxByOrNull { it.size })
+                }
+
+                return last.value
             }
         }
 
-        // this is the node to remove - but only if it completes
-        val last = deque.removeLast()
-
-        if (last.completes()) {
-            // look back until you first the last character that is not used for other strings
-            var j = inputString.length - 1
-            var nodeToUnlink: TrieNode<T>
-            while (!deque.removeLast().also { nodeToUnlink = it }.isUsedForOtherStrings()) {
-                j--
-            }
-            // unlink this last character, thus completing the removal
-            val charToUnlink = inputString[j].toString()
-            synchronized(nodeToUnlink.next) {
-                nodeToUnlink.next.removeIf { it.string == charToUnlink }
-            }
-            return last.value
-        } else {
-            return null // if it does not complete, input does not exist
-        }
+        return null
     }
 
     fun getExactly(string: String): T? {
@@ -182,6 +210,24 @@ class Trie<T> {
         }
 
         return results
+    }
+
+    private fun updateSizes(current: TrieNode<T>?, next: TrieNode<T>?) {
+        if (current != null) {
+            val newSize = (next?.size ?: 0) + 1
+
+            if (current.next.isNotEmpty()) {
+                val maxSize = max(
+                    newSize,
+                    1 + (current.next.filter { it != next }.maxOfOrNull { it.size } ?: 0))
+
+                current.size = maxSize
+                updateSizes(current.previous, current)
+            } else {
+                current.size = newSize
+                updateSizes(current.previous, current)
+            }
+        }
     }
 
     private fun TrieNode<T>.isUsedForOtherStrings(): Boolean {
