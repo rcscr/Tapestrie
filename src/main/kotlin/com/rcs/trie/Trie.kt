@@ -203,7 +203,7 @@ class Trie<T> {
     private fun updateSizes(current: TrieNode<T>?, next: TrieNode<T>?) {
         current?.let {
             val maxDepth = current.next.filter { it != next }.maxOfOrNull { it.size } ?: 0
-            current.size = max((next?.size ?: 0) + 1, maxDepth + 1)
+            current.size = 1 + max(next?.size ?: 0, maxDepth)
             updateSizes(current.previous, current)
         }
     }
