@@ -75,6 +75,31 @@ class FuzzySubstringSearchState<T> private constructor(
             return null
         }
 
+        return when (nextNodeMatches(nextNode)) {
+            true ->
+                listOf(
+                    FuzzySubstringSearchState(
+                        searchRequest = searchRequest,
+                        searchVariables = SearchVariables(
+                            node = nextNode,
+                            sequence = StringBuilder(searchVariables.sequence).append(nextNode.string),
+                            isGatherState = false
+                        ),
+                        searchCoordinates = SearchCoordinates(
+                            startMatchIndex = searchCoordinates.startMatchIndex ?: searchVariables.sequence.length,
+                            endMatchIndex = searchVariables.sequence.length,
+                            searchIndex = searchCoordinates.searchIndex + 1,
+                            numberOfMatches = searchCoordinates.numberOfMatches + 1,
+                            numberOfErrors = searchCoordinates.numberOfErrors,
+                        )
+                    )
+                )
+            else ->
+                null
+        }
+    }
+
+    private fun nextNodeMatches(nextNode: TrieNode<T>): Boolean {
         val wasMatchingBefore = searchCoordinates.numberOfMatches > 0
 
         val matchingPreconditions = when (searchRequest.matchingStrategy) {
@@ -86,29 +111,7 @@ class FuzzySubstringSearchState<T> private constructor(
                 true
         }
 
-        val nextNodeMatches = matchingPreconditions && searchCoordinatesMatch(nextNode)
-
-        if (nextNodeMatches) {
-            return listOf(
-                FuzzySubstringSearchState(
-                    searchRequest = searchRequest,
-                    searchVariables = SearchVariables(
-                        node = nextNode,
-                        sequence = StringBuilder(searchVariables.sequence).append(nextNode.string),
-                        isGatherState = false
-                    ),
-                    searchCoordinates = SearchCoordinates(
-                        startMatchIndex = searchCoordinates.startMatchIndex ?: searchVariables.sequence.length,
-                        endMatchIndex = searchVariables.sequence.length,
-                        searchIndex = searchCoordinates.searchIndex + 1,
-                        numberOfMatches = searchCoordinates.numberOfMatches + 1,
-                        numberOfErrors = searchCoordinates.numberOfErrors,
-                    )
-                )
-            )
-        } else {
-            return null
-        }
+        return matchingPreconditions && searchCoordinatesMatch(nextNode)
     }
 
     private fun buildErrorState(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>>? {
@@ -116,13 +119,36 @@ class FuzzySubstringSearchState<T> private constructor(
             return null
         }
 
+        return when (shouldContinueMatchingWithError()) {
+            true ->
+                getErrorStrategies(nextNode).map {
+                    FuzzySubstringSearchState(
+                        searchRequest = searchRequest,
+                        searchVariables = SearchVariables(
+                            node = it.node,
+                            sequence = it.sequence,
+                            isGatherState = false
+                        ),
+                        searchCoordinates = SearchCoordinates(
+                            startMatchIndex = searchCoordinates.startMatchIndex,
+                            endMatchIndex = searchCoordinates.endMatchIndex,
+                            searchIndex = it.searchIndex,
+                            numberOfMatches = searchCoordinates.numberOfMatches,
+                            numberOfErrors = searchCoordinates.numberOfErrors + 1,
+                        )
+                    )
+                }
+            else ->
+                null
+        }
+    }
+
+    private fun shouldContinueMatchingWithError(): Boolean {
         val wasMatchingBefore = searchCoordinates.numberOfMatches > 0
-
         val hasSearchCharacters = searchCoordinates.searchIndex + 1 < searchRequest.search.length
-
         val hasErrorAllowance = searchCoordinates.numberOfErrors < searchRequest.errorTolerance
 
-        val shouldContinueMatchingWithError = hasSearchCharacters
+        return hasSearchCharacters
                 && hasErrorAllowance
                 && when (searchRequest.matchingStrategy) {
                     FuzzySubstringMatchingStrategy.FUZZY_POSTFIX ->
@@ -132,28 +158,6 @@ class FuzzySubstringSearchState<T> private constructor(
                     else ->
                         wasMatchingBefore
                 }
-
-        if (shouldContinueMatchingWithError) {
-            return getErrorStrategies(nextNode).mapIndexed { i, it ->
-                FuzzySubstringSearchState(
-                    searchRequest = searchRequest,
-                    searchVariables = SearchVariables(
-                        node = it.node,
-                        sequence = it.sequence,
-                        isGatherState = false
-                    ),
-                    searchCoordinates = SearchCoordinates(
-                        startMatchIndex = searchCoordinates.startMatchIndex,
-                        endMatchIndex = searchCoordinates.endMatchIndex,
-                        searchIndex = it.searchIndex,
-                        numberOfMatches = searchCoordinates.numberOfMatches,
-                        numberOfErrors = searchCoordinates.numberOfErrors + 1,
-                    )
-                )
-            }
-        } else {
-            return null
-        }
     }
 
     private fun getErrorStrategies(nextNode: TrieNode<T>): List<SearchWithErrorStrategy<T>> {
@@ -184,27 +188,28 @@ class FuzzySubstringSearchState<T> private constructor(
         forceReturn: Boolean = false
     ): Collection<FuzzySubstringSearchState<T>>? {
 
-        if (!forceReturn && (searchVariables.isGatherState || matches())) {
-            return null
-        }
-
-        return listOf(
-            FuzzySubstringSearchState(
-                searchRequest = searchRequest,
-                searchVariables = SearchVariables(
-                    node = nextNode,
-                    sequence = StringBuilder(searchVariables.sequence).append(nextNode.string),
-                    isGatherState = false
-                ),
-                searchCoordinates = SearchCoordinates(
-                    startMatchIndex = null,
-                    endMatchIndex = null,
-                    searchIndex = 0,
-                    numberOfMatches = 0,
-                    numberOfErrors = 0,
+        return when {
+            !forceReturn && (searchVariables.isGatherState || matches()) ->
+                null
+            else ->
+                listOf(
+                    FuzzySubstringSearchState(
+                        searchRequest = searchRequest,
+                        searchVariables = SearchVariables(
+                            node = nextNode,
+                            sequence = StringBuilder(searchVariables.sequence).append(nextNode.string),
+                            isGatherState = false
+                        ),
+                        searchCoordinates = SearchCoordinates(
+                            startMatchIndex = null,
+                            endMatchIndex = null,
+                            searchIndex = 0,
+                            numberOfMatches = 0,
+                            numberOfErrors = 0,
+                        )
+                    )
                 )
-            )
-        )
+        }
     }
 
     private fun buildGatherState(nextNode: TrieNode<T>): List<FuzzySubstringSearchState<T>> {
