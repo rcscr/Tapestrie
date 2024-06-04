@@ -181,6 +181,7 @@ class Trie<T> {
 
     private fun gatherAll(start: TrieNode<T>, startSequence: String): MutableMap<String, T> {
         val results = mutableMapOf<String, T>()
+
         val queue = ArrayDeque<Pair<TrieNode<T>, String>>()
         queue.add(Pair(start, startSequence))
 
