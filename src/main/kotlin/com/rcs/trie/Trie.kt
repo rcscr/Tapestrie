@@ -59,16 +59,16 @@ class Trie<T> {
                         current.next.add(nextNode)
                         current = nextNode
 
-                        // we are at the last character of the input
-                        // we have a string going this far, so we modify it, setting it to complete
-                        // (if its already complete, that means we have already inserted the same input before)
-                        // see TrieTest.testAddShorterAfter
+                    // we are at the last character of the input
+                    // we have a string going this far, so we modify it, setting it to complete
+                    // (if its already complete, that means we have already inserted the same input before)
+                    // see TrieTest.testAddShorterAfter
                     } else if (reachedEndOfInput) {
                         previousValue = nextMatchingNode.value
                         nextMatchingNode.value = value
 
-                        // there is a matching node, but we're not at the end of the input yet,
-                        // so go on to the next character
+                    // there is a matching node, but we're not at the end of the input yet,
+                    // so go on to the next character
                     } else {
                         current = nextMatchingNode
                     }
