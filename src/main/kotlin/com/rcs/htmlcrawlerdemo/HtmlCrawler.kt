@@ -46,7 +46,7 @@ class HtmlCrawler(
 
         println("Done initializing crawler; " +
                 "indexed ${counts.pages} HTML pages and ${counts.uniqueTokens} unique tokens; " +
-                "took $durationMillis ms")
+                "took ${durationMillis}ms")
 
         this.initialized = true
     }
@@ -96,6 +96,7 @@ class HtmlCrawler(
         try {
             htmlContent = htmlClient.getAsString(baseUrl + relativeUrl)
         } catch (e: IOException) {
+            e.printStackTrace()
             println("Error fetching ${baseUrl + relativeUrl} - not indexing page")
             return IndexCounts(0, 0)
         }
