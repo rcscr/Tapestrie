@@ -12,13 +12,13 @@ class HtmlClient {
     fun getAsString(url: String): String {
         val con = URI(url).toURL().openConnection() as HttpURLConnection
         con.requestMethod = "GET"
-        val `in` = BufferedReader(InputStreamReader(con.inputStream))
+        val inputStream = BufferedReader(InputStreamReader(con.inputStream))
         var inputLine: String?
         val content = StringBuilder()
-        while ((`in`.readLine().also { inputLine = it }) != null) {
+        while ((inputStream.readLine().also { inputLine = it }) != null) {
             content.append(inputLine)
         }
-        `in`.close()
+        inputStream.close()
         return content.toString()
     }
 }
