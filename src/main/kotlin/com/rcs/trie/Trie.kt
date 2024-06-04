@@ -118,7 +118,7 @@ class Trie<T> {
             val last = deque.removeLast()
 
             if (last.completes()) {
-                // look back until we find the first the last character that is not used for other strings
+                // look back until we find the first character that is used for other strings
                 var j = inputString.length - 1
                 var nodeFromWhichToUnlink: TrieNode<T>
                 while (!deque.removeLast().also { nodeFromWhichToUnlink = it }.isUsedForOtherStrings()) {
