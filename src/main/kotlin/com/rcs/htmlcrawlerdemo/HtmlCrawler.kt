@@ -124,7 +124,7 @@ class HtmlCrawler(
     private fun indexPage(relativeUrl: String, htmlContent: String): Int {
         println("Indexing ${baseUrl + relativeUrl}")
 
-        var newWordsIndexed = 0
+        var newTokensIndexed = 0
 
         htmlTokenizer.tokenize(htmlContent)
             .forEach { entry ->
@@ -136,7 +136,7 @@ class HtmlCrawler(
 
                     synchronized(newKeys) {
                         if (newKeys.isEmpty()) {
-                            newWordsIndexed++
+                            newTokensIndexed++
                         }
 
                         // stores only relative URLs in order to minimize storage space
@@ -151,6 +151,6 @@ class HtmlCrawler(
                 }
             }
 
-        return newWordsIndexed
+        return newTokensIndexed
     }
 }
