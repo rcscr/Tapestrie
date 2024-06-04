@@ -86,9 +86,9 @@ class FuzzySubstringSearcher {
             if (existing == null) {
                 this[match.string] = match
             } else {
-                val bestFirst = mutableListOf(existing, match)
-                    .sortedWith(TrieSearchResultComparator.byBestMatchFirst)
-                this[match.string] = bestFirst.first()
+                when (TrieSearchResultComparator.byBestMatchFirst.compare(match, existing)) {
+                    -1 /* = match comes before */ -> this[match.string] = match
+                }
             }
         }
     }
