@@ -12,7 +12,7 @@ The `Trie` implemented here is thread-safe, unit-tested, and able to efficiently
 
 A demo of an `HtmlCrawler` has also been provided to illustrate the usage of the `Trie`.
 
-Searching the Linux manual (1,860 HTML pages and 21,181 unique tokens) for `computer` with `errorTolerance=2` takes less than one second and will return all of these hits:
+Searching the Linux manual (1,860 HTML pages and 21,181 unique tokens) for `computer` with `errorTolerance=2` takes less than one second and will return HTML pages containing any of these hits:
 
 <pre>
 [computer, computers, computerr1, compute, computed, computes, compuserve, comput, compiler, compugen, competes, compilers, computing, computation, compatgroup, computations, recomputes, minicomputer, deepcomputing]
@@ -64,10 +64,8 @@ TrieSearchResult(
 
 ### Other notes
 
-The fuzzy search algorithm now implements a culling strategy to discard nodes whose strings are not long enough to provide a match - this has brought down the performance of the above search from 25 seconds to under 1 second! Therefore, searches for longer strings are faster, because fewer strings will be examined.
+As an optimization, each node in the `Trie` stores its depth: the max size of a word stemming from it. This allowed me to implement a culling strategy to swiftly discard nodes whose strings are not long enough to provide a match. This has brought down the performance of the above search from 25 seconds to under 1 second! Therefore, searches for longer strings are faster, because fewer strings will be examined.
 
-The example above is quite extreme with more than 20,000 strings. But even so, the fuzzy search took less than 1 second, which is quite impressive. However, this in-memory `Trie` certainly has its limitations. In many scenarios, a solution like `ElasticSearch` should be used instead.
+The example above is quite extreme with more than 20,000 strings. But even so, the fuzzy search took less than 1 second, which is quite impressive. However, this in-memory `Trie` certainly has its limitations; for one, it is quite memory-intensive. In many scenarios, a solution like `ElasticSearch` should be used instead.
 
-In general, the greater the error tolerance, the slower the performance, because there are fewer paths to explore.
-
-A shallow `Trie`, where each entry is short (i.e. words) offers the best performance, but with the limitation that you can only search for short strings. A `Trie` that stores longer text (i.e. sentences) allows searching for phrases (multiple words chained together), but is slower.
+In general, the greater the error tolerance, the slower the performance, because there are fewer paths to explore. Furthermore, a shallow `Trie`, where each entry is short (i.e. words) offers the best performance, but with the limitation that you can only search for short strings. A `Trie` that stores longer text (i.e. sentences) allows searching for phrases (multiple words chained together), but is slower.
