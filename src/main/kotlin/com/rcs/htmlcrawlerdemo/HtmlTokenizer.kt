@@ -20,7 +20,7 @@ class HtmlTokenizer {
         // Convert to lowercase
         val lowerCase = singleSpace.lowercase(Locale.getDefault())
 
-        // Split, remove blanks, and remove duplicates (by converting to Set)
+        // Split, remove blanks, and collect as a histogram
         return lowerCase.split(" ")
             .filter { it.isNotBlank() }
             .fold(mutableMapOf()) { map, next ->
