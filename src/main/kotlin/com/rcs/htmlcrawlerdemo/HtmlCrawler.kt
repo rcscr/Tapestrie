@@ -5,12 +5,14 @@ import com.rcs.trie.Trie
 import java.io.IOException
 import java.util.LinkedList
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutorService
 
 class HtmlCrawler(
     private val baseUrl: String,
     private val htmlTokenizer: HtmlTokenizer,
     private val htmlUrlFinder: HtmlUrlFinder,
-    private val htmlClient: HtmlClient
+    private val htmlClient: HtmlClient,
+    private val executorService: ExecutorService
 ) {
 
     private val trie: Trie<LinkedList<HtmlIndexEntry>> = Trie() // maps a token to a set of URLs where the token can be found
@@ -95,10 +97,12 @@ class HtmlCrawler(
         val wordsIndexed = indexPage(relativeUrl, htmlContent)
 
         val newCounts = htmlUrlFinder.findRelativeUrls(htmlContent)
-            .parallelStream()
             .map { u -> fixUrl("/$relativeUrl", u) }
-            .map { u -> crawl(u, visited) }
-            .reduce(Pair(0, 0)) { a, b -> Pair(a.first + b.first, a.second + b.second) }
+            .map { u -> executorService.submit<Pair<Int, Int>> { crawl(u, visited) } }
+            .map { it.get() }
+            .fold(Pair(0, 0)) { result, next ->
+                Pair(next.first + result.first, next.second + result.second)
+            }
 
         return Pair(1 + newCounts.first, wordsIndexed + newCounts.second)
     }
