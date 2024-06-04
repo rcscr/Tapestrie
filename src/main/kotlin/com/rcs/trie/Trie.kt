@@ -154,9 +154,9 @@ class Trie<T> {
     }
 
     fun matchByPrefix(prefix: String): Map<String, T> {
-        return prefixMatchUpTo(prefix)?.let {
-            gatherAll(it, prefix)
-        } ?: mutableMapOf()
+        return prefixMatchUpTo(prefix)
+            ?.let { gatherAll(it, prefix) }
+            ?: mutableMapOf()
     }
 
     fun matchBySubstring(search: String): List<TrieSearchResult<T>> {
