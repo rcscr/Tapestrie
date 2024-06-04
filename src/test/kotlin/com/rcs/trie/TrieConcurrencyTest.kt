@@ -37,7 +37,7 @@ class TrieConcurrencyTest {
             }
             .forEach { it.get() }
 
-        assertThat(trie.matchByPrefix("").size).isEqualTo(0)
+        assertThat(trie.isEmpty()).isTrue()
     }
 
     private fun getRandomString(): String {

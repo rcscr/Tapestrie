@@ -12,6 +12,10 @@ class Trie<T> {
         root = TrieNode("", null, mutableSetOf())
     }
 
+    fun isEmpty(): Boolean {
+        return root.next.isEmpty()
+    }
+
     /**
      * Returns the previous value, if any, associated with this key (inputString)
      */
