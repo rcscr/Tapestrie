@@ -126,8 +126,8 @@ class Trie<T> {
                 }
 
                 // unlink this last character and update sizes
-                val charToUnlink = inputString[j].toString()
                 synchronized(nodeFromWhichToUnlink.next) {
+                    val charToUnlink = inputString[j].toString()
                     nodeFromWhichToUnlink.next.removeIf { it.string == charToUnlink }
                     updateSizes(nodeFromWhichToUnlink, nodeFromWhichToUnlink.next.maxByOrNull { it.size })
                 }
