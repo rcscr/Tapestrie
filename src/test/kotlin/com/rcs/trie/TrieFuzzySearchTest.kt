@@ -1,13 +1,12 @@
 package com.rcs.trie
 
-import org.assertj.core.api.SoftAssertions
 import kotlin.test.Test
 import com.rcs.trie.FuzzySubstringMatchingStrategy.*
+import org.assertj.core.api.Assertions.assertThat
 
 class TrieFuzzySearchTest {
 
     data class FuzzySearchScenario(
-        val description: String,
         val entries: Set<String>,
         val search: String,
         val errorTolerance: Int,
@@ -15,149 +14,146 @@ class TrieFuzzySearchTest {
         val expectedResults: List<TrieSearchResult<Unit>>
     )
 
-    @Test
-    fun `test matchBySubstringFuzzy with predefined scenarios`(): Unit = with(fuzzySearchScenarios())  {
-        val softAssertions = SoftAssertions()
-
-        this.forEach { scenario ->
-            // Arrange
-            val trie = Trie<Unit>()
-            scenario.entries.forEach {
-                trie.put(it, Unit)
-            }
-
-            // Act
-            val result = trie.matchBySubstringFuzzy(
-                scenario.search, scenario.errorTolerance, scenario.matchingStrategy)
-
-            // Assert
-            softAssertions.assertThat(result)
-                .`as`(scenario.description)
-                .isEqualTo(scenario.expectedResults)
+    private fun runTestScenario(scenario: FuzzySearchScenario) {
+        // Arrange
+        val trie = Trie<Unit>()
+        scenario.entries.forEach {
+            trie.put(it, Unit)
         }
 
-        softAssertions.assertAll()
+        // Act
+        val result = trie.matchBySubstringFuzzy(
+            scenario.search, scenario.errorTolerance, scenario.matchingStrategy)
+
+        // Assert
+        assertThat(result)
+            .isEqualTo(scenario.expectedResults)
     }
 
-    private fun fuzzySearchScenarios(): List<FuzzySearchScenario> {
-        val scenarios = mutableListOf<FuzzySearchScenario>()
+    @Test
+    fun `matching strategies LIBERAL, FUZZY_PREFIX, EXACT_PREFIX, FUZZY_POSTFIX do not match an edge case`() {
+        arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX, FUZZY_POSTFIX)
+            .map {
+                FuzzySearchScenario(
+                    setOf("ionice"),
+                    "indices",
+                    2,
+                    it,
+                    listOf()
+                )
+            }
+            .forEach { runTestScenario(it) }
+    }
 
-        scenarios.addAll(
-            arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
-                .map {
-                    FuzzySearchScenario(
-                        "MatchingStrategy=$it does not match an edge case",
-                        setOf("ionice"),
-                        "indices",
-                        2,
-                        it,
-                        listOf()
+    @Test
+    fun `matching strategies LIBERAL, FUZZY_PREFIX, EXACT_PREFIX match missing characters in the data`() {
+        arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
+            .map {
+                FuzzySearchScenario(
+                    setOf("this is rafael"),
+                    "raphael",
+                    2,
+                    it,
+                    listOf(
+                        TrieSearchResult("this is rafael", Unit, "rafael", "rafael", 5, 2, 0, false, false)
                     )
-                }
-        )
+                )
+            }
+            .forEach { runTestScenario(it) }
+    }
 
-        scenarios.addAll(
-            arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
-                .map {
-                    FuzzySearchScenario(
-                        "MatchingStrategy=$it matches missing characters in the data",
-                        setOf("this is rafael"),
-                        "raphael",
-                        2,
-                        it,
-                        listOf(
-                            TrieSearchResult("this is rafael", Unit, "rafael", "rafael", 5, 2, 0, false, false)
-                        )
+    @Test
+    fun `matching strategies LIBERAL, FUZZY_PREFIX, EXACT_PREFIX match missing characters in the search keyword`() {
+        arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
+            .map {
+                FuzzySearchScenario(
+                    setOf("this is raphael"),
+                    "rafael",
+                    2,
+                    it,
+                    listOf(
+                        TrieSearchResult("this is raphael", Unit, "raphael", "raphael", 5, 2, 0, false, false)
                     )
-                }
-        )
+                )
+            }
+            .forEach { runTestScenario(it) }
+    }
 
-        scenarios.addAll(
-            arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
-                .map {
-                    FuzzySearchScenario(
-                        "MatchingStrategy=$it matches missing characters in the search keyword",
-                        setOf("this is raphael"),
-                        "rafael",
-                        2,
-                        it,
-                        listOf(
-                            TrieSearchResult("this is raphael", Unit, "raphael", "raphael", 5, 2, 0, false, false)
-                        )
+    @Test
+    fun `matching strategies LIBERAL, FUZZY_PREFIX, EXACT_PREFIX match an incomplete string`() {
+        arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
+            .map {
+                FuzzySearchScenario(
+                    setOf("ma", "man", "manu", "many", "manXXXual", "manXuXal"),
+                    "manual",
+                    3,
+                    it,
+                    listOf(
+                        TrieSearchResult("manXuXal", Unit, "manXuXal", "manXuXal", 6, 2, 0, false, false),
+                        TrieSearchResult("manXXXual", Unit, "manXXXual", "manXXXual",  6, 3, 0, false, false),
+                        TrieSearchResult("manu", Unit, "manu", "manu", 4, 2, 0, false, false),
+                        TrieSearchResult("man", Unit, "man", "man", 3, 3, 0, false, false),
+                        TrieSearchResult("many", Unit, "man", "many", 3, 3, 0, false, false),
                     )
-                }
-        )
+                )
+            }
+            .forEach { runTestScenario(it) }
+    }
 
-        scenarios.addAll(
-            arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
-                .map {
-                    FuzzySearchScenario(
-                        "MatchingStrategy=$it matches an incomplete string, but only if it has enough characters to satisfy match",
-                        setOf("ma", "man", "manu", "many", "manXXXual", "manXuXal"),
-                        "manual",
-                        3,
-                        it,
-                        listOf(
-                            TrieSearchResult("manXuXal", Unit, "manXuXal", "manXuXal", 6, 2, 0, false, false),
-                            TrieSearchResult("manXXXual", Unit, "manXXXual", "manXXXual",  6, 3, 0, false, false),
-                            TrieSearchResult("manu", Unit, "manu", "manu", 4, 2, 0, false, false),
-                            TrieSearchResult("man", Unit, "man", "man", 3, 3, 0, false, false),
-                            TrieSearchResult("many", Unit, "man", "many", 3, 3, 0, false, false),
-                        )
+    @Test
+    fun `matching strategies LIBERAL, FUZZY_PREFIX, EXACT_PREFI match strings that stem from shorter, incomplete string`() {
+        arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
+            .map {
+                FuzzySearchScenario(
+                    setOf("m", "ma", "man", "manXuXal"),
+                    "manual",
+                    3,
+                    it,
+                    listOf(
+                        TrieSearchResult("manXuXal", Unit, "manXuXal", "manXuXal", 6, 2, 0, false, false),
+                        TrieSearchResult("man", Unit, "man", "man", 3, 3, 0, false, false),
                     )
-                }
-        )
+                )
+            }
+            .forEach { runTestScenario(it) }
+    }
 
-        scenarios.addAll(
+    @Test
+    fun `matching strategies LIBERAL, FUZZY_PREFIX, EXACT_PREFIX, FUZZY_POSTFIX match a super long word`() {
+        arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX, FUZZY_POSTFIX)
+            .map {
+                FuzzySearchScenario(
+                    setOf("blah blah indistinguishable blah blah"),
+                    "indic",
+                    1,
+                    it,
+                    listOf(TrieSearchResult("blah blah indistinguishable blah blah", Unit, "indi", "indistinguishable", 4, 1, 0, false, false))
+                )
+            }
+            .forEach { runTestScenario(it) }
+    }
+
+    @Test
+    fun `matching strategies LIBERAL, FUZZY_PREFIX, EXACT_PREFIX, FUZZY_POSTFIX match after an initial failed attempt, returning only the best possible match`() {
+        arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX, FUZZY_POSTFIX)
+            .map {
+                FuzzySearchScenario(
+                    setOf("lalala0 lalala1 lalala2 lalala3"),
+                    "lalala2",
+                    2,
+                    it,
+                    listOf(TrieSearchResult("lalala0 lalala1 lalala2 lalala3", Unit, "lalala2", "lalala2", 7, 0, 0, false, true))
+                )
+            }
+            .forEach { runTestScenario(it) }
+    }
+
+    @Test
+    fun `matching strategies LIBERAL, FUZZY_PREFIX, EXACT_PREFIX match with error between matching characters`() {
+        listOf(
             arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
                 .map {
                     FuzzySearchScenario(
-                        "MatchingStrategy=$it matches strings that stem from shorter, incomplete string",
-                        setOf("m", "ma", "man", "manXuXal"),
-                        "manual",
-                        3,
-                        it,
-                        listOf(
-                            TrieSearchResult("manXuXal", Unit, "manXuXal", "manXuXal", 6, 2, 0, false, false),
-                            TrieSearchResult("man", Unit, "man", "man", 3, 3, 0, false, false),
-                        )
-                    )
-                }
-        )
-
-        scenarios.addAll(
-            arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
-                .map {
-                    FuzzySearchScenario(
-                        "MatchingStrategy=$it matches a super long word",
-                        setOf("blah blah indistinguishable blah blah"),
-                        "indic",
-                        1,
-                        it,
-                        listOf(TrieSearchResult("blah blah indistinguishable blah blah", Unit, "indi", "indistinguishable", 4, 1, 0, false, false))
-                    )
-                }
-        )
-
-        scenarios.addAll(
-            arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
-                .map {
-                    FuzzySearchScenario(
-                        "MatchingStrategy=$it matches after an initial failed attempt, returning only the best possible match",
-                        setOf("lalala0 lalala1 lalala2 lalala3"),
-                        "lalala2",
-                        2,
-                        it,
-                        listOf(TrieSearchResult("lalala0 lalala1 lalala2 lalala3", Unit, "lalala2", "lalala2", 7, 0, 0, false, true))
-                    )
-                }
-        )
-
-        scenarios.addAll(listOf(
-            arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
-                .map {
-                    FuzzySearchScenario(
-                        "MatchingStrategy=$it matches with error between matching characters",
                         setOf("indexes", "indices"),
                         "indices",
                         2,
@@ -171,7 +167,6 @@ class TrieFuzzySearchTest {
             arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
                 .map {
                     FuzzySearchScenario(
-                        "MatchingStrategy=$it matches with error between matching characters",
                         setOf("indexes", "indices"),
                         "indexes",
                         2,
@@ -181,13 +176,15 @@ class TrieFuzzySearchTest {
                             TrieSearchResult("indices", Unit, "indices", "indices", 5, 2, 0, false, false)
                         )
                     )
-                },
-            ).flatten()
-        )
+                }
+        ).flatten()
+            .forEach { runTestScenario(it) }
+    }
 
-        scenarios.addAll(listOf(
+    @Test
+    fun `matching strategy LIBERAL matches errors in beginning`() {
+        listOf(
             FuzzySearchScenario(
-                "MatchingStrategy=${LIBERAL} matches substring with errorTolerance=0",
                 setOf("lala 000123456789000 hehe", "lala 000x23456789000 hehe", "lala 000xx3456789000 hehe", "lala 000xxx456789000 hehe"),
                 "123456789",
                 0,
@@ -195,7 +192,6 @@ class TrieFuzzySearchTest {
                 listOf(TrieSearchResult("lala 000123456789000 hehe", Unit, "123456789", "000123456789000", 9, 0, 3, false, false))
             ),
             FuzzySearchScenario(
-                "MatchingStrategy=${LIBERAL} matches errors in beginning with errorTolerance=1",
                 setOf("lala 000x23456789000 hehe", "lala 000x23456789000 hehe", "lala 000xx3456789000 hehe", "lala 000xxx456789000 hehe"),
                 "123456789",
                 1,
@@ -203,7 +199,6 @@ class TrieFuzzySearchTest {
                 listOf(TrieSearchResult("lala 000x23456789000 hehe", Unit, "23456789", "000x23456789000", 8, 1, 4, false, false))
             ),
             FuzzySearchScenario(
-                "MatchingStrategy=${LIBERAL} matches errors in beginning with errorTolerance=2",
                 setOf("lala 000x23456789000 hehe", "lala 000x23456789000 hehe", "lala 000xx3456789000 hehe", "lala 000xxx456789000 hehe"),
                 "123456789",
                 2,
@@ -213,25 +208,28 @@ class TrieFuzzySearchTest {
                     TrieSearchResult("lala 000xx3456789000 hehe", Unit, "3456789", "000xx3456789000", 7, 2, 5, false, false)
                 )
             )
-        ))
+        ).forEach { runTestScenario(it) }
+    }
 
-        scenarios.addAll(listOf(
-            FuzzySearchScenario(
-                "MatchingStrategy=${EXACT_PREFIX} only matches exact beginning of word",
-                setOf("lalala index", "lalala indix", "lalala ondex"),
-                "index",
-                1,
-                EXACT_PREFIX,
-                listOf(
-                    TrieSearchResult("lalala index", Unit, "index", "index", 5, 0, 0, false, true),
-                    TrieSearchResult("lalala indix", Unit, "indix", "indix", 4, 1, 0, false, false)
-                )
+    @Test
+    fun `matching strategy EXACT_PREFIX only matches exact beginning of word`() {
+        val scenario = FuzzySearchScenario(
+            setOf("lalala index", "lalala indix", "lalala ondex"),
+            "index",
+            1,
+            EXACT_PREFIX,
+            listOf(
+                TrieSearchResult("lalala index", Unit, "index", "index", 5, 0, 0, false, true),
+                TrieSearchResult("lalala indix", Unit, "indix", "indix", 4, 1, 0, false, false)
             )
-        ))
+        )
+        runTestScenario(scenario)
+    }
 
-        scenarios.addAll(listOf(
+    @Test
+    fun `matching strategy FUZZY_PREFIX only matches beginning of word with error tolerance`() {
+        listOf(
             FuzzySearchScenario(
-                "MatchingStrategy=${FUZZY_PREFIX} only matches beginning of word with errorTolerance=1",
                 setOf("lalaindex", "index", "ondex", "oldex", "omtex", "lalala index", "lalala ondex", "lalala oldex", "lalala omtex"),
                 "index",
                 1,
@@ -244,7 +242,6 @@ class TrieFuzzySearchTest {
                 )
             ),
             FuzzySearchScenario(
-                "MatchingStrategy=${FUZZY_PREFIX} only matches beginning of word with errorTolerance=2",
                 setOf("lalaindex", "index", "ondex", "oldex", "omtex", "lalala index", "lalala ondex", "lalala oldex", "lalala omtex"),
                 "index",
                 2,
@@ -258,55 +255,55 @@ class TrieFuzzySearchTest {
                     TrieSearchResult("lalala oldex", Unit, "dex", "oldex", 3, 2, 2, false, false)
                 )
             )
-        ))
+        ).forEach { runTestScenario(it) }
+    }
 
-        scenarios.add(
-            FuzzySearchScenario(
-                "MatchingStrategy=${LIBERAL} will return results sorted by best match",
-                setOf("manual", "manuel", "manuem", "emanuel", "lemanuel", "lemanuell", "manually", "manuals", "linux manual"),
-                "manual",
-                3,
-                LIBERAL,
-                listOf(
-                    // matches whole sequence is highest ranking
-                    TrieSearchResult("manual", Unit, "manual", "manual", 6, 0, 0, true, true),
-                    // matches a whole word is second-highest ranking
-                    TrieSearchResult("linux manual", Unit, "manual", "manual", 6, 0, 0, false, true),
-                    // matches the highest possible number of characters, but it's neither the whole sequence nor a whole word
-                    TrieSearchResult("manuals", Unit, "manual", "manuals", 6, 0, 0, false, false),
-                    // same as above, but the string is longer, so is ranked lower
-                    TrieSearchResult("manually", Unit, "manual", "manually", 6, 0, 0, false, false),
-                    // partial match, with one error
-                    TrieSearchResult("manuel", Unit, "manuel", "manuel", 5, 1, 0, false, false),
-                    // partial match, with two errors
-                    TrieSearchResult("manuem", Unit, "manu", "manuem", 4, 2, 0, false, false),
-                    // prefix match = 1
-                    TrieSearchResult("emanuel", Unit, "manuel", "emanuel", 5, 1, 1, false, false),
-                    // prefix match = 2
-                    TrieSearchResult("lemanuel", Unit, "manuel", "lemanuel", 5, 1, 2, false, false),
-                    // prefix match = 2 but word is longer, so ranked lower
-                    TrieSearchResult("lemanuell", Unit, "manuel", "lemanuell", 5, 1, 2, false, false)
-                )
+    @Test
+    fun `returns results sorted by best match`() {
+        val scenario = FuzzySearchScenario(
+            setOf("manual", "manuel", "manuem", "emanuel", "lemanuel", "lemanuell", "manually", "manuals", "linux manual"),
+            "manual",
+            3,
+            LIBERAL,
+            listOf(
+                // matches whole sequence is highest ranking
+                TrieSearchResult("manual", Unit, "manual", "manual", 6, 0, 0, true, true),
+                // matches a whole word is second-highest ranking
+                TrieSearchResult("linux manual", Unit, "manual", "manual", 6, 0, 0, false, true),
+                // matches the highest possible number of characters, but it's neither the whole sequence nor a whole word
+                TrieSearchResult("manuals", Unit, "manual", "manuals", 6, 0, 0, false, false),
+                // same as above, but the string is longer, so is ranked lower
+                TrieSearchResult("manually", Unit, "manual", "manually", 6, 0, 0, false, false),
+                // partial match, with one error
+                TrieSearchResult("manuel", Unit, "manuel", "manuel", 5, 1, 0, false, false),
+                // partial match, with two errors
+                TrieSearchResult("manuem", Unit, "manu", "manuem", 4, 2, 0, false, false),
+                // prefix match = 1
+                TrieSearchResult("emanuel", Unit, "manuel", "emanuel", 5, 1, 1, false, false),
+                // prefix match = 2
+                TrieSearchResult("lemanuel", Unit, "manuel", "lemanuel", 5, 1, 2, false, false),
+                // prefix match = 2 but word is longer, so ranked lower
+                TrieSearchResult("lemanuell", Unit, "manuel", "lemanuell", 5, 1, 2, false, false)
             )
         )
+        runTestScenario(scenario)
+    }
 
-        scenarios.add(
-            FuzzySearchScenario(
-                "MatchingStrategy=${FUZZY_POSTFIX} will only match errors at the end",
-                setOf("rafael", "raphael", "raffael", "laraffael", "raffaell", "raffaella", "raffaello"),
-                "raffaello",
-                2,
-                FUZZY_POSTFIX,
-                listOf(
-                    TrieSearchResult("raffaello", Unit, "raffaello", "raffaello", 9, 0, 0, true, true),
-                    TrieSearchResult("raffaell", Unit, "raffaell", "raffaell", 8, 1, 0, false, false),
-                    TrieSearchResult("raffaella", Unit, "raffaell", "raffaella", 8, 1, 0, false, false),
-                    TrieSearchResult("raffael", Unit, "raffael", "raffael", 7, 2, 0, false, false),
-                    TrieSearchResult("laraffael", Unit, "raffael", "laraffael", 7, 2, 2, false, false)
-                )
+    @Test
+    fun `matching strategy FUZZY_POSTFIX will only accept errors at the end`() {
+        val scenario = FuzzySearchScenario(
+            setOf("rafael", "raphael", "raffael", "laraffael", "raffaell", "raffaella", "raffaello"),
+            "raffaello",
+            2,
+            FUZZY_POSTFIX,
+            listOf(
+                TrieSearchResult("raffaello", Unit, "raffaello", "raffaello", 9, 0, 0, true, true),
+                TrieSearchResult("raffaell", Unit, "raffaell", "raffaell", 8, 1, 0, false, false),
+                TrieSearchResult("raffaella", Unit, "raffaell", "raffaella", 8, 1, 0, false, false),
+                TrieSearchResult("raffael", Unit, "raffael", "raffael", 7, 2, 0, false, false),
+                TrieSearchResult("laraffael", Unit, "raffael", "laraffael", 7, 2, 2, false, false)
             )
         )
-
-        return scenarios
+        runTestScenario(scenario)
     }
 }
