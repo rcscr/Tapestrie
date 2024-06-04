@@ -7,6 +7,13 @@ import java.util.LinkedList
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 
+private data class IndexCounts(val pages: Int, val uniqueTokens: Int) {
+
+    fun add(other: IndexCounts): IndexCounts {
+        return IndexCounts(pages + other.pages, uniqueTokens + other.uniqueTokens)
+    }
+}
+
 class HtmlCrawler(
     private val baseUrl: String,
     private val htmlTokenizer: HtmlTokenizer,
@@ -24,7 +31,7 @@ class HtmlCrawler(
 
         val currentTimeMillis = System.currentTimeMillis()
 
-        var counts: Pair<Int, Int>
+        var counts: IndexCounts
 
         // synchronization prevents searching while crawling/indexing
         synchronized(this.trie) {
@@ -35,7 +42,8 @@ class HtmlCrawler(
         val durationMillis = System.currentTimeMillis() - currentTimeMillis
 
         println("Done initializing crawler; " +
-                "indexed ${counts.first} HTML pages and ${counts.second} unique tokens; took $durationMillis ms")
+                "indexed ${counts.pages} HTML pages and ${counts.uniqueTokens} unique tokens; " +
+                "took $durationMillis ms")
 
         this.initialized = true
     }
@@ -75,15 +83,10 @@ class HtmlCrawler(
             .toList()
     }
 
-    /**
-     * returns
-     * Pair.first = number of pages indexed
-     * Pair.second = number of unique words indexed
-     */
-    private fun crawl(relativeUrl: String, visited: ConcurrentHashMap<String, Boolean?>): Pair<Int, Int> {
+    private fun crawl(relativeUrl: String, visited: ConcurrentHashMap<String, Boolean?>): IndexCounts {
         // Use putIfAbsent to check and mark the URL atomically
         if (visited.putIfAbsent(relativeUrl, true) != null) {
-            return Pair(0, 0) // URL already visited
+            return IndexCounts(0, 0) // URL already visited
         }
 
         val htmlContent: String
@@ -91,20 +94,18 @@ class HtmlCrawler(
             htmlContent = htmlClient.getAsString(baseUrl + relativeUrl)
         } catch (e: IOException) {
             println("Error fetching ${baseUrl + relativeUrl} - not indexing page")
-            return Pair(0, 0)
+            return IndexCounts(0, 0)
         }
 
-        val wordsIndexed = indexPage(relativeUrl, htmlContent)
+        val uniqueTokens = indexPage(relativeUrl, htmlContent)
 
         val newCounts = htmlUrlFinder.findRelativeUrls(htmlContent)
             .map { u -> fixUrl("/$relativeUrl", u) }
-            .map { u -> executorService.submit<Pair<Int, Int>> { crawl(u, visited) } }
+            .map { u -> executorService.submit<IndexCounts> { crawl(u, visited) } }
             .map { it.get() }
-            .fold(Pair(0, 0)) { result, next ->
-                Pair(next.first + result.first, next.second + result.second)
-            }
+            .fold(IndexCounts(0, 0)) { result, next -> result.add(next) }
 
-        return Pair(1 + newCounts.first, wordsIndexed + newCounts.second)
+        return IndexCounts(1 + newCounts.pages, uniqueTokens + newCounts.uniqueTokens)
     }
 
     private fun fixUrl(relativeUrl: String, additionalPath: String): String {
