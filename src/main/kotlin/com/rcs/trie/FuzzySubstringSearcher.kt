@@ -20,6 +20,7 @@ class FuzzySubstringSearcher {
             val queue = ArrayDeque<FuzzySubstringSearchState<T>>()
             queue.addAll(getInitialStates(root, search, errorTolerance, matchingStrategy))
 
+            // breadth-first search
             while (queue.isNotEmpty()) {
                 val state = queue.removeFirst()
 
