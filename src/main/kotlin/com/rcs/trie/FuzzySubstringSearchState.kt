@@ -8,7 +8,9 @@ class FuzzySubstringSearchState<T> private constructor(
 
     fun nextStates(): Collection<FuzzySubstringSearchState<T>> {
         synchronized(searchVariables.node.next) {
-            return searchVariables.node.next.map { nextStates(it) ?: listOf() }.flatten()
+            return searchVariables.node.next
+                .map { nextStates(it) ?: listOf() }
+                .flatten()
         }
     }
 
