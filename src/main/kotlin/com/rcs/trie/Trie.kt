@@ -184,24 +184,12 @@ class Trie<T>: Iterable<Pair<String, T>> {
     }
 
     private fun gatherAll(start: TrieNode<T>, startSequence: String): MutableMap<String, T> {
-        val results = mutableMapOf<String, T>()
-
-        val queue = ArrayDeque<Pair<TrieNode<T>, String>>()
-        queue.add(Pair(start, startSequence))
-
-        while(queue.isNotEmpty()) {
-            val current = queue.removeFirst()
-            val node = current.first
-            val sequence = current.second
-            if (node.completes()) {
-                results[sequence] = node.value!!
+        return TrieIterator(start)
+            .asSequence()
+            .fold(mutableMapOf()) { map, next ->
+                map[startSequence + next.first] = next.second
+                map
             }
-            for (next in node.next) {
-                queue.add(Pair(next, sequence + next.string))
-            }
-        }
-
-        return results
     }
 
     private fun updateSizes(current: TrieNode<T>?, next: TrieNode<T>?) {
