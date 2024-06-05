@@ -133,21 +133,21 @@ class HtmlCrawler(
                 val occurrences = entry.value
 
                 synchronized(token) {
-                    val newKeys = trie.getExactly(token) ?: LinkedList()
+                    val indexEntries = trie.getExactly(token) ?: LinkedList()
 
-                    synchronized(newKeys) {
-                        if (newKeys.isEmpty()) {
+                    synchronized(indexEntries) {
+                        if (indexEntries.isEmpty()) {
                             newTokensIndexed++
                         }
 
                         // stores only relative URLs in order to minimize storage space
                         // the full URL must then be reconstructed on retrieval!
                         val newEntry = HtmlIndexEntry(relativeUrl, occurrences)
-                        newKeys.add(newEntry)
+                        indexEntries.add(newEntry)
 
-                        newKeys.sortByDescending { it.occurrences }
+                        indexEntries.sortByDescending { it.occurrences }
 
-                        trie.put(token, newKeys)
+                        trie.put(token, indexEntries)
                     }
                 }
             }
