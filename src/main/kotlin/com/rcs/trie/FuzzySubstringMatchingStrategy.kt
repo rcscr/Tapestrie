@@ -10,6 +10,6 @@ enum class FuzzySubstringMatchingStrategy {
     // similar to EXACT_PREFIX, but allows applying error tolerance in the beginning
     FUZZY_PREFIX,
 
-    // matches everywhere in the string, btu allows errors only at the end
+    // matches everywhere in the string, but allows errors only at the end
     FUZZY_POSTFIX
 }
