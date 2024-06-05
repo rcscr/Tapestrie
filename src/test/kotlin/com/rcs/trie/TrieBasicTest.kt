@@ -142,6 +142,18 @@ class TrieBasicTest {
     }
 
     @Test
+    fun testDepthEmpty() {
+        // Arrange
+        val trie = Trie<Unit>()
+
+        // Act
+        val result = trie.depth()
+
+        // Assert
+        assertThat(result).isEqualTo(0)
+    }
+
+    @Test
     fun testDepthOnAdd() {
         // Arrange
         val trie = Trie<Unit>()

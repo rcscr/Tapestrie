@@ -17,7 +17,7 @@ class Trie<T>: Iterable<Pair<String, T>> {
     }
 
     fun depth(): Int {
-        return root.size - 1
+        return root.size
     }
 
     fun isEmpty(): Boolean {
@@ -195,7 +195,7 @@ class Trie<T>: Iterable<Pair<String, T>> {
     private fun updateSizes(current: TrieNode<T>?, next: TrieNode<T>?) {
         current?.let {
             val maxDepth = current.next.filter { it != next }.maxOfOrNull { it.size } ?: 0
-            current.size = 1 + max(next?.size ?: 0, maxDepth)
+            current.size = max(next?.size ?: 0, maxDepth) + when (current) { root -> 0 else -> 1 }
             updateSizes(current.previous, current)
         }
     }
