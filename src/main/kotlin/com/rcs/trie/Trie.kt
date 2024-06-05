@@ -2,7 +2,7 @@ package com.rcs.trie
 
 import kotlin.math.max
 
-class Trie<T> {
+class Trie<T>: Iterable<Pair<String, T>> {
 
     private val sizeUpdateLock = Any()
 
@@ -22,6 +22,10 @@ class Trie<T> {
 
     fun isEmpty(): Boolean {
         return root.next.isEmpty()
+    }
+
+    override fun iterator(): Iterator<Pair<String, T>> {
+        return TrieIterator(root)
     }
 
     /**
