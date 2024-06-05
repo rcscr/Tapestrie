@@ -22,45 +22,34 @@ class HtmlClient {
         val con = URI(url).toURL().openConnection() as HttpURLConnection
         con.requestMethod = "GET"
 
-        val content = StringBuilder()
-        
-        BufferedReader(InputStreamReader(con.inputStream))
-            .use { reader ->
-                var inputLine: String?
-                while ((reader.readLine().also { inputLine = it }) != null) {
-                    content.append(inputLine)
-                }
-            }
+        val content = inputStreamToString(InputStreamReader(con.inputStream))
 
-        val stringContent = content.toString()
+        writeToCache(encodeToFilename(url), content)
 
-        writeToFile(encodeToFilename(url), stringContent)
-
-        return stringContent
+        return content
     }
 
-    private fun readFromCache(filename: String): String? {
-        val content = java.lang.StringBuilder()
-
-        val file: FileReader
-        try {
-            file = FileReader(cacheDir + filename)
-        } catch (e: FileNotFoundException) {
-            return null
-        }
-
-        BufferedReader(file)
-            .use { reader ->
+    private fun inputStreamToString(reader: Reader): String {
+        val content = StringBuilder()
+        BufferedReader(reader)
+            .use {
                 var line: String?
-                while ((reader.readLine().also { line = it }) != null) {
+                while ((it.readLine().also { line = it }) != null) {
                     content.append(line).append(System.lineSeparator())
                 }
             }
-
         return content.toString()
     }
 
-    private fun writeToFile(filename: String, content: String) {
+    private fun readFromCache(filename: String): String? {
+        return try {
+            inputStreamToString(FileReader(cacheDir + filename))
+        } catch (e: FileNotFoundException) {
+            null
+        }
+    }
+
+    private fun writeToCache(filename: String, content: String) {
         FileWriter(cacheDir + filename)
             .use { writer -> writer.write(content) }
     }
