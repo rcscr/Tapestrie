@@ -4,7 +4,7 @@ import kotlin.math.max
 
 class Trie<T>: Iterable<Pair<String, T>> {
 
-    private val sizeUpdateLock = Any()
+    private val depthUpdateLock = Any()
 
     private lateinit var root: TrieNode<T>
 
@@ -17,7 +17,7 @@ class Trie<T>: Iterable<Pair<String, T>> {
     }
 
     fun depth(): Int {
-        return root.size
+        return root.depth
     }
 
     fun isEmpty(): Boolean {
@@ -38,7 +38,7 @@ class Trie<T>: Iterable<Pair<String, T>> {
 
         var previousValue: T? = null
 
-        synchronized(sizeUpdateLock) {
+        synchronized(depthUpdateLock) {
             var current = root
 
             for (i in inputString.indices) {
@@ -57,9 +57,9 @@ class Trie<T>: Iterable<Pair<String, T>> {
                     // and then keep appending the remaining characters of the input to it
                     if (null == nextMatchingNode) {
                         val valueToInsert = if (reachedEndOfInput) value else null
-                        val size = inputString.length - i - 1
+                        val depth = inputString.length - i - 1
                         val previous = current
-                        val nextNode = TrieNode(currentCharacter, valueToInsert, size, mutableSetOf(), previous)
+                        val nextNode = TrieNode(currentCharacter, valueToInsert, depth, mutableSetOf(), previous)
                         current.next.add(nextNode)
                         current = nextNode
 
@@ -79,7 +79,7 @@ class Trie<T>: Iterable<Pair<String, T>> {
                 }
             }
 
-            updateSizes(current, current.next.maxByOrNull { it.size })
+            updateDepths(current, current.next.maxByOrNull { it.depth })
         }
 
         return previousValue
@@ -89,7 +89,7 @@ class Trie<T>: Iterable<Pair<String, T>> {
      * Returns the previous value, if any, associated with this key (inputString)
      */
     fun remove(inputString: String): T? {
-        synchronized(sizeUpdateLock) {
+        synchronized(depthUpdateLock) {
             val deque = ArrayDeque<TrieNode<T>>(inputString.length + 1)
             deque.add(root)
 
@@ -126,7 +126,7 @@ class Trie<T>: Iterable<Pair<String, T>> {
                 synchronized(nodeFromWhichToUnlink.next) {
                     val charToUnlink = inputString[j].toString()
                     nodeFromWhichToUnlink.next.removeIf { it.string == charToUnlink }
-                    updateSizes(nodeFromWhichToUnlink, nodeFromWhichToUnlink.next.maxByOrNull { it.size })
+                    updateDepths(nodeFromWhichToUnlink, nodeFromWhichToUnlink.next.maxByOrNull { it.depth })
                 }
 
                 return last.value
@@ -192,11 +192,11 @@ class Trie<T>: Iterable<Pair<String, T>> {
             }
     }
 
-    private fun updateSizes(current: TrieNode<T>?, next: TrieNode<T>?) {
+    private fun updateDepths(current: TrieNode<T>?, next: TrieNode<T>?) {
         current?.let {
-            val maxDepth = current.next.filter { it != next }.maxOfOrNull { it.size } ?: 0
-            current.size = max(next?.size ?: 0, maxDepth) + when (current) { root -> 0 else -> 1 }
-            updateSizes(current.previous, current)
+            val maxDepth = current.next.filter { it != next }.maxOfOrNull { it.depth } ?: 0
+            current.depth = max(next?.depth ?: 0, maxDepth) + when (current) { root -> 0 else -> 1 }
+            updateDepths(current.previous, current)
         }
     }
 

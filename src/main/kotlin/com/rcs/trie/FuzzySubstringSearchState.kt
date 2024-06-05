@@ -81,7 +81,7 @@ class FuzzySubstringSearchState<T> private constructor(
                 searchRequest.errorTolerance -
                 searchCoordinates.numberOfMatches
 
-        return nextNode.size < numberOfMatchingCharactersNeeded
+        return nextNode.depth < numberOfMatchingCharactersNeeded
     }
 
     private fun buildMatchState(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>>? {
