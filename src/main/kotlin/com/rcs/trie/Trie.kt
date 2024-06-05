@@ -195,7 +195,7 @@ class Trie<T>: Iterable<Pair<String, T>> {
     private fun updateDepths(current: TrieNode<T>?, next: TrieNode<T>?) {
         current?.let {
             val maxDepth = current.next.filter { it != next }.maxOfOrNull { it.depth } ?: 0
-            current.depth = max(next?.depth ?: 0, maxDepth) + when (current) { root -> 0 else -> 1 }
+            current.depth = max(next?.depth ?: 0, maxDepth) + current.string.length
             updateDepths(current.previous, current)
         }
     }
