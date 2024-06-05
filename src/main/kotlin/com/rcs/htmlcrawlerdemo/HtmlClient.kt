@@ -11,22 +11,25 @@ class HtmlClient {
 
     @Throws(IOException::class)
     fun getAsString(url: String): String {
-        readFromCache(encodeToFilename(url))
-            ?.let {
-                println("Found URL in cache: $url")
-                return it
-            }
+        return readFromCache(url)
+            ?: fetch(url).also { writeToCache(url, it) }
+    }
 
+    private fun readFromCache(url: String): String? {
+        return try {
+            val content = inputStreamToString(FileReader(cacheDir + encodeToFilename(url)))
+            println("Found URL in cache: $url")
+            content
+        } catch (e: FileNotFoundException) {
+            null
+        }
+    }
+
+    private fun fetch(url: String): String {
         println("Fetching URL: $url")
-
         val con = URI(url).toURL().openConnection() as HttpURLConnection
         con.requestMethod = "GET"
-
-        val content = inputStreamToString(InputStreamReader(con.inputStream))
-
-        writeToCache(encodeToFilename(url), content)
-
-        return content
+        return inputStreamToString(InputStreamReader(con.inputStream))
     }
 
     private fun inputStreamToString(reader: Reader): String {
@@ -41,16 +44,8 @@ class HtmlClient {
         return content.toString()
     }
 
-    private fun readFromCache(filename: String): String? {
-        return try {
-            inputStreamToString(FileReader(cacheDir + filename))
-        } catch (e: FileNotFoundException) {
-            null
-        }
-    }
-
-    private fun writeToCache(filename: String, content: String) {
-        FileWriter(cacheDir + filename)
+    private fun writeToCache(url: String, content: String) {
+        FileWriter(cacheDir + encodeToFilename(url))
             .use { writer -> writer.write(content) }
     }
 
