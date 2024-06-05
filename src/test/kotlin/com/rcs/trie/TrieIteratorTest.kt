@@ -17,20 +17,20 @@ class TrieIteratorTest {
         trie.put("Hujambo", 5)
 
         // Act
-        val iterated = mutableListOf<Pair<String, Int>>()
+        val iterated = mutableListOf<TrieEntry<Int>>()
 
-        for (pair in trie) {
-            iterated.add(pair)
+        for (entry in trie) {
+            iterated.add(entry)
         }
 
         // Assert
         assertThat(iterated).containsExactly(
-            Pair("Oi", 1),
-            Pair("Hey", 0),
-            Pair("Hallo", 3),
-            Pair("Coucou", 2),
-            Pair("Hujambo", 5),
-            Pair("Konnichiwa", 4),
+            TrieEntry("Oi", 1),
+            TrieEntry("Hey", 0),
+            TrieEntry("Hallo", 3),
+            TrieEntry("Coucou", 2),
+            TrieEntry("Hujambo", 5),
+            TrieEntry("Konnichiwa", 4),
         )
     }
 }

@@ -2,7 +2,7 @@ package com.rcs.trie
 
 import kotlin.math.max
 
-class Trie<T>: Iterable<Pair<String, T>> {
+class Trie<T>: Iterable<TrieEntry<T>> {
 
     private val depthUpdateLock = Any()
 
@@ -24,7 +24,7 @@ class Trie<T>: Iterable<Pair<String, T>> {
         return root.next.isEmpty()
     }
 
-    override fun iterator(): Iterator<Pair<String, T>> {
+    override fun iterator(): Iterator<TrieEntry<T>> {
         return TrieIterator(root)
     }
 
@@ -187,7 +187,7 @@ class Trie<T>: Iterable<Pair<String, T>> {
         return TrieIterator(start)
             .asSequence()
             .fold(mutableMapOf()) { map, next ->
-                map[startSequence + next.first] = next.second
+                map[startSequence + next.string] = next.value
                 map
             }
     }

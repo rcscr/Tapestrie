@@ -1,9 +1,9 @@
 package com.rcs.trie
 
-class TrieIterator<T>(val root: TrieNode<T>): Iterator<Pair<String, T>> {
+class TrieIterator<T>(val root: TrieNode<T>): Iterator<TrieEntry<T>> {
 
     val queue = ArrayDeque<Pair<TrieNode<T>, String>>()
-    var next: Pair<String, T>? = null
+    var next: TrieEntry<T>? = null
 
     init {
         queue.add(Pair(root, ""))
@@ -14,7 +14,7 @@ class TrieIterator<T>(val root: TrieNode<T>): Iterator<Pair<String, T>> {
         return next != null
     }
 
-    override fun next(): Pair<String, T> {
+    override fun next(): TrieEntry<T> {
         val toReturn = next
         setNext()
         return toReturn!!
@@ -30,7 +30,7 @@ class TrieIterator<T>(val root: TrieNode<T>): Iterator<Pair<String, T>> {
                 queue.add(Pair(next, sequence + next.string))
             }
             if (node.completes()) {
-                next = Pair(sequence, node.value!!)
+                next = TrieEntry(sequence, node.value!!)
                 return
             }
         }
