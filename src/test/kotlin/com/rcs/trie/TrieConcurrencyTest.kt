@@ -11,33 +11,45 @@ class TrieConcurrencyTest {
     @Test
     fun testConcurrency() {
         // Arrange
-        val trie = Trie<Int>()
-        val executorService = Executors.newFixedThreadPool(8)
+        val trie = Trie<Unit>()
+        val executorService = Executors.newVirtualThreadPerTaskExecutor()
         val randomStrings = (0..10_000).map { getRandomString() }.distinct()
 
         // Act
         randomStrings
-            .map { executorService.submit { trie.put(it, 123) } }
+            .map { executorService.submit { trie.put(it, Unit) } }
             .forEach { it.get() }
 
         // Assert
         assertThat(trie.matchByPrefix("").size).isEqualTo(randomStrings.size)
 
-        // parallel match and remove
-        randomStrings
+        // we will add new strings as we remove the old ones
+        val randomStringsAgain = (0..10_000).map { getRandomString() }.distinct()
+
+        // run both add and remove operations concurrently
+        val addFutures = randomStringsAgain
+            .map { executorService.submit { trie.put(it, Unit) } }
+
+        val removeFutures = randomStrings
             .map {
                 executorService.submit {
-                    val substring = it.substring(0, 10)
-                    val matched = trie.matchByPrefix(substring)
-                    matched.keys.forEach {
-                        assertThat(trie.remove(it)).isNotNull()
-                        assertThat(trie.getExactly(it)).isNull()
-                    }
+                    assertThat(trie.getExactly(it)).isNotNull()
+                    assertThat(trie.remove(it)).isNotNull()
+                    assertThat(trie.getExactly(it)).isNull()
                 }
             }
-            .forEach { it.get() }
 
-        assertThat(trie.isEmpty()).isTrue()
+        // wait for all tasks
+        addFutures.map { it.get() }
+        removeFutures.map { it.get() }
+
+        // assert that the Trie still contains only the new strings added
+        val actualStringsRemaining = trie.iterator()
+            .asSequence()
+            .map { it.string }
+            .toSet()
+        assertThat(actualStringsRemaining)
+            .containsExactlyInAnyOrderElementsOf(randomStringsAgain)
     }
 
     private fun getRandomString(): String {
