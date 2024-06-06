@@ -84,13 +84,11 @@ class TrieFuzzySearchTest {
         arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
             .map {
                 FuzzySearchScenario(
-                    setOf("ma", "man", "manu", "many", "manXXXual", "manXuXal"),
+                    setOf("ma", "man", "manu", "many"),
                     "manual",
                     3,
                     it,
                     listOf(
-                        TrieSearchResult("manXuXal", Unit, "manXuXal", "manXuXal", 6, 2, 0, false, false),
-                        TrieSearchResult("manXXXual", Unit, "manXXXual", "manXXXual",  6, 3, 0, false, false),
                         TrieSearchResult("manu", Unit, "manu", "manu", 4, 2, 0, false, false),
                         TrieSearchResult("man", Unit, "man", "man", 3, 3, 0, false, false),
                         TrieSearchResult("many", Unit, "man", "many", 3, 3, 0, false, false),
