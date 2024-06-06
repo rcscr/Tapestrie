@@ -115,14 +115,16 @@ class Trie<T>: Iterable<TrieEntry<T>> {
             val last = deque.removeLast()
 
             if (last.completes()) {
-                // look back until we find the first character that is used for other strings
+                // look back until we find the first node that is used for other strings
+                // (nodes that are not used for other strings can be fully removed)
                 var j = inputString.length - 1
                 var nodeFromWhichToUnlink: TrieNode<T>
                 while (!deque.removeLast().also { nodeFromWhichToUnlink = it }.isUsedForOtherStrings()) {
                     j--
                 }
 
-                // unlink this last character and update sizes
+                // remove the character from node.next, thus completing the removal
+                // then update sizes to reflect the change in depth
                 synchronized(nodeFromWhichToUnlink.next) {
                     val charToUnlink = inputString[j].toString()
                     nodeFromWhichToUnlink.next.removeIf { it.string == charToUnlink }
