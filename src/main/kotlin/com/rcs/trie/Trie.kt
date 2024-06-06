@@ -165,18 +165,18 @@ class Trie<T>: Iterable<TrieEntry<T>> {
     private fun prefixMatchUpTo(string: String): TrieNode<T>? {
         var current = root
 
-        for (element in string) {
-            val currentCharacter = element.toString()
+        for (letter in string) {
+            val currentCharacter = letter.toString()
 
-            var nextSubstring: TrieNode<T>? = null
+            var nextNode: TrieNode<T>? = null
             synchronized(current.next) {
-                nextSubstring = current.next.firstOrNull { it.string == currentCharacter }
+                nextNode = current.next.firstOrNull { it.string == currentCharacter }
             }
 
-            if (nextSubstring == null) {
+            if (nextNode == null) {
                 return null
             } else {
-                current = nextSubstring!!
+                current = nextNode!!
             }
         }
 
