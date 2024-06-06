@@ -73,9 +73,13 @@ In general, the greater the error tolerance, the slower the performance, because
 ### Build & run demo
 
 <pre>docker build . -t trie-demo</pre>
+
 <pre>
 docker run -p 4567:4567 --rm trie-demo
 </pre>
+
+Or just run `com.rcs.htmlcrawlerdemo.HtmlCrawlerDemo.kt`
+
 <pre>
 POST http://localhost:4567/search
 Body: {"keyword": "computer", "strategy": "FUZZY", "errorTolerance": 2 }
