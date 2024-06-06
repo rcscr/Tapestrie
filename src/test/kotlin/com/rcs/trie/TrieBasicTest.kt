@@ -16,7 +16,7 @@ class TrieBasicTest {
         trie.clear()
 
         // Assert
-        assertThat(trie.matchByPrefix("")).isEmpty()
+        assertThat(trie).isEmpty()
     }
 
     @Test
