@@ -2,6 +2,7 @@ package com.rcs.htmlcrawlerdemo
 
 import com.rcs.trie.FuzzySubstringMatchingStrategy
 import com.rcs.trie.Trie
+import com.rcs.trie.TrieSearchResult
 import java.io.IOException
 import java.util.LinkedList
 import java.util.concurrent.ConcurrentHashMap
@@ -51,38 +52,37 @@ class HtmlCrawler(
         this.initialized = true
     }
 
-    fun search(searchRequest: SearchRequest): List<String> {
+    fun search(searchRequest: SearchRequest): List<TrieSearchResult<List<HtmlIndexEntry>>> {
         if (!initialized) {
             throw IllegalStateException("Crawler has not been initialized; call HtmlCrawler.init() first")
         }
 
         val normalizedKeyword = searchRequest.normalizedKeyword()
 
-        var resultsWithoutBaseUrl: Collection<HtmlIndexEntry>
+        var resultsWithoutBaseUrl: Collection<TrieSearchResult<LinkedList<HtmlIndexEntry>>>
 
         // synchronization prevents searching while crawling/indexing
         synchronized(crawlingLock) {
             resultsWithoutBaseUrl = when(searchRequest.strategy) {
                 SearchStrategy.EXACT -> {
-                    trie.getExactly(normalizedKeyword) ?: setOf()
+                    trie.getExactly(normalizedKeyword)
+                        ?.let { setOf(emulatedTrieSearchResult(normalizedKeyword, it)) }
+                        ?: setOf()
                 }
                 SearchStrategy.SUBSTRING -> {
                     trie.matchBySubstring(normalizedKeyword)
-                        .flatMap { it.value }
                 }
                 SearchStrategy.FUZZY -> {
-                    // for this large data set, it's better to limit the
-                    // fuzzy strategy to the more restrictive MATCH_PREFIX
-                    // other strategies will still work, but will be slow
-                    trie.matchBySubstringFuzzy(normalizedKeyword, 2, FuzzySubstringMatchingStrategy.EXACT_PREFIX)
-                        .flatMap { it.value }
+                    trie.matchBySubstringFuzzy(
+                        normalizedKeyword,
+                        searchRequest.errorTolerance,
+                        FuzzySubstringMatchingStrategy.LIBERAL)
                 }
             }
         }
 
         return resultsWithoutBaseUrl
-            .map { it.url }
-            .map { relativeUrl: String -> baseUrl + relativeUrl }
+            .map { enrichWithBaseUrl(it) }
             .toList()
     }
 
@@ -153,5 +153,23 @@ class HtmlCrawler(
             }
 
         return newTokensIndexed
+    }
+
+    private fun emulatedTrieSearchResult(string: String, value: LinkedList<HtmlIndexEntry>): TrieSearchResult<LinkedList<HtmlIndexEntry>> {
+        return TrieSearchResult(string, value, string, string, string.length, 0, 0, true, true)
+    }
+
+    private fun enrichWithBaseUrl(result: TrieSearchResult<LinkedList<HtmlIndexEntry>>): TrieSearchResult<List<HtmlIndexEntry>> {
+        return TrieSearchResult(
+            result.string,
+            result.value.map { HtmlIndexEntry(baseUrl + it.url, it.occurrences) },
+            result.matchedSubstring,
+            result.matchedWord,
+            result.numberOfMatches,
+            result.numberOfErrors,
+            result.prefixDistance,
+            result.matchedWholeString,
+            result.matchedWholeWord
+        )
     }
 }

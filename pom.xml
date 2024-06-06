@@ -59,7 +59,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.6.0</version>
                 <configuration>
-                    <mainClass>MainKt</mainClass>
+                    <mainClass>com.rcs.htmlcrawlerdemo.HtmlCrawlerDemoKt</mainClass>
                 </configuration>
             </plugin>
             <plugin>
@@ -74,6 +74,18 @@
     </build>
 
     <dependencies>
+        <dependency>
+            <groupId>com.sparkjava</groupId>
+            <artifactId>spark-core</artifactId>
+            <version>2.9.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.11.0</version>
+        </dependency>
+
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-test-junit5</artifactId>
