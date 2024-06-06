@@ -61,8 +61,12 @@ class FuzzySubstringSearchState<T> private constructor(
     private fun matches(): Boolean {
         return searchCoordinates.startMatchIndex != null
                 && searchCoordinates.endMatchIndex != null
-                && searchCoordinates.numberOfMatches >= searchRequest.search.length - searchRequest.errorTolerance
+                && hasMinimumNumberOfMatches()
                 && getActualNumberOfErrors() <= searchRequest.errorTolerance
+    }
+
+    private fun hasMinimumNumberOfMatches(): Boolean {
+        return searchCoordinates.numberOfMatches >= searchRequest.search.length - searchRequest.errorTolerance
     }
 
     private fun nextStates(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>>? {
@@ -166,7 +170,7 @@ class FuzzySubstringSearchState<T> private constructor(
                 && hasErrorAllowance
                 && when (searchRequest.matchingStrategy) {
                     FuzzySubstringMatchingStrategy.FUZZY_POSTFIX ->
-                        searchCoordinates.numberOfMatches >= searchRequest.search.length - searchRequest.errorTolerance
+                        hasMinimumNumberOfMatches()
                     FuzzySubstringMatchingStrategy.FUZZY_PREFIX ->
                         wasMatchingBefore || distanceToStartWordSeparatorIsPermissible()
                     else ->
