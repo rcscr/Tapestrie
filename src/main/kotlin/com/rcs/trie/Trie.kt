@@ -90,9 +90,6 @@ class Trie<T>: Iterable<TrieEntry<T>> {
      */
     fun remove(inputString: String): T? {
         synchronized(depthUpdateLock) {
-            val deque = ArrayDeque<TrieNode<T>>(inputString.length + 1)
-            deque.add(root)
-
             var current = root
 
             for (element in inputString) {
@@ -107,31 +104,29 @@ class Trie<T>: Iterable<TrieEntry<T>> {
                     return null // input does not exist
                 } else {
                     current = nextMatchingNode!!
-                    deque.add(current)
                 }
             }
 
             // this is the node to remove - but only if it completes
-            val last = deque.removeLast()
-
-            if (last.completes()) {
+            if (current.completes()) {
                 // look back until we find the first node that is used for other strings
                 // (nodes that are not used for other strings can be fully removed)
-                var j = inputString.length - 1
-                var nodeFromWhichToUnlink: TrieNode<T>
-                while (!deque.removeLast().also { nodeFromWhichToUnlink = it }.isUsedForOtherStrings()) {
+                var j = inputString.length
+                var last = current
+                do {
+                    last = last.previous!!
                     j--
-                }
+                } while (!last.isUsedForOtherStrings())
 
                 // remove the character from node.next, thus completing the removal
                 // then update sizes to reflect the change in depth
-                synchronized(nodeFromWhichToUnlink.next) {
+                synchronized(last.next) {
                     val charToUnlink = inputString[j].toString()
-                    nodeFromWhichToUnlink.next.removeIf { it.string == charToUnlink }
-                    updateDepths(nodeFromWhichToUnlink, nodeFromWhichToUnlink.next.maxByOrNull { it.depth })
+                    last.next.removeIf { it.string == charToUnlink }
+                    updateDepths(last, last.next.maxByOrNull { it.depth })
                 }
 
-                return last.value
+                return current.value
             }
         }
 
