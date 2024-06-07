@@ -50,6 +50,7 @@ class TrieConcurrencyTest {
             .toSet()
         assertThat(actualStringsRemaining)
             .containsExactlyInAnyOrderElementsOf(randomStringsAgain)
+        assertThat(trie.depth()).isEqualTo(20)
     }
 
     private fun getRandomString(): String {
