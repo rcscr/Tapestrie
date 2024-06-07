@@ -10,7 +10,7 @@ import java.util.concurrent.ExecutorService
 
 private data class IndexCounts(val pages: Int, val uniqueTokens: Int) {
 
-    fun add(other: IndexCounts): IndexCounts {
+    operator fun plus(other: IndexCounts): IndexCounts {
         return IndexCounts(pages + other.pages, uniqueTokens + other.uniqueTokens)
     }
 }
@@ -107,7 +107,7 @@ class HtmlCrawler(
             .map { u -> fixUrl("/$relativeUrl", u) }
             .map { u -> executorService.submit<IndexCounts> { crawl(u, visited) } }
             .map { it.get() }
-            .fold(IndexCounts(0, 0)) { result, next -> result.add(next) }
+            .fold(IndexCounts(0, 0)) { result, next -> result + next }
 
         return IndexCounts(1 + newCounts.pages, uniqueTokens + newCounts.uniqueTokens)
     }
