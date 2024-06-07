@@ -270,8 +270,8 @@ class FuzzySubstringSearchState<T> private constructor(
 
     private fun distanceToStartWordSeparatorIsPermissible(): Boolean {
         val indexOfLastWordSeparator = searchVariables.sequence.indexOfLastWordSeparator() ?: -1
-        val distanceToWordSeparator = searchVariables.sequence.length - 1 - indexOfLastWordSeparator
-        return distanceToWordSeparator - 1 <= searchCoordinates.numberOfErrors
+        val distanceToWordSeparator = searchVariables.sequence.length - indexOfLastWordSeparator - 2
+        return distanceToWordSeparator <= searchCoordinates.numberOfErrors
     }
 
     private fun matchedWholeSequence(startMatchIndex: Int, endMatchIndex: Int): Boolean {
