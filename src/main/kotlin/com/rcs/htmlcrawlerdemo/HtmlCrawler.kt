@@ -75,7 +75,7 @@ class HtmlCrawler(
                 SearchStrategy.FUZZY -> {
                     trie.matchBySubstringFuzzy(
                         normalizedKeyword,
-                        searchRequest.errorTolerance,
+                        searchRequest.errorTolerance!!,
                         FuzzySubstringMatchingStrategy.LIBERAL)
                 }
             }
