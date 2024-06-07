@@ -179,22 +179,22 @@ class FuzzySubstringSearchState<T> private constructor(
                 }
     }
 
-    private fun getErrorStrategies(nextNode: TrieNode<T>): List<SearchWithErrorStrategy<T>> {
+    private fun getErrorStrategies(nextNode: TrieNode<T>): List<ErrorStrategy<T>> {
         return listOf(
             // 1. misspelling: increment searchIndex and go to the next node
-            SearchWithErrorStrategy(
+            ErrorStrategy(
                 nextNode,
                 searchCoordinates.searchIndex + 1,
                 StringBuilder(searchVariables.sequence).append(nextNode.string)
             ),
             // 2. missing letter in data: increment searchIndex and stay at the previous node
-            SearchWithErrorStrategy(
+            ErrorStrategy(
                 searchVariables.node,
                 searchCoordinates.searchIndex + 1,
                 StringBuilder(searchVariables.sequence)
             ),
             // 3. missing letter in search keyword: keep searchIndex the same and go to the next node
-            SearchWithErrorStrategy(
+            ErrorStrategy(
                 nextNode,
                 searchCoordinates.searchIndex,
                 StringBuilder(searchVariables.sequence).append(nextNode.string)
@@ -369,7 +369,7 @@ private data class SearchCoordinates(
 /**
  * A convenience class for passing around new search error states.
  */
-private data class SearchWithErrorStrategy<T>(
+private data class ErrorStrategy<T>(
     val node: TrieNode<T>,
     val searchIndex: Int,
     val sequence: StringBuilder
