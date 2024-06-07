@@ -231,25 +231,28 @@ class FuzzySubstringSearchState<T> private constructor(
     }
 
     private fun buildGatherState(nextNode: TrieNode<T>): List<FuzzySubstringSearchState<T>> {
-        val finisherStates = mutableListOf(
-            FuzzySubstringSearchState(
-                searchRequest = searchRequest,
-                searchVariables = SearchVariables(
-                    node = nextNode,
-                    sequence = StringBuilder(searchVariables.sequence).append(nextNode.string),
-                    isGatherState = true,
-                ),
-                searchCoordinates = searchCoordinates
-            )
+        val gatherStates = mutableListOf<FuzzySubstringSearchState<T>>()
+
+        val defaultGatherState = FuzzySubstringSearchState(
+            searchRequest = searchRequest,
+            searchVariables = SearchVariables(
+                node = nextNode,
+                sequence = StringBuilder(searchVariables.sequence).append(nextNode.string),
+                isGatherState = true,
+            ),
+            searchCoordinates = searchCoordinates
         )
 
-        // in case we find a better match further in the string
+        gatherStates.add(defaultGatherState)
+
+        // we spin off a new reset state, in case we find a better match further in the string.
+        // we must only do this once, if this is the first time this state enters into the gather state
         val perfectMatch = searchRequest.search.length == searchCoordinates.numberOfMatches
         if (!searchVariables.isGatherState && !perfectMatch) {
-            finisherStates.addAll(buildResetState(nextNode, true)!!)
+            gatherStates.addAll(buildResetState(nextNode, true)!!)
         }
 
-        return finisherStates
+        return gatherStates
     }
 
     private fun searchCoordinatesMatch(nextNode: TrieNode<T>): Boolean {
