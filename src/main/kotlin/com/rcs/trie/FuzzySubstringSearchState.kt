@@ -288,7 +288,7 @@ class FuzzySubstringSearchState<T> private constructor(
     }
 
     private fun String.isWordSeparator(): Boolean {
-        return this == "" || this.matches(wordSeparatorRegex)
+        return this == "" /* == root */ || this.matches(wordSeparatorRegex)
     }
 
     private fun CharSequence.indexOfLastWordSeparator(endIndex: Int = this.length - 1): Int? {
