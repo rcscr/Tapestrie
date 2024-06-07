@@ -16,7 +16,7 @@ class TrieBasicTest {
         trie.clear()
 
         // Assert
-        assertThat(trie).isEmpty()
+        assertThat(trie.isEmpty()).isTrue()
     }
 
     @Test
