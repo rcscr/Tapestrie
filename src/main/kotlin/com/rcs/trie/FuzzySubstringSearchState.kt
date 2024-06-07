@@ -93,8 +93,8 @@ class FuzzySubstringSearchState<T> private constructor(
             return null
         }
 
-        return when (nextNodeMatches(nextNode)) {
-            true ->
+        return when {
+            nextNodeMatches(nextNode) ->
                 listOf(
                     FuzzySubstringSearchState(
                         searchRequest = searchRequest,
@@ -137,8 +137,8 @@ class FuzzySubstringSearchState<T> private constructor(
             return null
         }
 
-        return when (shouldContinueMatchingWithError()) {
-            true ->
+        return when {
+            shouldContinueMatchingWithError() ->
                 getErrorStrategies(nextNode).map {
                     FuzzySubstringSearchState(
                         searchRequest = searchRequest,
