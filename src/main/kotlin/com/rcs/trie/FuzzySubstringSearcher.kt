@@ -1,8 +1,13 @@
 package com.rcs.trie
 
+import java.util.concurrent.Executors
+
 class FuzzySubstringSearcher {
 
     companion object {
+
+        private val executorService = Executors.newVirtualThreadPerTaskExecutor()
+        private val updateLock = Any()
 
         fun <T> search(
             root: TrieNode<T>,
@@ -15,12 +20,32 @@ class FuzzySubstringSearcher {
                 throw IllegalArgumentException()
             }
 
+            val initialStates = getInitialStates(root, search, errorTolerance, matchingStrategy)
             val results = mutableMapOf<String, TrieSearchResult<T>>()
 
-            val queue = ArrayDeque<FuzzySubstringSearchState<T>>()
-            queue.addAll(getInitialStates(root, search, errorTolerance, matchingStrategy))
+            // Parallelizes only top-level of the Trie: one (virtual) thread for each node directly beneath the root
+            val topLevelStates = initialStates
+                .map { it.nextStates() }
+                .flatten()
 
-            // breadth-first search
+            val futures = topLevelStates.map {
+                executorService.submit {
+                    searchJob(it, results)
+                }
+            }
+
+            futures.map { it.get() }
+
+            return results.values.sortedWith(TrieSearchResultComparator.byBestMatchFirst)
+        }
+
+        private fun <T> searchJob(
+            initialState: FuzzySubstringSearchState<T>,
+            results: MutableMap<String, TrieSearchResult<T>>
+        ) {
+            val queue = ArrayDeque<FuzzySubstringSearchState<T>>()
+            queue.add(initialState)
+
             while (queue.isNotEmpty()) {
                 val state = queue.removeFirst()
 
@@ -31,8 +56,6 @@ class FuzzySubstringSearcher {
 
                 queue.addAll(state.nextStates())
             }
-
-            return results.values.sortedWith(TrieSearchResultComparator.byBestMatchFirst)
         }
 
         private fun <T> getInitialStates(
@@ -67,14 +90,16 @@ class FuzzySubstringSearcher {
         }
 
         private fun <T> MutableMap<String, TrieSearchResult<T>>.putOnlyNewOrBetter(newMatch: TrieSearchResult<T>) {
-            val existing = this[newMatch.string]
-            if (existing == null) {
-                this[newMatch.string] = newMatch
-            } else {
-                val compareResult = TrieSearchResultComparator.byBestMatchFirst.compare(newMatch, existing)
-                val newMatchIsBetter = compareResult == -1
-                if (newMatchIsBetter) {
+            synchronized(updateLock) {
+                val existing = this[newMatch.string]
+                if (existing == null) {
                     this[newMatch.string] = newMatch
+                } else {
+                    val compareResult = TrieSearchResultComparator.byBestMatchFirst.compare(newMatch, existing)
+                    val newMatchIsBetter = compareResult == -1
+                    if (newMatchIsBetter) {
+                        this[newMatch.string] = newMatch
+                    }
                 }
             }
         }
