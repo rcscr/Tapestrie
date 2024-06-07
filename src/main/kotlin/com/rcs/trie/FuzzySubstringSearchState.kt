@@ -66,7 +66,8 @@ class FuzzySubstringSearchState<T> private constructor(
     }
 
     private fun hasMinimumNumberOfMatches(): Boolean {
-        return searchCoordinates.numberOfMatches >= searchRequest.search.length - searchRequest.errorTolerance
+        val minimumRequiredMatches = searchRequest.search.length - searchRequest.errorTolerance
+        return searchCoordinates.numberOfMatches >= minimumRequiredMatches
     }
 
     private fun nextStates(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>>? {
