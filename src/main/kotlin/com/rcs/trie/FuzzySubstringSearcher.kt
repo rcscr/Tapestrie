@@ -23,7 +23,8 @@ class FuzzySubstringSearcher {
             val initialStates = getInitialStates(root, search, errorTolerance, matchingStrategy)
             val results = mutableMapOf<String, TrieSearchResult<T>>()
 
-            // Parallelizes only top-level of the Trie: one (virtual) thread for each node directly beneath the root
+            // Parallelizes only top-level of the Trie:
+            // one (virtual) thread for each state derived from each node directly beneath the root
             val topLevelStates = initialStates
                 .map { it.nextStates() }
                 .flatten()
