@@ -8,13 +8,6 @@ import java.util.LinkedList
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 
-private data class IndexCounts(val pages: Int, val uniqueTokens: Int) {
-
-    operator fun plus(other: IndexCounts): IndexCounts {
-        return IndexCounts(pages + other.pages, uniqueTokens + other.uniqueTokens)
-    }
-}
-
 class HtmlCrawler(
     private val baseUrl: String,
     private val htmlTokenizer: HtmlTokenizer,
@@ -35,18 +28,18 @@ class HtmlCrawler(
 
         val currentTimeMillis = System.currentTimeMillis()
 
-        var counts: IndexCounts
+        var pagesIndexed: Int
 
         // synchronization prevents searching while crawling/indexing
         synchronized(crawlingLock) {
             trie.clear()
-            counts = crawl("", ConcurrentHashMap())
+            pagesIndexed = crawl("", ConcurrentHashMap())
         }
 
         val durationMillis = System.currentTimeMillis() - currentTimeMillis
 
         println("Done initializing crawler; " +
-                "indexed ${counts.pages} HTML pages and ${counts.uniqueTokens} unique tokens; " +
+                "indexed $pagesIndexed HTML pages and ${trie.size} unique tokens; " +
                 "took ${durationMillis}ms")
 
         this.initialized = true
@@ -86,10 +79,10 @@ class HtmlCrawler(
             .toList()
     }
 
-    private fun crawl(relativeUrl: String, visited: ConcurrentHashMap<String, Boolean?>): IndexCounts {
+    private fun crawl(relativeUrl: String, visited: ConcurrentHashMap<String, Boolean?>): Int {
         // Use putIfAbsent to check and mark the URL atomically
         if (visited.putIfAbsent(relativeUrl, true) != null) {
-            return IndexCounts(0, 0) // URL already visited
+            return 0 // URL already visited
         }
 
         val htmlContent: String
@@ -98,18 +91,17 @@ class HtmlCrawler(
         } catch (e: IOException) {
             e.printStackTrace()
             println("Error fetching ${baseUrl + relativeUrl} - not indexing page")
-            return IndexCounts(0, 0)
+            return 0
         }
 
-        val uniqueTokens = indexPage(relativeUrl, htmlContent)
+        indexPage(relativeUrl, htmlContent)
 
         val newCounts = htmlUrlFinder.findRelativeUrls(htmlContent)
             .map { u -> fixUrl("/$relativeUrl", u) }
-            .map { u -> executorService.submit<IndexCounts> { crawl(u, visited) } }
-            .map { it.get() }
-            .fold(IndexCounts(0, 0)) { result, next -> result + next }
+            .map { u -> executorService.submit<Int> { crawl(u, visited) } }
+            .sumOf { it.get() }
 
-        return IndexCounts(1 + newCounts.pages, uniqueTokens + newCounts.uniqueTokens)
+        return 1 + newCounts
     }
 
     private fun fixUrl(relativeUrl: String, additionalPath: String): String {
@@ -122,37 +114,27 @@ class HtmlCrawler(
         return prefixUrl + fixedUrl
     }
 
-    private fun indexPage(relativeUrl: String, htmlContent: String): Int {
+    private fun indexPage(relativeUrl: String, htmlContent: String) {
         println("Indexing ${baseUrl + relativeUrl}")
-
-        var newTokensIndexed = 0
 
         htmlTokenizer.tokenize(htmlContent)
             .forEach { entry ->
                 val token = entry.key
                 val occurrences = entry.value
 
-                synchronized(token) {
-                    val indexEntries = trie.getExactly(token) ?: LinkedList()
+                val indexEntries = trie.getExactly(token) ?: LinkedList()
 
-                    synchronized(indexEntries) {
-                        if (indexEntries.isEmpty()) {
-                            newTokensIndexed++
-                        }
+                synchronized(indexEntries) {
+                    // stores only relative URLs in order to minimize storage space
+                    // the full URL must then be reconstructed on retrieval!
+                    val newEntry = HtmlIndexEntry(relativeUrl, occurrences)
+                    indexEntries.add(newEntry)
 
-                        // stores only relative URLs in order to minimize storage space
-                        // the full URL must then be reconstructed on retrieval!
-                        val newEntry = HtmlIndexEntry(relativeUrl, occurrences)
-                        indexEntries.add(newEntry)
+                    indexEntries.sortByDescending { it.occurrences }
 
-                        indexEntries.sortByDescending { it.occurrences }
-
-                        trie.put(token, indexEntries)
-                    }
+                    trie.put(token, indexEntries)
                 }
             }
-
-        return newTokensIndexed
     }
 
     private fun emulatedTrieSearchResult(string: String, value: LinkedList<HtmlIndexEntry>): TrieSearchResult<LinkedList<HtmlIndexEntry>> {
