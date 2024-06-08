@@ -28,7 +28,7 @@ fun main() {
         val start = System.currentTimeMillis()
         val results = htmlCrawler.search(searchRequest)
         println("Search took ${System.currentTimeMillis() - start}ms")
-        println("Found these hits: ${results.map { it.string }}")
+        println("Found ${results.size} hits: ${results.map { it.string }}")
         res.header("Content-Type", "application/json")
         gson.toJson(results)
     }
