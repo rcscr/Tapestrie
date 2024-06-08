@@ -82,8 +82,7 @@ class Trie<T>: Iterable<TrieEntry<T>> {
             updateDepths(current, current.next.maxByOrNull { it.depth })
         }
 
-        val isUpdate = previousValue != null
-        if (!isUpdate) {
+        if (previousValue == null /* = is update */) {
             _size++
         }
 
