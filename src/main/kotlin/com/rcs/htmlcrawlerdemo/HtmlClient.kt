@@ -7,7 +7,14 @@ import java.util.*
 
 class HtmlClient {
 
-    private val cacheDir = System.getProperty("user.dir") + "/data/"
+    private val cacheDirPath = System.getProperty("user.dir") + "/data/"
+
+    init {
+        val cacheDir = File(cacheDirPath)
+        if (!cacheDir.exists()) {
+            cacheDir.mkdirs()
+        }
+    }
 
     @Throws(IOException::class)
     fun getAsString(url: String): String {
@@ -17,7 +24,7 @@ class HtmlClient {
 
     private fun readFromCache(url: String): String? {
         return try {
-            val content = inputStreamToString(FileReader(cacheDir + encodeToFilename(url)))
+            val content = inputStreamToString(FileReader(cacheDirPath + encodeToFilename(url)))
             println("Found URL in cache: $url")
             content
         } catch (e: FileNotFoundException) {
@@ -45,7 +52,7 @@ class HtmlClient {
     }
 
     private fun writeToCache(url: String, content: String) {
-        FileWriter(cacheDir + encodeToFilename(url))
+        FileWriter(cacheDirPath + encodeToFilename(url))
             .use { writer -> writer.write(content) }
     }
 
