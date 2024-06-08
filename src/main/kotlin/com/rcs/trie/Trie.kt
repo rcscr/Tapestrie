@@ -48,38 +48,35 @@ class Trie<T>: Iterable<TrieEntry<T>> {
 
             for (i in inputString.indices) {
                 val reachedEndOfInput = i == inputString.length - 1
-
                 val currentCharacter = inputString[i].toString()
 
                 synchronized(current.next) {
-                    val nextMatchingNode = current.next
-                        .stream()
-                        .filter { it.string == currentCharacter }
-                        .findAny()
-                        .orElse(null)
+                    when (val nextMatchingNode = current.getNextNode(currentCharacter)) {
+                        null -> {
+                            // we do not have a string going this far, so we create a new node,
+                            // and then keep appending the remaining characters of the input to it
+                            val valueToInsert = if (reachedEndOfInput) value else null
+                            val depth = inputString.length - i - 1
+                            val previous = current
+                            val nextNode = TrieNode(currentCharacter, valueToInsert, depth, mutableSetOf(), previous)
+                            current.next.add(nextNode)
+                            current = nextNode
+                        }
+                        else -> {
+                            // we are at the last character of the input
+                            // we have a string going this far, so we modify it, setting it to complete
+                            // (if its already complete, that means we have already inserted the same input before)
+                            // see TrieBasicTest.testAddShorterAfter
+                            if (reachedEndOfInput) {
+                                previousValue = nextMatchingNode.value
+                                nextMatchingNode.value = value
 
-                    // we do not have a string going this far, so we create a new node,
-                    // and then keep appending the remaining characters of the input to it
-                    if (null == nextMatchingNode) {
-                        val valueToInsert = if (reachedEndOfInput) value else null
-                        val depth = inputString.length - i - 1
-                        val previous = current
-                        val nextNode = TrieNode(currentCharacter, valueToInsert, depth, mutableSetOf(), previous)
-                        current.next.add(nextNode)
-                        current = nextNode
-
-                    // we are at the last character of the input
-                    // we have a string going this far, so we modify it, setting it to complete
-                    // (if its already complete, that means we have already inserted the same input before)
-                    // see TrieBasicTest.testAddShorterAfter
-                    } else if (reachedEndOfInput) {
-                        previousValue = nextMatchingNode.value
-                        nextMatchingNode.value = value
-
-                    // there is a matching node, but we're not at the end of the input yet,
-                    // so go on to the next character
-                    } else {
-                        current = nextMatchingNode
+                            // there is a matching node, but we're not at the end of the input yet,
+                            // so go on to the next character
+                            } else {
+                                current = nextMatchingNode
+                            }
+                        }
                     }
                 }
             }
@@ -100,29 +97,24 @@ class Trie<T>: Iterable<TrieEntry<T>> {
      */
     fun remove(inputString: String): T? {
         synchronized(depthUpdateLock) {
-            var current = root
+            var nodeToRemove = root
 
             for (element in inputString) {
                 val currentCharacter = element.toString()
 
-                var nextMatchingNode: TrieNode<T>?
-                synchronized(current.next) {
-                    nextMatchingNode = current.next.firstOrNull { it.string == currentCharacter }
-                }
-
-                if (nextMatchingNode == null) {
-                    return null // input does not exist
-                } else {
-                    current = nextMatchingNode!!
+                synchronized(nodeToRemove.next) {
+                    when (val nextMatchingNode = nodeToRemove.getNextNode(currentCharacter)) {
+                        null -> return null
+                        else -> nodeToRemove = nextMatchingNode
+                    }
                 }
             }
 
-            // this is the node to remove - but only if it completes
-            if (current.completes()) {
+            if (nodeToRemove.completes()) {
                 // look back until we find the first node that is used for other strings
                 // (nodes that are not used for other strings can be fully removed)
                 var j = inputString.length
-                var last = current
+                var last = nodeToRemove
                 do {
                     last = last.previous!!
                     j--
@@ -138,7 +130,7 @@ class Trie<T>: Iterable<TrieEntry<T>> {
 
                 _size--
 
-                return current.value
+                return nodeToRemove.value
             }
         }
 
@@ -173,22 +165,15 @@ class Trie<T>: Iterable<TrieEntry<T>> {
 
     private fun prefixMatchUpTo(string: String): TrieNode<T>? {
         var current = root
-
         for (letter in string) {
             val currentCharacter = letter.toString()
-
-            var nextNode: TrieNode<T>? = null
             synchronized(current.next) {
-                nextNode = current.next.firstOrNull { it.string == currentCharacter }
-            }
-
-            if (nextNode == null) {
-                return null
-            } else {
-                current = nextNode!!
+                when (val nextNode = current.getNextNode(currentCharacter)) {
+                    null -> return null
+                    else -> current = nextNode
+                }
             }
         }
-
         return current
     }
 

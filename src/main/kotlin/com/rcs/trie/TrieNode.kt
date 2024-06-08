@@ -11,4 +11,8 @@ class TrieNode<T>(
     fun completes(): Boolean {
         return value != null
     }
+
+    fun getNextNode(string: String): TrieNode<T>? {
+        return next.firstOrNull { it.string == string }
+    }
 }
