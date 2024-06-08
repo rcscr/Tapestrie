@@ -13,6 +13,14 @@ class TrieNode<T>(
     }
 
     fun getNextNode(string: String): TrieNode<T>? {
-        return next.firstOrNull { it.string == string }
+        synchronized(next) {
+            return next.firstOrNull { it.string == string }
+        }
+    }
+
+    fun removeNextNode(string: String) {
+        synchronized(next) {
+            next.removeIf { it.string == string }
+        }
     }
 }
