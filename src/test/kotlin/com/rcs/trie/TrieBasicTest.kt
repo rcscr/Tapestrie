@@ -17,6 +17,7 @@ class TrieBasicTest {
 
         // Assert
         assertThat(trie.isEmpty()).isTrue()
+        assertThat(trie.size).isEqualTo(0)
     }
 
     @Test
@@ -28,6 +29,7 @@ class TrieBasicTest {
         trie.put("Hello, Nomads!", 123)
 
         // Assert
+        assertThat(trie.size).isEqualTo(1)
         assertThat(trie.containsExactly("Hello")).isFalse()
         assertThat(trie.containsExactly("Hello, World!")).isFalse()
         assertThat(trie.containsExactly("Hello, Nomads!")).isTrue()
@@ -43,6 +45,7 @@ class TrieBasicTest {
         val previousValue = trie.put("Hello", 456)
 
         // Assert
+        assertThat(trie.size).isEqualTo(1)
         assertThat(previousValue).isEqualTo(123)
         assertThat(trie.getExactly("Hello")).isEqualTo(456)
     }
@@ -58,6 +61,7 @@ class TrieBasicTest {
         trie.put("1234", 3)
 
         // Assert
+        assertThat(trie.size).isEqualTo(3)
         assertThat(trie.containsExactly("123456")).isTrue()
         assertThat(trie.containsExactly("12345")).isTrue()
         assertThat(trie.containsExactly("1234")).isTrue()
@@ -74,6 +78,7 @@ class TrieBasicTest {
         trie.put("123456", 3)
 
         // Assert
+        assertThat(trie.size).isEqualTo(3)
         assertThat(trie.containsExactly("1234")).isTrue()
         assertThat(trie.containsExactly("12345")).isTrue()
         assertThat(trie.containsExactly("123456")).isTrue()
@@ -120,6 +125,7 @@ class TrieBasicTest {
         val result = trie.remove("Hello, Nomads!")
 
         // Assert
+        assertThat(trie.size).isEqualTo(1)
         assertThat(result).isEqualTo(1)
         assertThat(trie.containsExactly("Hello, Nomads!")).isFalse()
         assertThat(trie.containsExactly("Hello, World!")).isTrue()
@@ -136,6 +142,7 @@ class TrieBasicTest {
         val result = trie.remove("Hello, People!")
 
         // Assert
+        assertThat(trie.size).isEqualTo(2)
         assertThat(result).isNull()
         assertThat(trie.containsExactly("Hello, Nomads!")).isTrue()
         assertThat(trie.containsExactly("Hello, World!")).isTrue()
