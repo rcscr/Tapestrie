@@ -8,6 +8,10 @@ class TrieNode<T>(
     val previous: TrieNode<T>?
 ) {
 
+    fun isRoot(): Boolean {
+        return string == "" && previous == null
+    }
+
     fun completes(): Boolean {
         return value != null
     }

@@ -359,8 +359,8 @@ class FuzzySubstringSearchState<T> private constructor(
             matchingStrategy: FuzzySubstringMatchingStrategy
         ): FuzzySubstringSearchState<T> {
 
-            // the SearchState work works when beginning with the root node
-            assert(root.string == "")
+            // this class only work works when beginning with the root node
+            assert(root.isRoot())
 
             return FuzzySubstringSearchState(
                 searchRequest = SearchRequest(
