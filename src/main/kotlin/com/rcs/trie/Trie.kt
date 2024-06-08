@@ -68,10 +68,6 @@ class Trie<T>: Iterable<TrieEntry<T>> {
                         current.next.add(nextNode)
                         current = nextNode
 
-                        if (reachedEndOfInput) {
-                            _size++
-                        }
-
                     // we are at the last character of the input
                     // we have a string going this far, so we modify it, setting it to complete
                     // (if its already complete, that means we have already inserted the same input before)
@@ -79,10 +75,6 @@ class Trie<T>: Iterable<TrieEntry<T>> {
                     } else if (reachedEndOfInput) {
                         previousValue = nextMatchingNode.value
                         nextMatchingNode.value = value
-                        val isUpdate = previousValue != null
-                        if (!isUpdate) {
-                            _size++
-                        }
 
                     // there is a matching node, but we're not at the end of the input yet,
                     // so go on to the next character
@@ -93,6 +85,11 @@ class Trie<T>: Iterable<TrieEntry<T>> {
             }
 
             updateDepths(current, current.next.maxByOrNull { it.depth })
+        }
+
+        val isUpdate = previousValue != null
+        if (!isUpdate) {
+            _size++
         }
 
         return previousValue
