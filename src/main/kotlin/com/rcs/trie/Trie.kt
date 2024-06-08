@@ -58,7 +58,7 @@ class Trie<T>: Iterable<TrieEntry<T>> {
                         val depth = inputString.length - i - 1
                         val previous = current
                         val nextNode = TrieNode(currentCharacter, valueToInsert, depth, mutableSetOf(), previous)
-                        current.next.add(nextNode)
+                        current.addNextNode(nextNode)
                         current = nextNode
                     }
                     else -> {

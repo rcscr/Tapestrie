@@ -18,6 +18,12 @@ class TrieNode<T>(
         }
     }
 
+    fun addNextNode(node: TrieNode<T>) {
+        synchronized(next) {
+            next.add(node)
+        }
+    }
+
     fun removeNextNode(string: String) {
         synchronized(next) {
             next.removeIf { it.string == string }
