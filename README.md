@@ -64,7 +64,7 @@ TrieSearchResult(
 
 ### Other notes
 
-As an optimization, each node in the `Trie` stores its depth: the max size of a word stemming from it. This allowed me to implement a culling strategy to swiftly discard nodes whose strings are not long enough to provide a match. This has brought down the performance of the above search from 25 seconds to ~1.5 seconds! Therefore, searches for longer strings are faster, because fewer strings will be examined.
+As an optimization, each node in the `Trie` stores its depth: the max size of a word stemming from it. This allowed me to implement a culling strategy to swiftly discard nodes whose strings are not long enough to provide a match. In general, searches for longer strings are faster, because fewer strings will be examined.
 
 The example above is quite extreme with more than 20,000 strings. But even so, the fuzzy search took ~1.5 seconds, which is quite impressive. However, this in-memory `Trie` certainly has its limitations; for one, it is quite memory-intensive. In many scenarios, a solution like `ElasticSearch` should be used instead.
 
