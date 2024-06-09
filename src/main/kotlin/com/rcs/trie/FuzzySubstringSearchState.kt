@@ -180,7 +180,7 @@ class FuzzySubstringSearchState<T> private constructor(
         }
 
         return when {
-            shouldContinueMatchingWithError() ->
+            shouldProduceErrorStates() ->
                 getErrorStrategies(nextNode).map {
                     FuzzySubstringSearchState(
                         searchRequest = searchRequest,
@@ -203,7 +203,7 @@ class FuzzySubstringSearchState<T> private constructor(
         }
     }
 
-    private fun shouldContinueMatchingWithError(): Boolean {
+    private fun shouldProduceErrorStates(): Boolean {
         val wasMatchingBefore = searchCoordinates.numberOfMatches > 0
         val hasSearchCharacters = searchCoordinates.searchIndex + 1 < searchRequest.search.length
         val hasErrorAllowance = searchCoordinates.numberOfErrors < searchRequest.errorTolerance
