@@ -15,7 +15,7 @@ private data class SearchRequest(
  */
 private data class SearchVariables<T>(
     val node: TrieNode<T>,
-    val sequence: StringBuilder,
+    val sequence: String,
     val isGatherState: Boolean,
 )
 
@@ -36,7 +36,7 @@ private data class SearchCoordinates(
 private data class ErrorStrategy<T>(
     val node: TrieNode<T>,
     val searchIndex: Int,
-    val sequence: StringBuilder
+    val sequence: String
 )
 
 private val wordSeparatorRegex = "[\\s\\p{P}]".toRegex()
@@ -87,7 +87,7 @@ class FuzzySubstringSearchState<T> private constructor(
         val matchedWord = searchVariables.sequence.substring(indexOfWordSeparatorBefore + 1, indexOfWordSeparatorAfter)
 
         return TrieSearchResult(
-            searchVariables.sequence.toString(),
+            searchVariables.sequence,
             searchVariables.node.value!!,
             matchedSubstring,
             matchedWord,
@@ -142,7 +142,7 @@ class FuzzySubstringSearchState<T> private constructor(
                         searchRequest = searchRequest,
                         searchVariables = SearchVariables(
                             node = nextNode,
-                            sequence = StringBuilder(searchVariables.sequence).append(nextNode.string),
+                            sequence = searchVariables.sequence + nextNode.string,
                             isGatherState = false
                         ),
                         searchCoordinates = SearchCoordinates(
@@ -226,19 +226,19 @@ class FuzzySubstringSearchState<T> private constructor(
             ErrorStrategy(
                 nextNode,
                 searchCoordinates.searchIndex + 1,
-                StringBuilder(searchVariables.sequence).append(nextNode.string)
+                searchVariables.sequence + nextNode.string
             ),
             // 2. missing letter in data: increment searchIndex and stay at the previous node
             ErrorStrategy(
                 searchVariables.node,
                 searchCoordinates.searchIndex + 1,
-                StringBuilder(searchVariables.sequence)
+                searchVariables.sequence
             ),
             // 3. missing letter in search keyword: keep searchIndex the same and go to the next node
             ErrorStrategy(
                 nextNode,
                 searchCoordinates.searchIndex,
-                StringBuilder(searchVariables.sequence).append(nextNode.string)
+                searchVariables.sequence + nextNode.string
             )
         )
     }
@@ -257,7 +257,7 @@ class FuzzySubstringSearchState<T> private constructor(
                         searchRequest = searchRequest,
                         searchVariables = SearchVariables(
                             node = nextNode,
-                            sequence = StringBuilder(searchVariables.sequence).append(nextNode.string),
+                            sequence = searchVariables.sequence + nextNode.string,
                             isGatherState = false
                         ),
                         searchCoordinates = SearchCoordinates(
@@ -279,7 +279,7 @@ class FuzzySubstringSearchState<T> private constructor(
             searchRequest = searchRequest,
             searchVariables = SearchVariables(
                 node = nextNode,
-                sequence = StringBuilder(searchVariables.sequence).append(nextNode.string),
+                sequence = searchVariables.sequence + nextNode.string,
                 isGatherState = true,
             ),
             searchCoordinates = searchCoordinates
@@ -325,7 +325,7 @@ class FuzzySubstringSearchState<T> private constructor(
                 && searchVariables.sequence.isWordSeparatorAt(endMatchIndex + 1)
     }
 
-    private fun StringBuilder.isWordSeparatorAt(index: Int): Boolean {
+    private fun String.isWordSeparatorAt(index: Int): Boolean {
         return index < 0 || index >= this.length || this[index].toString().isWordSeparator()
     }
 
@@ -371,7 +371,7 @@ class FuzzySubstringSearchState<T> private constructor(
                 ),
                 searchVariables = SearchVariables(
                     node = root,
-                    sequence = StringBuilder(),
+                    sequence = "",
                     isGatherState = false,
                 ),
                 searchCoordinates = SearchCoordinates(0, 0, 0, null, null)
