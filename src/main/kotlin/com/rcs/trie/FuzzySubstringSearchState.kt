@@ -304,7 +304,9 @@ class FuzzySubstringSearchState<T> private constructor(
 
     private fun getActualNumberOfErrors(): Int {
         val unmatchedCharacters = searchRequest.search.length - searchCoordinates.searchIndex
-        assert(unmatchedCharacters >= 0)
+        if (unmatchedCharacters < 0) {
+            throw AssertionError("Number of unmatched characters should never be negative")
+        }
         return searchRequest.numberOfPredeterminedErrors +
                 searchCoordinates.numberOfErrors +
                 unmatchedCharacters
@@ -360,7 +362,9 @@ class FuzzySubstringSearchState<T> private constructor(
         ): FuzzySubstringSearchState<T> {
 
             // this class only work works when beginning with the root node
-            assert(root.isRoot())
+            if (!root.isRoot()) {
+                throw IllegalArgumentException("Node must be root")
+            }
 
             return FuzzySubstringSearchState(
                 searchRequest = SearchRequest(
