@@ -304,4 +304,29 @@ class TrieFuzzySearchTest {
         )
         runTestScenario(scenario)
     }
+
+    @Test
+    fun `matching strategy TYPO will only match adjacent letter swaps`() {
+        listOf(
+            FuzzySearchScenario(
+                setOf("raphael", "rapheal", "rafhael"),
+                "rahpael",
+                2,
+                TYPO,
+                listOf(
+                    TrieSearchResult("raphael", Unit, "raphael", "raphael", 5, 2, 0, false, false),
+                )
+            ),
+            FuzzySearchScenario(
+                setOf("raphael", "rapheal", "rafhael"),
+                "rahpael",
+                4,
+                TYPO,
+                listOf(
+                    TrieSearchResult("raphael", Unit, "raphael", "raphael", 5, 2, 0, false, false),
+                    TrieSearchResult("rapheal", Unit, "rapheal", "rapheal", 3, 4, 0, false, false),
+                )
+            )
+        ).forEach { runTestScenario(it) }
+    }
 }

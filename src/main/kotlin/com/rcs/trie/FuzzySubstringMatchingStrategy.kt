@@ -11,5 +11,8 @@ enum class FuzzySubstringMatchingStrategy {
     FUZZY_PREFIX,
 
     // matches everywhere in the string, but allows errors only at the end
-    FUZZY_POSTFIX
+    FUZZY_POSTFIX,
+
+    // accepts only errors due to adjacent typos (letter swaps)
+    TYPO,
 }

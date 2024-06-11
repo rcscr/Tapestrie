@@ -27,7 +27,8 @@ private data class SearchCoordinates(
     val numberOfMatches: Int,
     val numberOfErrors: Int,
     val startMatchIndex: Int?,
-    var endMatchIndex: Int?,
+    val endMatchIndex: Int?,
+    val swapChar: Pair<String, String>?
 )
 
 /**
@@ -36,7 +37,8 @@ private data class SearchCoordinates(
 private data class ErrorStrategy<T>(
     val node: TrieNode<T>,
     val searchIndex: Int,
-    val sequence: String
+    val sequence: String,
+    val swapChar: Pair<String, String>?
 )
 
 private val wordSeparatorRegex = "[\\s\\p{P}]".toRegex()
@@ -151,6 +153,7 @@ class FuzzySubstringSearchState<T> private constructor(
                             searchIndex = searchCoordinates.searchIndex + 1,
                             numberOfMatches = searchCoordinates.numberOfMatches + 1,
                             numberOfErrors = searchCoordinates.numberOfErrors,
+                            swapChar = null
                         )
                     )
                 )
@@ -179,7 +182,28 @@ class FuzzySubstringSearchState<T> private constructor(
             return null
         }
 
+        val satisfiedSwap = searchCoordinates.swapChar != null
+                && searchCoordinates.swapChar.first == nextNode.string
+                && searchCoordinates.swapChar.second == searchRequest.search[searchCoordinates.searchIndex].toString()
+
         return when {
+            satisfiedSwap ->
+                listOf(FuzzySubstringSearchState(
+                    searchRequest = searchRequest,
+                    searchVariables = SearchVariables(
+                        node = nextNode,
+                        sequence = searchVariables.sequence + nextNode.string,
+                        isGatherState = false
+                    ),
+                    searchCoordinates = SearchCoordinates(
+                        startMatchIndex = searchCoordinates.startMatchIndex,
+                        endMatchIndex = searchCoordinates.endMatchIndex,
+                        searchIndex = searchCoordinates.searchIndex + 1,
+                        numberOfMatches = searchCoordinates.numberOfMatches,
+                        numberOfErrors = searchCoordinates.numberOfErrors + 1,
+                        swapChar = null
+                    )
+                ))
             shouldProduceErrorStates() ->
                 getErrorStrategies(nextNode).map {
                     FuzzySubstringSearchState(
@@ -195,6 +219,7 @@ class FuzzySubstringSearchState<T> private constructor(
                             searchIndex = it.searchIndex,
                             numberOfMatches = searchCoordinates.numberOfMatches,
                             numberOfErrors = searchCoordinates.numberOfErrors + 1,
+                            swapChar = it.swapChar
                         )
                     )
                 }
@@ -204,11 +229,13 @@ class FuzzySubstringSearchState<T> private constructor(
     }
 
     private fun shouldProduceErrorStates(): Boolean {
+        val isNotInMiddleOfSwap = searchCoordinates.swapChar == null
         val wasMatchingBefore = searchCoordinates.numberOfMatches > 0
         val hasSearchCharacters = searchCoordinates.searchIndex + 1 < searchRequest.search.length
         val hasErrorAllowance = searchCoordinates.numberOfErrors < searchRequest.errorTolerance
 
-        return hasSearchCharacters
+        return isNotInMiddleOfSwap
+                && hasSearchCharacters
                 && hasErrorAllowance
                 && when (searchRequest.matchingStrategy) {
                     FuzzySubstringMatchingStrategy.FUZZY_POSTFIX ->
@@ -221,26 +248,47 @@ class FuzzySubstringSearchState<T> private constructor(
     }
 
     private fun getErrorStrategies(nextNode: TrieNode<T>): List<ErrorStrategy<T>> {
-        return listOf(
-            // 1. misspelling: increment searchIndex and go to the next node
-            ErrorStrategy(
-                nextNode,
-                searchCoordinates.searchIndex + 1,
-                searchVariables.sequence + nextNode.string
-            ),
-            // 2. missing letter in data: increment searchIndex and stay at the previous node
-            ErrorStrategy(
-                searchVariables.node,
-                searchCoordinates.searchIndex + 1,
-                searchVariables.sequence
-            ),
-            // 3. missing letter in search keyword: keep searchIndex the same and go to the next node
-            ErrorStrategy(
-                nextNode,
-                searchCoordinates.searchIndex,
-                searchVariables.sequence + nextNode.string
-            )
+        // 1. typo: increment searchIndex and go to the next node, and keep track of swap letters
+        val typoStrategy = ErrorStrategy(
+            nextNode,
+            searchCoordinates.searchIndex + 1,
+            searchVariables.sequence + nextNode.string,
+            when (searchRequest.matchingStrategy) {
+                FuzzySubstringMatchingStrategy.TYPO ->
+                    Pair(searchRequest.search[searchCoordinates.searchIndex].toString(), nextNode.string)
+                else ->
+                    null
+            }
         )
+
+        // 2. misspelling: increment searchIndex and go to the next node
+        val misspellingStrategy = ErrorStrategy(
+            nextNode,
+            searchCoordinates.searchIndex + 1,
+            searchVariables.sequence + nextNode.string,
+            null
+        )
+
+        // 3. missing letter in data: increment searchIndex and stay at the previous node
+        val missingTargetLetterStrategy = ErrorStrategy(
+            searchVariables.node,
+            searchCoordinates.searchIndex + 1,
+            searchVariables.sequence,
+            null
+        )
+
+        // 4. missing letter in search keyword: keep searchIndex the same and go to the next node
+        val missingSourceLetterStrategy = ErrorStrategy(
+            nextNode,
+            searchCoordinates.searchIndex,
+            searchVariables.sequence + nextNode.string,
+            null
+        )
+
+        return when (searchRequest.matchingStrategy) {
+            FuzzySubstringMatchingStrategy.TYPO -> listOf(typoStrategy)
+            else -> listOf(misspellingStrategy, missingTargetLetterStrategy, missingSourceLetterStrategy)
+        }
     }
 
     private fun buildResetState(
@@ -266,6 +314,7 @@ class FuzzySubstringSearchState<T> private constructor(
                             searchIndex = 0,
                             numberOfMatches = 0,
                             numberOfErrors = 0,
+                            swapChar = null
                         )
                     )
                 )
@@ -378,7 +427,7 @@ class FuzzySubstringSearchState<T> private constructor(
                     sequence = "",
                     isGatherState = false,
                 ),
-                searchCoordinates = SearchCoordinates(0, 0, 0, null, null)
+                searchCoordinates = SearchCoordinates(0, 0, 0, null, null, null)
             )
         }
     }
