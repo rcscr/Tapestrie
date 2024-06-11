@@ -253,12 +253,7 @@ class FuzzySubstringSearchState<T> private constructor(
             nextNode,
             searchCoordinates.searchIndex + 1,
             searchVariables.sequence + nextNode.string,
-            when (searchRequest.matchingStrategy) {
-                FuzzySubstringMatchingStrategy.TYPO ->
-                    Pair(searchRequest.search[searchCoordinates.searchIndex].toString(), nextNode.string)
-                else ->
-                    null
-            }
+            Pair(searchRequest.search[searchCoordinates.searchIndex].toString(), nextNode.string)
         )
 
         if (searchRequest.matchingStrategy == FuzzySubstringMatchingStrategy.TYPO) {
