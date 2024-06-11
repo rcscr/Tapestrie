@@ -261,6 +261,10 @@ class FuzzySubstringSearchState<T> private constructor(
             }
         )
 
+        if (searchRequest.matchingStrategy == FuzzySubstringMatchingStrategy.TYPO) {
+            return listOf(typoStrategy)
+        }
+
         // 2. misspelling: increment searchIndex and go to the next node
         val misspellingStrategy = ErrorStrategy(
             nextNode,
@@ -285,10 +289,7 @@ class FuzzySubstringSearchState<T> private constructor(
             null
         )
 
-        return when (searchRequest.matchingStrategy) {
-            FuzzySubstringMatchingStrategy.TYPO -> listOf(typoStrategy)
-            else -> listOf(misspellingStrategy, missingTargetLetterStrategy, missingSourceLetterStrategy)
-        }
+        return listOf(misspellingStrategy, missingTargetLetterStrategy, missingSourceLetterStrategy)
     }
 
     private fun buildResetState(
