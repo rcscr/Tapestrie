@@ -31,6 +31,23 @@ class TrieFuzzySearchTest {
     }
 
     @Test
+    fun `matching strategies LIBERAL, FUZZY_PREFIX, EXACT_PREFIX, FUZZY_POSTFIX matches with a space`() {
+        arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX, FUZZY_POSTFIX)
+            .map {
+                FuzzySearchScenario(
+                    setOf("abc def"),
+                    "abc deh",
+                    2,
+                    it,
+                    listOf( // matching spaces count as one correct match
+                        TrieSearchResult("abc def", Unit, "abc de", "abc def", 6, 1, 0, false, false)
+                    )
+                )
+            }
+            .forEach { runTestScenario(it) }
+    }
+
+    @Test
     fun `matching strategies LIBERAL, FUZZY_PREFIX, EXACT_PREFIX, FUZZY_POSTFIX do not match an edge case`() {
         arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX, FUZZY_POSTFIX)
             .map {
@@ -353,21 +370,21 @@ class TrieFuzzySearchTest {
                 )
             ),
             FuzzySearchScenario(
-                setOf("BellyJeans"), // a spoonerism
-                "JellyBeans",
+                setOf("Belly Jeans"), // a spoonerism
+                "Jelly Beans",
                 2,
                 SWAP,
                 listOf(
-                    TrieSearchResult("BellyJeans", Unit, "BellyJeans", "BellyJeans", 8, 2, 0, false, false),
+                    TrieSearchResult("Belly Jeans", Unit, "Belly Jeans", "Belly Jeans", 9, 2, 0, false, false),
                 )
             ),
             FuzzySearchScenario(
-                setOf("NuenasBoches"), // a spoonerism
-                "BuenasNoches",
+                setOf("Nuenas Boches"), // a spoonerism
+                "Buenas Noches",
                 2,
                 SWAP,
                 listOf(
-                    TrieSearchResult("NuenasBoches", Unit, "NuenasBoches", "NuenasBoches", 10, 2, 0, false, false),
+                    TrieSearchResult("Nuenas Boches", Unit, "Nuenas Boches", "Nuenas Boches", 11, 2, 0, false, false),
                 )
             ),
         ).forEach { runTestScenario(it) }
