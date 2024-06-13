@@ -85,14 +85,8 @@ class FuzzySubstringSearchState<T> private constructor(
 
         val prefixDistance = assertedStartMatchIndex - indexOfWordSeparatorBefore - 1
 
-//        val matchedSubstring = when (searchRequest.matchingStrategy) {
-//            FuzzySubstringMatchingStrategy.TYPO, FuzzySubstringMatchingStrategy.SWAP ->
-//
-//            else ->
-                val matchedSubstring = searchVariables.sequence
-                    .substring(assertedStartMatchIndex, assertedEndMatchIndex + 1)
-//        }
-
+        val matchedSubstring = searchVariables.sequence
+            .substring(assertedStartMatchIndex, assertedEndMatchIndex + 1)
 
         val matchedWord = searchVariables.sequence.substring(indexOfWordSeparatorBefore + 1, indexOfWordSeparatorAfter)
 
