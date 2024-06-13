@@ -28,7 +28,7 @@ private data class SearchCoordinates(
     val numberOfErrors: Int,
     val startMatchIndex: Int?,
     val endMatchIndex: Int?,
-    val swapChar: Pair<String, String>?
+    val swapChar: MutableList<Pair<String, String>>?
 )
 
 /**
@@ -38,7 +38,8 @@ private data class ErrorStrategy<T>(
     val node: TrieNode<T>,
     val searchIndex: Int,
     val sequence: String,
-    val swapChar: Pair<String, String>?
+    val swapChar: Pair<String, String>?,
+    val startMatchIndex: Int?
 )
 
 private val wordSeparatorRegex = "[\\s\\p{P}]".toRegex()
@@ -84,7 +85,14 @@ class FuzzySubstringSearchState<T> private constructor(
 
         val prefixDistance = assertedStartMatchIndex - indexOfWordSeparatorBefore - 1
 
-        val matchedSubstring = searchVariables.sequence.substring(assertedStartMatchIndex, assertedEndMatchIndex + 1)
+//        val matchedSubstring = when (searchRequest.matchingStrategy) {
+//            FuzzySubstringMatchingStrategy.TYPO, FuzzySubstringMatchingStrategy.SWAP ->
+//
+//            else ->
+                val matchedSubstring = searchVariables.sequence
+                    .substring(assertedStartMatchIndex, assertedEndMatchIndex + 1)
+//        }
+
 
         val matchedWord = searchVariables.sequence.substring(indexOfWordSeparatorBefore + 1, indexOfWordSeparatorAfter)
 
@@ -106,6 +114,7 @@ class FuzzySubstringSearchState<T> private constructor(
                 && searchCoordinates.endMatchIndex != null
                 && hasMinimumNumberOfMatches()
                 && getActualNumberOfErrors() <= searchRequest.errorTolerance
+                && (searchCoordinates.swapChar ?: emptyList()).isEmpty()
     }
 
     private fun hasMinimumNumberOfMatches(): Boolean {
@@ -153,7 +162,7 @@ class FuzzySubstringSearchState<T> private constructor(
                             searchIndex = searchCoordinates.searchIndex + 1,
                             numberOfMatches = searchCoordinates.numberOfMatches + 1,
                             numberOfErrors = searchCoordinates.numberOfErrors,
-                            swapChar = null
+                            swapChar = searchCoordinates.swapChar
                         )
                     )
                 )
@@ -182,28 +191,34 @@ class FuzzySubstringSearchState<T> private constructor(
             return null
         }
 
-        val satisfiedSwap = searchCoordinates.swapChar != null
-                && searchCoordinates.swapChar.first == nextNode.string
-                && searchCoordinates.swapChar.second == searchRequest.search[searchCoordinates.searchIndex].toString()
+        val swapSatisfied = searchCoordinates.swapChar
+            ?.firstOrNull {
+                it.first == nextNode.string
+                        && it.second == searchRequest.search[searchCoordinates.searchIndex].toString()
+            }
 
         return when {
-            satisfiedSwap ->
-                listOf(FuzzySubstringSearchState(
-                    searchRequest = searchRequest,
-                    searchVariables = SearchVariables(
-                        node = nextNode,
-                        sequence = searchVariables.sequence + nextNode.string,
-                        isGatherState = false
-                    ),
-                    searchCoordinates = SearchCoordinates(
-                        startMatchIndex = searchCoordinates.startMatchIndex,
-                        endMatchIndex = searchCoordinates.endMatchIndex,
-                        searchIndex = searchCoordinates.searchIndex + 1,
-                        numberOfMatches = searchCoordinates.numberOfMatches,
-                        numberOfErrors = searchCoordinates.numberOfErrors + 1,
-                        swapChar = null
+            swapSatisfied != null -> {
+                searchCoordinates.swapChar!!.remove(swapSatisfied)
+                listOf(
+                    FuzzySubstringSearchState(
+                        searchRequest = searchRequest,
+                        searchVariables = SearchVariables(
+                            node = nextNode,
+                            sequence = searchVariables.sequence + nextNode.string,
+                            isGatherState = false
+                        ),
+                        searchCoordinates = SearchCoordinates(
+                            startMatchIndex = searchCoordinates.startMatchIndex ?: searchVariables.sequence.length,
+                            endMatchIndex = searchVariables.sequence.length,
+                            searchIndex = searchCoordinates.searchIndex + 1,
+                            numberOfMatches = searchCoordinates.numberOfMatches,
+                            numberOfErrors = searchCoordinates.numberOfErrors + 1,
+                            swapChar = searchCoordinates.swapChar
+                        )
                     )
-                ))
+                )
+            }
             shouldProduceErrorStates() ->
                 getErrorStrategies(nextNode).map {
                     FuzzySubstringSearchState(
@@ -214,12 +229,14 @@ class FuzzySubstringSearchState<T> private constructor(
                             isGatherState = false
                         ),
                         searchCoordinates = SearchCoordinates(
-                            startMatchIndex = searchCoordinates.startMatchIndex,
+                            startMatchIndex = it.startMatchIndex,
                             endMatchIndex = searchCoordinates.endMatchIndex,
                             searchIndex = it.searchIndex,
                             numberOfMatches = searchCoordinates.numberOfMatches,
                             numberOfErrors = searchCoordinates.numberOfErrors + 1,
-                            swapChar = it.swapChar
+                            swapChar = it.swapChar?.let { swapChar ->
+                                (searchCoordinates.swapChar ?: mutableListOf()).plus(swapChar).toMutableList()
+                            }
                         )
                     )
                 }
@@ -229,15 +246,18 @@ class FuzzySubstringSearchState<T> private constructor(
     }
 
     private fun shouldProduceErrorStates(): Boolean {
-        val isNotInMiddleOfSwap = searchCoordinates.swapChar == null
+        val isNotInMiddleOfSwap = searchCoordinates.swapChar?.isEmpty() ?: true
         val wasMatchingBefore = searchCoordinates.numberOfMatches > 0
         val hasSearchCharacters = searchCoordinates.searchIndex + 1 < searchRequest.search.length
         val hasErrorAllowance = searchCoordinates.numberOfErrors < searchRequest.errorTolerance
 
-        return isNotInMiddleOfSwap
-                && hasSearchCharacters
+        return hasSearchCharacters
                 && hasErrorAllowance
                 && when (searchRequest.matchingStrategy) {
+                    FuzzySubstringMatchingStrategy.SWAP ->
+                        true
+                    FuzzySubstringMatchingStrategy.TYPO ->
+                        isNotInMiddleOfSwap
                     FuzzySubstringMatchingStrategy.FUZZY_POSTFIX ->
                         hasMinimumNumberOfMatches()
                     FuzzySubstringMatchingStrategy.FUZZY_PREFIX ->
@@ -249,15 +269,17 @@ class FuzzySubstringSearchState<T> private constructor(
 
     private fun getErrorStrategies(nextNode: TrieNode<T>): List<ErrorStrategy<T>> {
         // 1. typo: increment searchIndex and go to the next node, and keep track of swap letters
-        val typoStrategy = ErrorStrategy(
+        val typoSwapStrategy = ErrorStrategy(
             nextNode,
             searchCoordinates.searchIndex + 1,
             searchVariables.sequence + nextNode.string,
-            Pair(searchRequest.search[searchCoordinates.searchIndex].toString(), nextNode.string)
+            Pair(searchRequest.search[searchCoordinates.searchIndex].toString(), nextNode.string),
+            searchCoordinates.startMatchIndex ?: searchVariables.sequence.length
         )
 
-        if (searchRequest.matchingStrategy == FuzzySubstringMatchingStrategy.TYPO) {
-            return listOf(typoStrategy)
+        if (searchRequest.matchingStrategy == FuzzySubstringMatchingStrategy.TYPO
+                || searchRequest.matchingStrategy == FuzzySubstringMatchingStrategy.SWAP) {
+            return listOf(typoSwapStrategy)
         }
 
         // 2. misspelling: increment searchIndex and go to the next node
@@ -265,7 +287,8 @@ class FuzzySubstringSearchState<T> private constructor(
             nextNode,
             searchCoordinates.searchIndex + 1,
             searchVariables.sequence + nextNode.string,
-            null
+            null,
+            searchCoordinates.startMatchIndex
         )
 
         // 3. missing letter in data: increment searchIndex and stay at the previous node
@@ -273,7 +296,8 @@ class FuzzySubstringSearchState<T> private constructor(
             searchVariables.node,
             searchCoordinates.searchIndex + 1,
             searchVariables.sequence,
-            null
+            null,
+            searchCoordinates.startMatchIndex
         )
 
         // 4. missing letter in search keyword: keep searchIndex the same and go to the next node
@@ -281,7 +305,8 @@ class FuzzySubstringSearchState<T> private constructor(
             nextNode,
             searchCoordinates.searchIndex,
             searchVariables.sequence + nextNode.string,
-            null
+            null,
+            searchCoordinates.startMatchIndex
         )
 
         return listOf(misspellingStrategy, missingTargetLetterStrategy, missingSourceLetterStrategy)

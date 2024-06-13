@@ -15,4 +15,7 @@ enum class FuzzySubstringMatchingStrategy {
 
     // accepts only errors due to adjacent typos (letter swaps)
     TYPO,
+
+    // accepts only errors due to letter swaps anywhere in the string
+    SWAP,
 }
