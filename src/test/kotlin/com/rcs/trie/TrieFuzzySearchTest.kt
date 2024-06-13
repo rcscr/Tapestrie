@@ -352,6 +352,24 @@ class TrieFuzzySearchTest {
                     TrieSearchResult("ulvxo", Unit, "ulvxo", "ulvxo", 1, 4, 0, false, false),
                 )
             ),
+            FuzzySearchScenario(
+                setOf("BellyJeans"), // a spoonerism
+                "JellyBeans",
+                2,
+                SWAP,
+                listOf(
+                    TrieSearchResult("BellyJeans", Unit, "BellyJeans", "BellyJeans", 8, 2, 0, false, false),
+                )
+            ),
+            FuzzySearchScenario(
+                setOf("NuenasBoches"), // a spoonerism
+                "BuenasNoches",
+                2,
+                SWAP,
+                listOf(
+                    TrieSearchResult("NuenasBoches", Unit, "NuenasBoches", "NuenasBoches", 10, 2, 0, false, false),
+                )
+            ),
         ).forEach { runTestScenario(it) }
     }
 }
