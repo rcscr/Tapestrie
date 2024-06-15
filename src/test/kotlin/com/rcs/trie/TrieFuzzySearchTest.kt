@@ -378,6 +378,13 @@ class TrieFuzzySearchTest {
                     TrieSearchResult("Nuenas Boches", Unit, "Nuenas Boches", "Nuenas Boches", 11, 2, 0, false, false),
                 )
             ),
+            FuzzySearchScenario(
+                setOf("Nood Gight"), // a spoonerism that won't match
+                "Good Fight",
+                2,
+                SWAP,
+                listOf()
+            ),
         ).forEach { runTestScenario(it) }
     }
 }
