@@ -33,17 +33,27 @@ class TrieFuzzySearchTest {
     @Test
     fun `matching strategies LIBERAL, FUZZY_PREFIX, EXACT_PREFIX, FUZZY_POSTFIX matches with a space`() {
         arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX, FUZZY_POSTFIX)
-            .map {
+            .map { listOf(
                 FuzzySearchScenario(
-                    setOf("abc def"),
+                    setOf("abc def", "abcdef"),
                     "abc deh",
-                    2,
+                    1,
                     it,
                     listOf( // matching spaces count as one correct match
                         TrieSearchResult("abc def", Unit, "abc de", "abc def", 6, 1, 0, false, false)
                     )
+                ),
+                FuzzySearchScenario(
+                    setOf("abcde lalala"),
+                    "abcdef",
+                    1,
+                    it,
+                    listOf( // not matching spaces count as one correct match
+                        TrieSearchResult("abcde lalala", Unit, "abcde", "abcde", 5, 1, 0, false, false)
+                    )
                 )
-            }
+            )
+        }.flatten()
             .forEach { runTestScenario(it) }
     }
 
