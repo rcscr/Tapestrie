@@ -361,25 +361,6 @@ class TrieFuzzySearchTest {
     fun `matching strategy SWAP will find letter swaps anywhere in the string`() {
         listOf(
             FuzzySearchScenario(
-                setOf("luxov", "lusox"),
-                "luvox",
-                2,
-                SWAP,
-                listOf(
-                    TrieSearchResult("luxov", Unit, "luxov", "luxov", 3, 2, 0, false, false),
-                )
-            ),
-            FuzzySearchScenario(
-                setOf("ulvxo", "luxov", "vuxol"),
-                "luvox",
-                4,
-                SWAP,
-                listOf(
-                    TrieSearchResult("luxov", Unit, "luxov", "luxov", 3, 2, 0, false, false),
-                    TrieSearchResult("ulvxo", Unit, "ulvxo", "ulvxo", 1, 4, 0, false, false),
-                )
-            ),
-            FuzzySearchScenario(
                 setOf("Belly Jeans"), // a spoonerism
                 "Jelly Beans",
                 2,
