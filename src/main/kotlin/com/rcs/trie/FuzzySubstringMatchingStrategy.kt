@@ -13,9 +13,12 @@ enum class FuzzySubstringMatchingStrategy {
     // matches everywhere in the string, but allows errors only at the end
     FUZZY_POSTFIX,
 
-    // accepts only errors due to adjacent typos (letter swaps)
+    // accepts only errors due to adjacent letter swaps (i.e. typos)
     TYPO,
 
-    // accepts only errors due to letter swaps anywhere in the string
+    // accepts only errors due to letter swaps anywhere in the string (i.e. spoonerisms)
     SWAP,
+
+    // matches a * to any character, without considering it as an error
+    WILDCARD
 }

@@ -1,5 +1,7 @@
 package com.rcs.trie
 
+import com.rcs.trie.FuzzySubstringMatchingStrategy.*
+
 /**
  * Invariable properties of the search request - these never change.
  */
@@ -166,12 +168,17 @@ class FuzzySubstringSearchState<T> private constructor(
     }
 
     private fun nextNodeMatches(nextNode: TrieNode<T>): Boolean {
+        if (searchRequest.matchingStrategy == WILDCARD
+            && searchRequest.search[searchCoordinates.searchIndex] == '*') {
+            return true
+        }
+
         val wasMatchingBefore = searchCoordinates.numberOfMatches > 0
 
         val matchingPreconditions = when (searchRequest.matchingStrategy) {
-            FuzzySubstringMatchingStrategy.FUZZY_PREFIX ->
+            FUZZY_PREFIX ->
                 wasMatchingBefore || distanceToStartWordSeparatorIsPermissible()
-            FuzzySubstringMatchingStrategy.EXACT_PREFIX ->
+            EXACT_PREFIX ->
                 wasMatchingBefore || searchVariables.node.string.isWordSeparator()
             else ->
                 true
@@ -248,13 +255,13 @@ class FuzzySubstringSearchState<T> private constructor(
         return hasSearchCharacters
                 && hasErrorAllowance
                 && when (searchRequest.matchingStrategy) {
-                    FuzzySubstringMatchingStrategy.SWAP ->
+                    SWAP ->
                         true
-                    FuzzySubstringMatchingStrategy.TYPO ->
+                    TYPO ->
                         isNotInMiddleOfSwap
-                    FuzzySubstringMatchingStrategy.FUZZY_POSTFIX ->
+                    FUZZY_POSTFIX ->
                         hasMinimumNumberOfMatches()
-                    FuzzySubstringMatchingStrategy.FUZZY_PREFIX ->
+                    FUZZY_PREFIX ->
                         wasMatchingBefore || distanceToStartWordSeparatorIsPermissible()
                     else ->
                         wasMatchingBefore
@@ -271,8 +278,8 @@ class FuzzySubstringSearchState<T> private constructor(
             searchCoordinates.startMatchIndex ?: searchVariables.sequence.length
         )
 
-        if (searchRequest.matchingStrategy == FuzzySubstringMatchingStrategy.TYPO
-                || searchRequest.matchingStrategy == FuzzySubstringMatchingStrategy.SWAP) {
+        if (searchRequest.matchingStrategy == TYPO
+                || searchRequest.matchingStrategy == SWAP) {
             return listOf(typoSwapStrategy)
         }
 

@@ -387,4 +387,29 @@ class TrieFuzzySearchTest {
             ),
         ).forEach { runTestScenario(it) }
     }
+
+    @Test
+    fun `matching strategy WILDCARD will matching wildcard characters without error`() {
+        listOf(
+            FuzzySearchScenario(
+                setOf("rafael", "raphael"),
+                "ra*ael",
+                0,
+                WILDCARD,
+                listOf(
+                    TrieSearchResult("rafael", Unit, "rafael", "rafael", 6, 0, 0, true, true),
+                )
+            ),
+            FuzzySearchScenario(
+                setOf("rafael", "raphael"),
+                "ra*ael",
+                1,
+                WILDCARD,
+                listOf(
+                    TrieSearchResult("rafael", Unit, "rafael", "rafael", 6, 0, 0, true, true),
+                    TrieSearchResult("raphael", Unit, "raphael", "raphael", 6, 1, 0, false, false),
+                )
+            )
+        ).forEach { runTestScenario(it) }
+    }
 }
