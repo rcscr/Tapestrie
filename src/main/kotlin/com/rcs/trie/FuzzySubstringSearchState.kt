@@ -178,7 +178,7 @@ class FuzzySubstringSearchState<T> private constructor(
         val matchingPreconditions = when (searchRequest.matchingStrategy) {
             FUZZY_PREFIX ->
                 wasMatchingBefore || distanceToStartWordSeparatorIsPermissible()
-            EXACT_PREFIX ->
+            EXACT_PREFIX, FUZZY_POSTFIX ->
                 wasMatchingBefore || searchVariables.node.string.isWordSeparator()
             else ->
                 true

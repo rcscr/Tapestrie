@@ -7,10 +7,10 @@ enum class FuzzySubstringMatchingStrategy {
     // matches only words that start with the first letter of the keyword
     EXACT_PREFIX,
 
-    // similar to EXACT_PREFIX, but allows applying error tolerance in the beginning
+    // similar to EXACT_PREFIX, but allows errors in the beginning, middle, and end
     FUZZY_PREFIX,
 
-    // matches everywhere in the string, but allows errors only at the end
+    // similar to EXACT_PREFIX, but allows errors only at the end
     FUZZY_POSTFIX,
 
     // accepts only errors due to adjacent letter swaps (i.e. typos)

@@ -317,7 +317,7 @@ class TrieFuzzySearchTest {
     @Test
     fun `matching strategy FUZZY_POSTFIX will only accept errors at the end`() {
         val scenario = FuzzySearchScenario(
-            setOf("rafael", "raphael", "raphaello", "raffael", "laraffael", "raffaell", "raffaella", "raffaello"),
+            setOf("rafael", "raphael", "raphaello", "raffael", "raffael", "raffaell", "raffaella", "raffaello"),
             "raffaello",
             2,
             FUZZY_POSTFIX,
@@ -326,7 +326,6 @@ class TrieFuzzySearchTest {
                 TrieSearchResult("raffaell", Unit, "raffaell", "raffaell", 8, 1, 0, false, false),
                 TrieSearchResult("raffaella", Unit, "raffaell", "raffaella", 8, 1, 0, false, false),
                 TrieSearchResult("raffael", Unit, "raffael", "raffael", 7, 2, 0, false, false),
-                TrieSearchResult("laraffael", Unit, "raffael", "laraffael", 7, 2, 2, false, false)
             )
         )
         runTestScenario(scenario)
