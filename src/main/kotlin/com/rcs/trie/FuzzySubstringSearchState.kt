@@ -30,8 +30,13 @@ private data class SearchCoordinates(
     val numberOfErrors: Int,
     val startMatchIndex: Int?,
     val endMatchIndex: Int?,
-    val swapChar: MutableList<Pair<String, String>>?
+    val swapChar: MutableList<SwapChars>?
 )
+
+/**
+ * Holds swap characters for matching strategy SWAP
+ */
+private data class SwapChars(val fromSource: String, val fromTarget: String)
 
 /**
  * A convenience class for passing around new search error states.
@@ -40,7 +45,7 @@ private data class ErrorStrategy<T>(
     val node: TrieNode<T>,
     val searchIndex: Int,
     val sequence: String,
-    val swapChar: Pair<String, String>?,
+    val swapChar: SwapChars?,
     val startMatchIndex: Int?
 )
 
@@ -192,11 +197,7 @@ class FuzzySubstringSearchState<T> private constructor(
             return null
         }
 
-        val swapSatisfied = searchCoordinates.swapChar
-            ?.firstOrNull {
-                it.first == nextNode.string
-                        && it.second == searchRequest.search[searchCoordinates.searchIndex].toString()
-            }
+        val swapSatisfied = searchCoordinates.swapChar.getMatching(nextNode)
 
         return when {
             swapSatisfied != null -> {
@@ -274,7 +275,7 @@ class FuzzySubstringSearchState<T> private constructor(
             nextNode,
             searchCoordinates.searchIndex + 1,
             searchVariables.sequence + nextNode.string,
-            Pair(searchRequest.search[searchCoordinates.searchIndex].toString(), nextNode.string),
+            SwapChars(searchRequest.search[searchCoordinates.searchIndex].toString(), nextNode.string),
             searchCoordinates.startMatchIndex ?: searchVariables.sequence.length
         )
 
@@ -415,6 +416,13 @@ class FuzzySubstringSearchState<T> private constructor(
     private fun CharSequence.indexOfFirstWordSeparator(startIndex: Int = 0): Int? {
         return (startIndex..<this.length).firstOrNull {
             this[it].toString().matches(wordSeparatorRegex)
+        }
+    }
+
+    private fun List<SwapChars>?.getMatching(node: TrieNode<T>): SwapChars? {
+        return this?.firstOrNull {
+            it.fromSource == node.string
+                    && it.fromTarget == searchRequest.search[searchCoordinates.searchIndex].toString()
         }
     }
 
