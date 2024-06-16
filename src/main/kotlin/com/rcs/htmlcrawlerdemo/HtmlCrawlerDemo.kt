@@ -12,12 +12,14 @@ fun main() {
     // linux manual pages
     val baseUrl = "https://docs.huihoo.com/linux/man/20100621/"
 
+    val executorService = Executors.newVirtualThreadPerTaskExecutor()
+
     val htmlCrawler = HtmlCrawler(
         baseUrl,
         HtmlTokenizer(),
         HtmlUrlFinder(),
-        HtmlClient(),
-        Executors.newVirtualThreadPerTaskExecutor())
+        HtmlClient(executorService),
+        executorService)
 
     htmlCrawler.init()
     // Done initializing crawler; indexed 1860 HTML pages and 21181 unique tokens; took 23599ms (or 6108ms reading from cache)
