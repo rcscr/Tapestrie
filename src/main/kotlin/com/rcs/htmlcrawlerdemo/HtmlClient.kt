@@ -25,7 +25,9 @@ class HtmlClient(private val executorService: ExecutorService) {
 
     private fun readFromCache(url: String): String? {
         return try {
-            val content = inputStreamToString(FileReader(cacheDirPath + encodeToFilename(url)))
+            val fileReader = FileReader(cacheDirPath + encodeToFilename(url))
+            val content = inputStreamToString(fileReader)
+            fileReader.close()
             println("Found URL in cache: $url")
             content
         } catch (e: FileNotFoundException) {
