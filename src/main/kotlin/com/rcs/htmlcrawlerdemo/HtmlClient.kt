@@ -51,6 +51,7 @@ class HtmlClient(private val executorService: ExecutorService) {
                     content.append(line).append(System.lineSeparator())
                 }
             }
+        reader.close()
         return content.toString()
     }
 
