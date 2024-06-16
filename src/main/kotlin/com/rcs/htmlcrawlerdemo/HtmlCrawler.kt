@@ -18,8 +18,17 @@ class HtmlCrawler(
         println("Initializing crawler with baseURL=${this.baseUrl}")
 
         val currentTimeMillis = System.currentTimeMillis()
+
         val trie: Trie<ConcurrentLinkedDeque<HtmlIndexEntry>> = Trie()
+
+        // crawl
         val pagesIndexed = crawl(baseUrl, ConcurrentHashMap(), trie)
+
+        // index
+        htmlClient.forEachFileInCacheDir { filename, content ->
+            indexPage(filename, content, trie)
+        }
+
         val durationMillis = System.currentTimeMillis() - currentTimeMillis
 
         println("Done initializing crawler; " +
@@ -48,8 +57,6 @@ class HtmlCrawler(
             return 0
         }
 
-        indexPage(url, htmlContent, trie)
-
         val newCounts = htmlUrlFinder.findRelativeUrls(url, htmlContent)
             .map { u -> executorService.submit<Int> { crawl(u, visited, trie) } }
             .sumOf { it.get() }
@@ -62,7 +69,7 @@ class HtmlCrawler(
 
         // stores only relative URLs in order to minimize storage space
         // the full URL must then be reconstructed on retrieval!
-        val relativeUrl = url.substring(0, url.length)
+        val relativeUrl = url.substring(baseUrl.length, url.length)
 
         htmlTokenizer.tokenize(htmlContent)
             .forEach { entry ->
