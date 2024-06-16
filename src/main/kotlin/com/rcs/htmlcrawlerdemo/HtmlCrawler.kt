@@ -4,8 +4,8 @@ import com.rcs.trie.FuzzySubstringMatchingStrategy
 import com.rcs.trie.Trie
 import com.rcs.trie.TrieSearchResult
 import java.io.IOException
-import java.util.LinkedList
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.ExecutorService
 
 class HtmlCrawler(
@@ -17,7 +17,7 @@ class HtmlCrawler(
 ) {
 
     // maps a token to a set of URLs where the token can be found
-    private val trie: Trie<LinkedList<HtmlIndexEntry>> = Trie()
+    private val trie: Trie<ConcurrentLinkedDeque<HtmlIndexEntry>> = Trie()
 
     private var initialized = false
 
@@ -52,7 +52,7 @@ class HtmlCrawler(
 
         val normalizedKeyword = searchRequest.normalizedKeyword()
 
-        var resultsWithoutBaseUrl: Collection<TrieSearchResult<LinkedList<HtmlIndexEntry>>>
+        var resultsWithoutBaseUrl: Collection<TrieSearchResult<ConcurrentLinkedDeque<HtmlIndexEntry>>>
 
         // synchronization prevents searching while crawling/indexing
         synchronized(crawlingLock) {
@@ -121,27 +121,21 @@ class HtmlCrawler(
             .forEach { entry ->
                 val token = entry.key
                 val occurrences = entry.value
-
-                val indexEntries = trie.getExactly(token) ?: LinkedList()
-
-                synchronized(indexEntries) {
-                    // stores only relative URLs in order to minimize storage space
-                    // the full URL must then be reconstructed on retrieval!
-                    val newEntry = HtmlIndexEntry(relativeUrl, occurrences)
-                    indexEntries.add(newEntry)
-
-                    indexEntries.sortByDescending { it.occurrences }
-
-                    trie.put(token, indexEntries)
-                }
+                val indexEntries = trie.getExactly(token) ?: ConcurrentLinkedDeque()
+                // stores only relative URLs in order to minimize storage space
+                // the full URL must then be reconstructed on retrieval!
+                val newEntry = HtmlIndexEntry(relativeUrl, occurrences)
+                indexEntries.add(newEntry)
+                indexEntries.sortedBy { it.occurrences }
+                trie.put(token, indexEntries)
             }
     }
 
-    private fun emulatedTrieSearchResult(string: String, value: LinkedList<HtmlIndexEntry>): TrieSearchResult<LinkedList<HtmlIndexEntry>> {
+    private fun emulatedTrieSearchResult(string: String, value: ConcurrentLinkedDeque<HtmlIndexEntry>): TrieSearchResult<ConcurrentLinkedDeque<HtmlIndexEntry>> {
         return TrieSearchResult(string, value, string, string, string.length, 0, 0, true, true)
     }
 
-    private fun enrichWithBaseUrl(result: TrieSearchResult<LinkedList<HtmlIndexEntry>>): TrieSearchResult<List<HtmlIndexEntry>> {
+    private fun enrichWithBaseUrl(result: TrieSearchResult<ConcurrentLinkedDeque<HtmlIndexEntry>>): TrieSearchResult<List<HtmlIndexEntry>> {
         return TrieSearchResult(
             result.string,
             result.value.map { HtmlIndexEntry(baseUrl + it.url, it.occurrences) },
