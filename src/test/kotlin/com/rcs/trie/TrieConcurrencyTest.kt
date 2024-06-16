@@ -47,7 +47,7 @@ class TrieConcurrencyTest {
         val actualStringsRemaining = trie.iterator()
             .asSequence()
             .map { it.string }
-            .toSet()
+            .toList()
         assertThat(actualStringsRemaining)
             .containsExactlyInAnyOrderElementsOf(randomStringsAgain)
 
