@@ -75,7 +75,8 @@ class FuzzySubstringSearchState<T> private constructor(
     fun buildSearchResult(): TrieSearchResult<T> {
         assert(hasSearchResult())
 
-        val actualErrors = getActualNumberOfErrors()
+        val actualErrors = getNumberOfErrorsIncludingMissingCharacters() +
+                searchRequest.numberOfPredeterminedErrors
 
         val assertedStartMatchIndex = searchCoordinates.startMatchIndex!!
 
@@ -117,7 +118,7 @@ class FuzzySubstringSearchState<T> private constructor(
         return searchCoordinates.startMatchIndex != null
                 && searchCoordinates.endMatchIndex != null
                 && hasMinimumNumberOfMatches()
-                && getActualNumberOfErrors() <= searchRequest.errorTolerance
+                && getNumberOfErrorsIncludingMissingCharacters() <= searchRequest.errorTolerance
                 && (searchCoordinates.swapChar ?: emptyList()).isEmpty()
     }
 
@@ -139,8 +140,8 @@ class FuzzySubstringSearchState<T> private constructor(
 
     private fun shouldCull(nextNode: TrieNode<T>): Boolean {
         val numberOfMatchingCharactersNeeded = searchRequest.search.length -
-                searchRequest.errorTolerance -
-                searchCoordinates.numberOfMatches
+                searchCoordinates.numberOfMatches -
+                searchRequest.errorTolerance
 
         return nextNode.depth < numberOfMatchingCharactersNeeded
     }
@@ -377,13 +378,12 @@ class FuzzySubstringSearchState<T> private constructor(
                 && nextNode.string == searchRequest.search[searchCoordinates.searchIndex].toString()
     }
 
-    private fun getActualNumberOfErrors(): Int {
+    private fun getNumberOfErrorsIncludingMissingCharacters(): Int {
         val unmatchedCharacters = searchRequest.search.length - searchCoordinates.searchIndex
         if (unmatchedCharacters < 0) {
             throw AssertionError("Number of unmatched characters should never be negative")
         }
-        return searchRequest.numberOfPredeterminedErrors +
-                searchCoordinates.numberOfErrors +
+        return searchCoordinates.numberOfErrors +
                 unmatchedCharacters
     }
 

@@ -87,7 +87,7 @@ class FuzzySubstringSearcher {
                         root,
                         search.substring(i, search.length),
                         numberOfPredeterminedErrors = i,
-                        errorTolerance,
+                        errorTolerance - i,
                         matchingStrategy
                     )
                     initialStates.add(stateWithPredeterminedError)
