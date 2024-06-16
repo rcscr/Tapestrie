@@ -34,9 +34,12 @@ private data class SearchCoordinates(
 )
 
 /**
- * Holds swap characters for matching strategy SWAP
+ * Holds swap characters for matching strategy TYPO and SWAP
  */
-private data class SwapChars(val fromSource: String, val fromTarget: String)
+private data class SwapChars(
+    val fromSource: String,
+    val fromTarget: String
+)
 
 /**
  * A convenience class for passing around new search error states.
