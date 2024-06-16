@@ -4,8 +4,9 @@ import java.io.*
 import java.net.HttpURLConnection
 import java.net.URI
 import java.util.*
+import java.util.concurrent.ExecutorService
 
-class HtmlClient {
+class HtmlClient(private val executorService: ExecutorService) {
 
     private val cacheDirPath = System.getProperty("user.dir") + "/data/"
 
@@ -52,8 +53,10 @@ class HtmlClient {
     }
 
     private fun writeToCache(url: String, content: String) {
-        FileWriter(cacheDirPath + encodeToFilename(url))
-            .use { writer -> writer.write(content) }
+        executorService.submit {
+            FileWriter(cacheDirPath + encodeToFilename(url))
+                .use { writer -> writer.write(content) }
+        }
     }
 
     private fun encodeToFilename(url: String): String {
