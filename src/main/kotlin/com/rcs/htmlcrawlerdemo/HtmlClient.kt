@@ -37,9 +37,29 @@ class HtmlClient(private val executorService: ExecutorService) {
 
     private fun fetch(url: String): String {
         println("Fetching URL: $url")
-        val con = URI(url).toURL().openConnection() as HttpURLConnection
-        con.requestMethod = "GET"
-        return inputStreamToString(InputStreamReader(con.inputStream))
+        var attempts = 0
+        var result: String? = null
+        var con: HttpURLConnection? = null
+
+        while (attempts < 10) {
+            try {
+                con = URI(url).toURL().openConnection() as HttpURLConnection
+                con.requestMethod = "GET"
+                result = inputStreamToString(InputStreamReader(con.inputStream))
+                break // Successful fetch, exit the loop
+            } catch (e: Exception) {
+                attempts++
+                println("Attempt $attempts fetching $url failed: ${e.message}")
+                Thread.sleep(500)
+            } finally {
+                con?.disconnect()             }
+        }
+
+        if (result == null) {
+            throw IOException("Failed to fetch URL after 10 attempts: $url")
+        }
+
+        return result
     }
 
     private fun inputStreamToString(reader: Reader): String {
