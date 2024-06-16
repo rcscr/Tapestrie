@@ -6,7 +6,6 @@ class FuzzySubstringSearcher {
 
     companion object {
 
-        private val executorService = Executors.newVirtualThreadPerTaskExecutor()
         private val updateLock = Any()
 
         fun <T> search(
@@ -19,6 +18,8 @@ class FuzzySubstringSearcher {
             if (search.isEmpty() || errorTolerance < 0 || errorTolerance > search.length) {
                 throw IllegalArgumentException()
             }
+
+            val executorService = Executors.newVirtualThreadPerTaskExecutor()
 
             val initialStates = getInitialStates(root, search, errorTolerance, matchingStrategy)
             val results = mutableMapOf<String, TrieSearchResult<T>>()
@@ -36,6 +37,12 @@ class FuzzySubstringSearcher {
             }
 
             futures.map { it.get() }
+
+            // clean up resources to prevent memory leak
+            executorService.submit {
+                System.gc()
+                executorService.shutdown()
+            }
 
             return results.values.sortedWith(TrieSearchResultComparator.byBestMatchFirst)
         }
