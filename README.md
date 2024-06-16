@@ -10,7 +10,7 @@ The `Trie` implemented here is thread-safe, unit-tested, and able to efficiently
 
 ### Demo
 
-A demo of an `HtmlCrawler` has also been provided to illustrate the usage of the `Trie`.
+A demo of an `HtmlCrawler` & `HtmlSearcher` have also been provided to illustrate the usage of the `Trie`.
 
 Searching the Linux manual (1,860 HTML pages and 21,181 unique tokens) for `computer` with `errorTolerance=2` takes ~1.5 seconds and will return HTML pages containing any of these hits:
 

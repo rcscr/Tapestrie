@@ -1,8 +1,6 @@
 package com.rcs.htmlcrawlerdemo
 
-import com.rcs.trie.FuzzySubstringMatchingStrategy
 import com.rcs.trie.Trie
-import com.rcs.trie.TrieSearchResult
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedDeque
@@ -16,70 +14,26 @@ class HtmlCrawler(
     private val executorService: ExecutorService
 ) {
 
-    // maps a token to a set of URLs where the token can be found
-    private val trie: Trie<ConcurrentLinkedDeque<HtmlIndexEntry>> = Trie()
-
-    private var initialized = false
-
-    private var crawlingLock = Any()
-
-    fun init() {
+    fun crawlAndIndex(): Trie<ConcurrentLinkedDeque<HtmlIndexEntry>> {
         println("Initializing crawler with baseURL=${this.baseUrl}")
 
         val currentTimeMillis = System.currentTimeMillis()
-
-        var pagesIndexed: Int
-
-        // synchronization prevents searching while crawling/indexing
-        synchronized(crawlingLock) {
-            trie.clear()
-            pagesIndexed = crawl("", ConcurrentHashMap())
-        }
-
+        val trie: Trie<ConcurrentLinkedDeque<HtmlIndexEntry>> = Trie()
+        val pagesIndexed = crawl("", ConcurrentHashMap(), trie)
         val durationMillis = System.currentTimeMillis() - currentTimeMillis
 
         println("Done initializing crawler; " +
                 "indexed $pagesIndexed HTML pages and ${trie.size} unique tokens; " +
                 "took ${durationMillis}ms")
 
-        this.initialized = true
+        return trie
     }
 
-    fun search(searchRequest: SearchRequest): List<TrieSearchResult<List<HtmlIndexEntry>>> {
-        if (!initialized) {
-            throw IllegalStateException("Crawler has not been initialized; call HtmlCrawler.init() first")
-        }
-
-        val normalizedKeyword = searchRequest.normalizedKeyword()
-
-        var resultsWithoutBaseUrl: Collection<TrieSearchResult<ConcurrentLinkedDeque<HtmlIndexEntry>>>
-
-        // synchronization prevents searching while crawling/indexing
-        synchronized(crawlingLock) {
-            resultsWithoutBaseUrl = when(searchRequest.strategy) {
-                SearchStrategy.EXACT -> {
-                    trie.getExactly(normalizedKeyword)
-                        ?.let { setOf(emulatedTrieSearchResult(normalizedKeyword, it)) }
-                        ?: setOf()
-                }
-                SearchStrategy.SUBSTRING -> {
-                    trie.matchBySubstring(normalizedKeyword)
-                }
-                SearchStrategy.FUZZY -> {
-                    trie.matchBySubstringFuzzy(
-                        normalizedKeyword,
-                        searchRequest.errorTolerance!!,
-                        FuzzySubstringMatchingStrategy.LIBERAL)
-                }
-            }
-        }
-
-        return resultsWithoutBaseUrl
-            .map { enrichWithBaseUrl(it) }
-            .toList()
-    }
-
-    private fun crawl(relativeUrl: String, visited: ConcurrentHashMap<String, Boolean?>): Int {
+    private fun crawl(
+        relativeUrl: String,
+        visited: ConcurrentHashMap<String, Boolean?>,
+        trie: Trie<ConcurrentLinkedDeque<HtmlIndexEntry>>
+    ): Int {
         // Use putIfAbsent to check and mark the URL atomically
         if (visited.putIfAbsent(relativeUrl, true) != null) {
             return 0 // URL already visited
@@ -94,11 +48,11 @@ class HtmlCrawler(
             return 0
         }
 
-        indexPage(relativeUrl, htmlContent)
+        indexPage(relativeUrl, htmlContent, trie)
 
         val newCounts = htmlUrlFinder.findRelativeUrls(htmlContent)
             .map { u -> fixUrl("/$relativeUrl", u) }
-            .map { u -> executorService.submit<Int> { crawl(u, visited) } }
+            .map { u -> executorService.submit<Int> { crawl(u, visited, trie) } }
             .sumOf { it.get() }
 
         return 1 + newCounts
@@ -114,7 +68,7 @@ class HtmlCrawler(
         return prefixUrl + fixedUrl
     }
 
-    private fun indexPage(relativeUrl: String, htmlContent: String) {
+    private fun indexPage(relativeUrl: String, htmlContent: String, trie: Trie<ConcurrentLinkedDeque<HtmlIndexEntry>>) {
         println("Indexing ${baseUrl + relativeUrl}")
 
         htmlTokenizer.tokenize(htmlContent)
@@ -129,23 +83,5 @@ class HtmlCrawler(
                 indexEntries.sortedBy { it.occurrences }
                 trie.put(token, indexEntries)
             }
-    }
-
-    private fun emulatedTrieSearchResult(string: String, value: ConcurrentLinkedDeque<HtmlIndexEntry>): TrieSearchResult<ConcurrentLinkedDeque<HtmlIndexEntry>> {
-        return TrieSearchResult(string, value, string, string, string.length, 0, 0, true, true)
-    }
-
-    private fun enrichWithBaseUrl(result: TrieSearchResult<ConcurrentLinkedDeque<HtmlIndexEntry>>): TrieSearchResult<List<HtmlIndexEntry>> {
-        return TrieSearchResult(
-            result.string,
-            result.value.map { HtmlIndexEntry(baseUrl + it.url, it.occurrences) },
-            result.matchedSubstring,
-            result.matchedWord,
-            result.numberOfMatches,
-            result.numberOfErrors,
-            result.prefixDistance,
-            result.matchedWholeString,
-            result.matchedWholeWord
-        )
     }
 }
