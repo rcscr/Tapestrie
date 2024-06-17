@@ -1,6 +1,8 @@
-## Trie
+# Tapestrie
 
 This project implements a `Trie`, a.k.a. `PrefixTree`, a data structure used for efficient string searching.
+
+The analogy of a `Trie` data structure to a tapestry is quite fitting. Just as a tapestry is composed of many threads woven together to create a complete piece of art, a `Trie` organizes various threads of strings to form a cohesive structure for efficient retrieval. Each path through the `Trie` can be thought of as a thread contributing to the overall functionality.
 
 The `Trie` implemented here is thread-safe, unit-tested, and able to efficiently retrieve data using any of the following strategies:
   - exact match (like a `Map`)
