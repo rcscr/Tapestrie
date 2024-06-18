@@ -1,4 +1,4 @@
-# Tapestrie
+# Tapes*trie*
 
 This project implements a `Trie`, a.k.a. `PrefixTree`, a data structure used for efficient string searching.
 
