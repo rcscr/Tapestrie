@@ -70,7 +70,7 @@ As an optimization, each node in the `Trie` stores its depth: the max size of a 
 
 The example above is quite extreme with more than 20,000 strings. But even so, the fuzzy search took ~1 second, which is quite impressive. However, this in-memory `Trie` certainly has its limitations; for one, it is quite memory-intensive. In many scenarios, a solution like `ElasticSearch` should be used instead.
 
-In general, the greater the error tolerance, the slower the performance, because there are fewer paths to explore. Furthermore, a shallow `Trie`, where each entry is short (i.e. words) offers the best performance, but with the limitation that you can only search for short strings. A `Trie` that stores longer text (i.e. sentences) allows searching for phrases (multiple words chained together), but is slower.
+In general, the greater the error tolerance, the slower the performance, because there are more paths to explore. Furthermore, a shallow `Trie`, where each entry is short (i.e. words) offers the best performance, but with the limitation that you can only search for short strings. A `Trie` that stores longer text (i.e. sentences) allows searching for phrases (multiple words chained together), but is slower.
 
 ### Build & run demo
 
