@@ -274,16 +274,14 @@ class FuzzySubstringSearchState<T> private constructor(
 
     private fun getErrorStrategies(nextNode: TrieNode<T>): List<ErrorStrategy<T>> {
         // 1. typo/swap: increment searchIndex and go to the next node, and keep track of swap letters
-        val typoSwapStrategy = ErrorStrategy(
-            nextNode,
-            searchCoordinates.searchIndex + 1,
-            searchVariables.sequence + nextNode.string,
-            SwapChars(searchRequest.search[searchCoordinates.searchIndex].toString(), nextNode.string),
-            searchCoordinates.startMatchIndex ?: searchVariables.sequence.length
-        )
-
-        if (searchRequest.matchingStrategy == TYPO
-                || searchRequest.matchingStrategy == SWAP) {
+        if (searchRequest.matchingStrategy == TYPO || searchRequest.matchingStrategy == SWAP) {
+            val typoSwapStrategy = ErrorStrategy(
+                nextNode,
+                searchCoordinates.searchIndex + 1,
+                searchVariables.sequence + nextNode.string,
+                SwapChars(searchRequest.search[searchCoordinates.searchIndex].toString(), nextNode.string),
+                searchCoordinates.startMatchIndex ?: searchVariables.sequence.length
+            )
             return listOf(typoSwapStrategy)
         }
 
