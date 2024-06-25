@@ -1,6 +1,6 @@
 package com.rcs.trie
 
-class TrieIterator<T>(val root: TrieNode<T>): Iterator<TrieEntry<T>> {
+class TrieIterator<T>(root: TrieNode<T>): Iterator<TrieEntry<T>> {
 
     private val queue = ArrayDeque<Pair<TrieNode<T>, String>>()
     private var next: TrieEntry<T>? = null
