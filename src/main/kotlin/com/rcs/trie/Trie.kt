@@ -56,8 +56,8 @@ class Trie<T>: Iterable<TrieEntry<T>> {
                         // and then keep appending the remaining characters of the input to it
                         val valueToInsert = if (reachedEndOfInput) value else null
                         val depth = inputString.length - i - 1
-                        val previous = current
-                        val nextNode = TrieNode(currentCharacter, valueToInsert, depth, mutableSetOf(), previous)
+                        val nextNode = TrieNode(
+                            currentCharacter, valueToInsert, depth, mutableSetOf(), previous = current)
                         current.addNextNode(nextNode)
                         current = nextNode
                     }
