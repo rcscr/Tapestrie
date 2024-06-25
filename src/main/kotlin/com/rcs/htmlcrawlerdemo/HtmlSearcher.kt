@@ -23,7 +23,8 @@ class HtmlSearcher(private val baseUrl: String, private val htmlCrawler: HtmlCra
 
     fun search(searchRequest: SearchRequest): List<TrieSearchResult<List<HtmlIndexEntry>>> {
         if (!initialized) {
-            throw IllegalStateException("HtmlSearcher has not been initialized; call HtmlSearcher.crawlAndIndex() first")
+            throw IllegalStateException("HtmlSearcher has not been initialized; " +
+                    "call HtmlSearcher.crawlAndIndex() first")
         }
 
         val normalizedKeyword = searchRequest.normalizedKeyword()
