@@ -363,9 +363,9 @@ class FuzzySubstringSearchState<T> private constructor(
         gatherStates.add(defaultGatherState)
 
         // we spin off a new reset state, in case we find a better match further in the string.
-        // we must only do this once, if this is the first time this state enters into the gather state
-        val perfectMatch = searchRequest.search.length == searchCoordinates.numberOfMatches
-        if (!searchVariables.isGatherState && !perfectMatch) {
+        // we must only do this once: if this is the first time this state enters into the gather state.
+        val notPerfectMatch = searchRequest.search.length != searchCoordinates.numberOfMatches
+        if (!searchVariables.isGatherState && notPerfectMatch) {
             gatherStates.addAll(buildResetState(nextNode, true)!!)
         }
 
