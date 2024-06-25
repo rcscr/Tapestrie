@@ -73,7 +73,9 @@ class FuzzySubstringSearchState<T> private constructor(
     }
 
     fun buildSearchResult(): TrieSearchResult<T> {
-        assert(hasSearchResult())
+        if (!hasSearchResult()) {
+            throw IllegalStateException("State does not have a search result")
+        }
 
         val actualErrors = getNumberOfErrorsIncludingMissingCharacters() +
                 searchRequest.numberOfPredeterminedErrors
