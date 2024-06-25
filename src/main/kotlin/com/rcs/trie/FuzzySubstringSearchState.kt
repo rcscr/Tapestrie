@@ -273,7 +273,7 @@ class FuzzySubstringSearchState<T> private constructor(
     }
 
     private fun getErrorStrategies(nextNode: TrieNode<T>): List<ErrorStrategy<T>> {
-        // 1. typo: increment searchIndex and go to the next node, and keep track of swap letters
+        // 1. typo/swap: increment searchIndex and go to the next node, and keep track of swap letters
         val typoSwapStrategy = ErrorStrategy(
             nextNode,
             searchCoordinates.searchIndex + 1,
