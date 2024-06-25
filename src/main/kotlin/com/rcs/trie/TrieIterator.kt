@@ -6,7 +6,7 @@ class TrieIterator<T>(root: TrieNode<T>): Iterator<TrieEntry<T>> {
     private var next: TrieEntry<T>? = null
 
     init {
-        queue.add(Pair(root, ""))
+        queue.add(Pair(root, root.string))
         setNext()
     }
 
