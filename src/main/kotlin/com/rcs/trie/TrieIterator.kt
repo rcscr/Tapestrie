@@ -23,9 +23,7 @@ class TrieIterator<T>(val root: TrieNode<T>): Iterator<TrieEntry<T>> {
     private fun setNext() {
         // breadth-first search: returns strings from shortest to longest
         while(queue.isNotEmpty()) {
-            val current = queue.removeFirst()
-            val node = current.first
-            val sequence = current.second
+            val (node, sequence) = queue.removeFirst()
             for (next in node.next) {
                 queue.add(Pair(next, sequence + next.string))
             }
