@@ -30,7 +30,7 @@ private data class SearchCoordinates(
     val numberOfErrors: Int,
     val startMatchIndex: Int?,
     val endMatchIndex: Int?,
-    val swapChar: MutableList<SwapChars>?
+    val swapChar: List<SwapChars>?
 )
 
 /**
@@ -205,7 +205,6 @@ class FuzzySubstringSearchState<T> private constructor(
 
         return when {
             swapSatisfied != null -> {
-                searchCoordinates.swapChar!!.remove(swapSatisfied)
                 listOf(
                     FuzzySubstringSearchState(
                         searchRequest = searchRequest,
@@ -220,7 +219,7 @@ class FuzzySubstringSearchState<T> private constructor(
                             searchIndex = searchCoordinates.searchIndex + 1,
                             numberOfMatches = searchCoordinates.numberOfMatches,
                             numberOfErrors = searchCoordinates.numberOfErrors + 1,
-                            swapChar = searchCoordinates.swapChar
+                            swapChar = searchCoordinates.swapChar!!.filter { sc -> sc != swapSatisfied }
                         )
                     )
                 )
