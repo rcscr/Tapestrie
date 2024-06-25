@@ -321,9 +321,7 @@ class FuzzySubstringSearchState<T> private constructor(
     ): Collection<FuzzySubstringSearchState<T>>? {
 
         return when {
-            !forceReturn && (searchVariables.isGatherState || matches()) ->
-                null
-            else ->
+            forceReturn || (!searchVariables.isGatherState && !matches()) ->
                 listOf(
                     FuzzySubstringSearchState(
                         searchRequest = searchRequest,
@@ -342,6 +340,8 @@ class FuzzySubstringSearchState<T> private constructor(
                         )
                     )
                 )
+            else ->
+                null
         }
     }
 
