@@ -334,13 +334,13 @@ class TrieFuzzySearchTest {
     }
 
     @Test
-    fun `matching strategy TYPO will only match adjacent letter swaps`() {
+    fun `matching strategy ADJACENT_SWAP will only match adjacent letter swaps`() {
         listOf(
             FuzzySearchScenario(
                 setOf("raphael", "rapheal", "rafhael"),
                 "rahpael",
                 2,
-                TYPO,
+                ADJACENT_SWAP,
                 listOf(
                     TrieSearchResult("raphael", Unit, "raphael", "raphael", 5, 2, 0, false, false),
                 )
@@ -349,7 +349,7 @@ class TrieFuzzySearchTest {
                 setOf("raphael", "rapheal", "rafhael"),
                 "rahpael",
                 4,
-                TYPO,
+                ADJACENT_SWAP,
                 listOf(
                     TrieSearchResult("raphael", Unit, "raphael", "raphael", 5, 2, 0, false, false),
                     TrieSearchResult("rapheal", Unit, "rapheal", "rapheal", 3, 4, 0, false, false),
@@ -359,13 +359,13 @@ class TrieFuzzySearchTest {
     }
 
     @Test
-    fun `matching strategy SWAP will find letter swaps anywhere in the string`() {
+    fun `matching strategy SYMMETRICAL_SWAP will find letter swaps anywhere in the string`() {
         listOf(
             FuzzySearchScenario(
                 setOf("i need Belly Jeans now"), // a symmetrical spoonerism in the middle of the string
                 "Jelly Beans",
                 2,
-                SWAP,
+                SYMMETRICAL_SWAP,
                 listOf(
                     TrieSearchResult("i need Belly Jeans now", Unit, "Belly Jeans", "Belly Jeans", 9, 2, 0, false, false),
                 )
@@ -374,16 +374,25 @@ class TrieFuzzySearchTest {
                 setOf("Nuenas Boches"), // another symmetrical spoonerism
                 "Buenas Noches",
                 2,
-                SWAP,
+                SYMMETRICAL_SWAP,
                 listOf(
                     TrieSearchResult("Nuenas Boches", Unit, "Nuenas Boches", "Nuenas Boches", 11, 2, 0, false, false),
+                )
+            ),
+            FuzzySearchScenario(
+                setOf("Chied Fricken"), // a symmetrical spoonerism with two letters
+                "Fried Chicken",
+                4,
+                SYMMETRICAL_SWAP,
+                listOf(
+                    TrieSearchResult("Chied Fricken", Unit, "Chied Fricken", "Chied Fricken", 9, 4, 0, false, false),
                 )
             ),
             FuzzySearchScenario(
                 setOf("Nood Gight"), // a symmetrical spoonerism that won't match
                 "Good Fight",
                 2,
-                SWAP,
+                SYMMETRICAL_SWAP,
                 listOf()
             )
         ).forEach { runTestScenario(it) }

@@ -261,9 +261,9 @@ class FuzzySubstringSearchState<T> private constructor(
         return hasSearchCharacters
                 && hasErrorAllowance
                 && when (searchRequest.matchingStrategy) {
-                    SWAP ->
+                    SYMMETRICAL_SWAP ->
                         true
-                    TYPO ->
+                    ADJACENT_SWAP ->
                         isNotInMiddleOfSwap
                     FUZZY_POSTFIX ->
                         hasMinimumNumberOfMatches()
@@ -275,8 +275,8 @@ class FuzzySubstringSearchState<T> private constructor(
     }
 
     private fun getErrorStrategies(nextNode: TrieNode<T>): List<ErrorStrategy<T>> {
-        // 1. typo/swap: increment searchIndex and go to the next node, and keep track of swap letters
-        if (searchRequest.matchingStrategy == TYPO || searchRequest.matchingStrategy == SWAP) {
+        // 1. Swap: increment searchIndex and go to the next node, and keep track of swap letters
+        if (searchRequest.matchingStrategy == ADJACENT_SWAP || searchRequest.matchingStrategy == SYMMETRICAL_SWAP) {
             val typoSwapStrategy = ErrorStrategy(
                 nextNode,
                 searchCoordinates.searchIndex + 1,

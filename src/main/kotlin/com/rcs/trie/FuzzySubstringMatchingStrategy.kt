@@ -14,12 +14,12 @@ enum class FuzzySubstringMatchingStrategy {
     FUZZY_POSTFIX,
 
     // accepts only errors due to adjacent letter swaps (i.e. typos)
-    TYPO,
+    ADJACENT_SWAP,
 
     // accepts only errors due to letter swaps anywhere in the string
     // (i.e. symmetrical spoonerisms)
     // TODO: Implement asymmetrical spoonerism match
-    SWAP,
+    SYMMETRICAL_SWAP,
 
     // matches a * to any character, without considering it as an error
     WILDCARD
