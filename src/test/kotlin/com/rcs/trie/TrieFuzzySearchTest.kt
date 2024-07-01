@@ -362,16 +362,16 @@ class TrieFuzzySearchTest {
     fun `matching strategy SWAP will find letter swaps anywhere in the string`() {
         listOf(
             FuzzySearchScenario(
-                setOf("Belly Jeans"), // a spoonerism
+                setOf("i need Belly Jeans now"), // a symmetrical spoonerism in the middle of the string
                 "Jelly Beans",
                 2,
                 SWAP,
                 listOf(
-                    TrieSearchResult("Belly Jeans", Unit, "Belly Jeans", "Belly Jeans", 9, 2, 0, false, false),
+                    TrieSearchResult("i need Belly Jeans now", Unit, "Belly Jeans", "Belly Jeans", 9, 2, 0, false, false),
                 )
             ),
             FuzzySearchScenario(
-                setOf("Nuenas Boches"), // a spoonerism
+                setOf("Nuenas Boches"), // another symmetrical spoonerism
                 "Buenas Noches",
                 2,
                 SWAP,
@@ -380,12 +380,12 @@ class TrieFuzzySearchTest {
                 )
             ),
             FuzzySearchScenario(
-                setOf("Nood Gight"), // a spoonerism that won't match
+                setOf("Nood Gight"), // a symmetrical spoonerism that won't match
                 "Good Fight",
                 2,
                 SWAP,
                 listOf()
-            ),
+            )
         ).forEach { runTestScenario(it) }
     }
 
