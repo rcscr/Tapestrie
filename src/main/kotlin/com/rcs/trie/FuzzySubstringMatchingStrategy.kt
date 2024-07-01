@@ -16,7 +16,9 @@ enum class FuzzySubstringMatchingStrategy {
     // accepts only errors due to adjacent letter swaps (i.e. typos)
     TYPO,
 
-    // accepts only errors due to letter swaps anywhere in the string (i.e. spoonerisms)
+    // accepts only errors due to letter swaps anywhere in the string
+    // (i.e. symmetrical spoonerisms)
+    // TODO: Implement asymmetrical spoonerism match
     SWAP,
 
     // matches a * to any character, without considering it as an error
