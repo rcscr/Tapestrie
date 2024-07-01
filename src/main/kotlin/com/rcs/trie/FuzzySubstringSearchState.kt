@@ -34,7 +34,7 @@ private data class SearchCoordinates(
 )
 
 /**
- * Holds swap characters for matching strategy TYPO and SWAP
+ * Holds swap characters for matching SWAP strategies
  */
 private data class SwapChars(
     val fromSource: String,
