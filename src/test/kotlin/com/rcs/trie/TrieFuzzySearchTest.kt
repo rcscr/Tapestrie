@@ -380,12 +380,12 @@ class TrieFuzzySearchTest {
                 )
             ),
             FuzzySearchScenario(
-                setOf("Chied Fricken"), // a symmetrical spoonerism with two letters
-                "Fried Chicken",
+                setOf("Chied Frurros"), // a symmetrical spoonerism with two letters
+                "Fried Churros",
                 4,
                 SYMMETRICAL_SWAP,
                 listOf(
-                    TrieSearchResult("Chied Fricken", Unit, "Chied Fricken", "Chied Fricken", 9, 4, 0, false, false),
+                    TrieSearchResult("Chied Frurros", Unit, "Chied Frurros", "Chied Frurros", 9, 4, 0, false, false),
                 )
             ),
             FuzzySearchScenario(
