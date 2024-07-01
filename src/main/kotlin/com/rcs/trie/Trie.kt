@@ -82,7 +82,7 @@ class Trie<T>: Iterable<TrieEntry<T>> {
             updateDepths(current, current.next.maxByOrNull { it.depth })
         }
 
-        if (previousValue == null /* = is update */) {
+        if (previousValue == null) { // = is update
             _size++
         }
 
