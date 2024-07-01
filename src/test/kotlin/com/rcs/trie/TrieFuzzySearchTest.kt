@@ -31,25 +31,27 @@ class TrieFuzzySearchTest {
     }
 
     @Test
-    fun `matching strategies LIBERAL, FUZZY_PREFIX, EXACT_PREFIX, FUZZY_POSTFIX matches with a space`() {
-        arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX, FUZZY_POSTFIX)
+    fun `matching strategies LIBERAL, FUZZY_PREFIX, and EXACT_PREFIX matches with or without a space`() {
+        arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
             .map { listOf(
                 FuzzySearchScenario(
-                    setOf("abc def", "abcdef"),
-                    "abc deh",
+                    setOf("fullstack", "full stack", "backend"),
+                    "fullstack",
                     1,
                     it,
-                    listOf( // matching spaces count as one correct match
-                        TrieSearchResult("abc def", Unit, "abc de", "abc def", 6, 1, 0, false, false)
+                    listOf(
+                        TrieSearchResult("fullstack", Unit, "fullstack", "fullstack", 9, 0, 0, true, true),
+                        TrieSearchResult("full stack", Unit, "full stack", "full stack", 9, 1, 0, false, false)
                     )
                 ),
                 FuzzySearchScenario(
-                    setOf("abcde lalala"),
-                    "abcdef",
+                    setOf("fullstack", "full stack", "backend"),
+                    "full stack",
                     1,
                     it,
-                    listOf( // not matching spaces count as one correct match
-                        TrieSearchResult("abcde lalala", Unit, "abcde", "abcde", 5, 1, 0, false, false)
+                    listOf(
+                        TrieSearchResult("full stack", Unit, "full stack", "full stack", 10, 0, 0, true, true),
+                        TrieSearchResult("fullstack", Unit, "fullstack", "fullstack", 9, 1, 0, false, false)
                     )
                 )
             )
