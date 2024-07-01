@@ -169,8 +169,10 @@ class Trie<T>: Iterable<TrieEntry<T>> {
     }
 
     private fun gatherAll(start: TrieNode<T>, startSequence: String): MutableMap<String, T> {
-        return TrieIterator(start)
-            .asSequence()
+        return start.next
+            .flatMap {
+                TrieIterator(it).asSequence()
+            }
             .fold(mutableMapOf()) { map, entry ->
                 map[startSequence + entry.string] = entry.value
                 map
