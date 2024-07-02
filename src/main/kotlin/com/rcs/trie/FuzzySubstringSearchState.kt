@@ -121,7 +121,7 @@ class FuzzySubstringSearchState<T> private constructor(
                 && searchCoordinates.endMatchIndex != null
                 && hasMinimumNumberOfMatches()
                 && getNumberOfErrorsIncludingMissingCharacters() <= searchRequest.errorTolerance
-                && (searchCoordinates.swapChar ?: emptyList()).isEmpty()
+                && searchCoordinates.swapChar?.isEmpty() ?: true
     }
 
     private fun hasMinimumNumberOfMatches(): Boolean {
