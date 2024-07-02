@@ -221,7 +221,7 @@ class FuzzySubstringSearchState<T> private constructor(
                             keywordIndex = searchCoordinates.keywordIndex + 1,
                             numberOfMatches = searchCoordinates.numberOfMatches,
                             numberOfErrors = searchCoordinates.numberOfErrors + 1,
-                            swapChar = searchCoordinates.swapChar!!.filter { sc -> sc != swapSatisfied }
+                            swapChar = searchCoordinates.swapChar!!.filter { it != swapSatisfied }
                         )
                     )
                 )
