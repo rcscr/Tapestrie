@@ -242,7 +242,7 @@ class FuzzySubstringSearchState<T> private constructor(
                             numberOfMatches = searchCoordinates.numberOfMatches,
                             numberOfErrors = searchCoordinates.numberOfErrors + 1,
                             swapChar = it.swapChar?.let { swapChar ->
-                                (searchCoordinates.swapChar ?: mutableListOf()).plus(swapChar).toMutableList()
+                                (searchCoordinates.swapChar ?: mutableListOf()) + swapChar
                             }
                         )
                     )
