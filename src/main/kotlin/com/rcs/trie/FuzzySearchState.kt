@@ -1,12 +1,12 @@
 package com.rcs.trie
 
-import com.rcs.trie.FuzzySubstringMatchingStrategy.*
+import com.rcs.trie.FuzzyMatchingStrategy.*
 
 /**
  * Invariable properties of the search request - these never change.
  */
 private data class SearchRequest(
-    val matchingStrategy: FuzzySubstringMatchingStrategy,
+    val matchingStrategy: FuzzyMatchingStrategy,
     val keyword: String,
     val numberOfPredeterminedErrors: Int,
     val errorTolerance: Int,
@@ -54,13 +54,13 @@ private data class ErrorStrategy<T>(
 
 private val wordSeparatorRegex = "[\\s\\p{P}]".toRegex()
 
-class FuzzySubstringSearchState<T> private constructor(
+class FuzzySearchState<T> private constructor(
     private val searchRequest: SearchRequest,
     private val searchVariables: SearchVariables<T>,
     private val searchCoordinates: SearchCoordinates
 ) {
 
-    fun nextStates(): Collection<FuzzySubstringSearchState<T>> {
+    fun nextStates(): Collection<FuzzySearchState<T>> {
         synchronized(searchVariables.node.next) {
             return searchVariables.node.next
                 .map { nextStates(it) ?: listOf() }
@@ -129,7 +129,7 @@ class FuzzySubstringSearchState<T> private constructor(
         return searchCoordinates.numberOfMatches >= minimumRequiredMatches
     }
 
-    private fun nextStates(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>>? {
+    private fun nextStates(nextNode: TrieNode<T>): Collection<FuzzySearchState<T>>? {
         if (shouldCull(nextNode)) {
             return null
         }
@@ -148,7 +148,7 @@ class FuzzySubstringSearchState<T> private constructor(
         return nextNode.depth < numberOfMatchingCharactersNeeded
     }
 
-    private fun buildMatchState(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>>? {
+    private fun buildMatchState(nextNode: TrieNode<T>): Collection<FuzzySearchState<T>>? {
         if (searchVariables.isGatherState) {
             return null
         }
@@ -156,7 +156,7 @@ class FuzzySubstringSearchState<T> private constructor(
         return when {
             nextNodeMatches(nextNode) ->
                 listOf(
-                    FuzzySubstringSearchState(
+                    FuzzySearchState(
                         searchRequest = searchRequest,
                         searchVariables = SearchVariables(
                             node = nextNode,
@@ -198,7 +198,7 @@ class FuzzySubstringSearchState<T> private constructor(
         return matchingPreconditions && searchCoordinatesMatch(nextNode)
     }
 
-    private fun buildErrorState(nextNode: TrieNode<T>): Collection<FuzzySubstringSearchState<T>>? {
+    private fun buildErrorState(nextNode: TrieNode<T>): Collection<FuzzySearchState<T>>? {
         if (searchVariables.isGatherState) {
             return null
         }
@@ -208,7 +208,7 @@ class FuzzySubstringSearchState<T> private constructor(
         return when {
             swapSatisfied != null -> {
                 listOf(
-                    FuzzySubstringSearchState(
+                    FuzzySearchState(
                         searchRequest = searchRequest,
                         searchVariables = SearchVariables(
                             node = nextNode,
@@ -228,7 +228,7 @@ class FuzzySubstringSearchState<T> private constructor(
             }
             shouldProduceErrorStates() ->
                 getErrorStrategies(nextNode).map {
-                    FuzzySubstringSearchState(
+                    FuzzySearchState(
                         searchRequest = searchRequest,
                         searchVariables = SearchVariables(
                             node = it.node,
@@ -320,12 +320,12 @@ class FuzzySubstringSearchState<T> private constructor(
     private fun buildResetState(
         nextNode: TrieNode<T>,
         forceReturn: Boolean = false
-    ): Collection<FuzzySubstringSearchState<T>>? {
+    ): Collection<FuzzySearchState<T>>? {
 
         return when {
             forceReturn || (!searchVariables.isGatherState && !matches()) ->
                 listOf(
-                    FuzzySubstringSearchState(
+                    FuzzySearchState(
                         searchRequest = searchRequest,
                         searchVariables = SearchVariables(
                             node = nextNode,
@@ -347,10 +347,10 @@ class FuzzySubstringSearchState<T> private constructor(
         }
     }
 
-    private fun buildGatherState(nextNode: TrieNode<T>): List<FuzzySubstringSearchState<T>> {
-        val gatherStates = mutableListOf<FuzzySubstringSearchState<T>>()
+    private fun buildGatherState(nextNode: TrieNode<T>): List<FuzzySearchState<T>> {
+        val gatherStates = mutableListOf<FuzzySearchState<T>>()
 
-        val defaultGatherState = FuzzySubstringSearchState(
+        val defaultGatherState = FuzzySearchState(
             searchRequest = searchRequest,
             searchVariables = SearchVariables(
                 node = nextNode,
@@ -434,12 +434,12 @@ class FuzzySubstringSearchState<T> private constructor(
             root: TrieNode<T>,
             search: String,
             errorTolerance: Int,
-            matchingStrategy: FuzzySubstringMatchingStrategy
-        ): Collection<FuzzySubstringSearchState<T>> {
+            matchingStrategy: FuzzyMatchingStrategy
+        ): Collection<FuzzySearchState<T>> {
 
-            val initialStates = mutableListOf<FuzzySubstringSearchState<T>>()
+            val initialStates = mutableListOf<FuzzySearchState<T>>()
 
-            val defaultInitialState = FuzzySubstringSearchState(
+            val defaultInitialState = FuzzySearchState(
                 root, search, 0, errorTolerance, matchingStrategy)
 
             initialStates.add(defaultInitialState)
@@ -447,7 +447,7 @@ class FuzzySubstringSearchState<T> private constructor(
             // efficient way to match with errors in beginning
             if (matchingStrategy == LIBERAL) {
                 for (i in 1..errorTolerance) {
-                    val stateWithPredeterminedError = FuzzySubstringSearchState(
+                    val stateWithPredeterminedError = FuzzySearchState(
                         root,
                         search.substring(i, search.length),
                         numberOfPredeterminedErrors = i,
@@ -470,15 +470,15 @@ class FuzzySubstringSearchState<T> private constructor(
             search: String,
             numberOfPredeterminedErrors: Int,
             errorTolerance: Int,
-            matchingStrategy: FuzzySubstringMatchingStrategy
-        ): FuzzySubstringSearchState<T> {
+            matchingStrategy: FuzzyMatchingStrategy
+        ): FuzzySearchState<T> {
 
             // this class only work works when beginning with the root node
             if (!root.isRoot()) {
                 throw IllegalArgumentException("Node must be root")
             }
 
-            return FuzzySubstringSearchState(
+            return FuzzySearchState(
                 searchRequest = SearchRequest(
                     matchingStrategy = matchingStrategy,
                     keyword = search,

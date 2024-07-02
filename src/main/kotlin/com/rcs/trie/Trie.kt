@@ -145,15 +145,15 @@ class Trie<T>: Iterable<TrieEntry<T>> {
     }
 
     fun matchBySubstring(search: String): List<TrieSearchResult<T>> {
-        return matchBySubstringFuzzy(search, 0, FuzzySubstringMatchingStrategy.LIBERAL)
+        return matchBySubstringFuzzy(search, 0, FuzzyMatchingStrategy.LIBERAL)
     }
 
     fun matchBySubstringFuzzy(
         search: String,
         errorTolerance: Int,
-        matchingStrategy: FuzzySubstringMatchingStrategy
+        matchingStrategy: FuzzyMatchingStrategy
     ): List<TrieSearchResult<T>> {
-        return FuzzySubstringSearcher.search(root, search, errorTolerance, matchingStrategy)
+        return FuzzySearcher.search(root, search, errorTolerance, matchingStrategy)
     }
 
     private fun prefixMatchUpTo(string: String): TrieNode<T>? {

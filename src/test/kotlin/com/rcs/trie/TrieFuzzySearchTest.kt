@@ -1,7 +1,7 @@
 package com.rcs.trie
 
 import kotlin.test.Test
-import com.rcs.trie.FuzzySubstringMatchingStrategy.*
+import com.rcs.trie.FuzzyMatchingStrategy.*
 import org.assertj.core.api.Assertions.assertThat
 
 class TrieFuzzySearchTest {
@@ -10,7 +10,7 @@ class TrieFuzzySearchTest {
         val entries: Set<String>,
         val search: String,
         val errorTolerance: Int,
-        val matchingStrategy: FuzzySubstringMatchingStrategy,
+        val matchingStrategy: FuzzyMatchingStrategy,
         val expectedResults: List<TrieSearchResult<Unit>>
     )
 

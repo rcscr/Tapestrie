@@ -1,6 +1,6 @@
 package com.rcs.htmlcrawlerdemo
 
-import com.rcs.trie.FuzzySubstringMatchingStrategy
+import com.rcs.trie.FuzzyMatchingStrategy
 import com.rcs.trie.Trie
 import com.rcs.trie.TrieSearchResult
 import java.util.concurrent.ConcurrentLinkedDeque
@@ -46,7 +46,7 @@ class HtmlSearcher(private val baseUrl: String, private val htmlCrawler: HtmlCra
                     trie.matchBySubstringFuzzy(
                         normalizedKeyword,
                         searchRequest.errorTolerance!!,
-                        FuzzySubstringMatchingStrategy.LIBERAL)
+                        FuzzyMatchingStrategy.LIBERAL)
                 }
             }
         }

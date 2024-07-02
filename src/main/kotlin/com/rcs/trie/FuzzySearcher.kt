@@ -2,7 +2,7 @@ package com.rcs.trie
 
 import java.util.concurrent.Executors
 
-class FuzzySubstringSearcher {
+class FuzzySearcher {
 
     companion object {
 
@@ -12,7 +12,7 @@ class FuzzySubstringSearcher {
             root: TrieNode<T>,
             search: String,
             errorTolerance: Int,
-            matchingStrategy: FuzzySubstringMatchingStrategy
+            matchingStrategy: FuzzyMatchingStrategy
         ): List<TrieSearchResult<T>> {
 
             if (search.isEmpty() || errorTolerance < 0 || errorTolerance > search.length) {
@@ -21,7 +21,7 @@ class FuzzySubstringSearcher {
 
             val executorService = Executors.newVirtualThreadPerTaskExecutor()
 
-            val initialStates = FuzzySubstringSearchState.getInitialStates(root, search, errorTolerance, matchingStrategy)
+            val initialStates = FuzzySearchState.getInitialStates(root, search, errorTolerance, matchingStrategy)
             val results = mutableMapOf<String, TrieSearchResult<T>>()
 
             // Parallelizes only top-level of the Trie:
@@ -48,10 +48,10 @@ class FuzzySubstringSearcher {
         }
 
         private fun <T> searchJob(
-            initialState: FuzzySubstringSearchState<T>,
+            initialState: FuzzySearchState<T>,
             results: MutableMap<String, TrieSearchResult<T>>
         ) {
-            val queue = ArrayDeque<FuzzySubstringSearchState<T>>()
+            val queue = ArrayDeque<FuzzySearchState<T>>()
             queue.add(initialState)
 
             while (queue.isNotEmpty()) {

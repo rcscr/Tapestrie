@@ -1,6 +1,6 @@
 package com.rcs.trie
 
-enum class FuzzySubstringMatchingStrategy {
+enum class FuzzyMatchingStrategy {
     // matches everywhere in the string, and allows errors in the beginning, middle, and end
     LIBERAL,
 
