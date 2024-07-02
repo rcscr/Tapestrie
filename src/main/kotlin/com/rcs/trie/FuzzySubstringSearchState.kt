@@ -430,11 +430,42 @@ class FuzzySubstringSearchState<T> private constructor(
 
     companion object {
 
+        fun <T> getInitialStates(
+            root: TrieNode<T>,
+            search: String,
+            errorTolerance: Int,
+            matchingStrategy: FuzzySubstringMatchingStrategy
+        ): Collection<FuzzySubstringSearchState<T>> {
+
+            val initialStates = mutableListOf<FuzzySubstringSearchState<T>>()
+
+            val defaultInitialState = FuzzySubstringSearchState(
+                root, search, 0, errorTolerance, matchingStrategy)
+
+            initialStates.add(defaultInitialState)
+
+            // efficient way to match with errors in beginning
+            if (matchingStrategy == LIBERAL) {
+                for (i in 1..errorTolerance) {
+                    val stateWithPredeterminedError = FuzzySubstringSearchState(
+                        root,
+                        search.substring(i, search.length),
+                        numberOfPredeterminedErrors = i,
+                        errorTolerance - i,
+                        matchingStrategy
+                    )
+                    initialStates.add(stateWithPredeterminedError)
+                }
+            }
+
+            return initialStates
+        }
+
+
         /**
-         * Emulates a public constructor, keeping some properties private as part of
-         * this class's implementation details
+         * `invoke` emulates a public constructor
          */
-        operator fun <T> invoke(
+        private operator fun <T> invoke(
             root: TrieNode<T>,
             search: String,
             numberOfPredeterminedErrors: Int,

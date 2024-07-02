@@ -21,7 +21,7 @@ class FuzzySubstringSearcher {
 
             val executorService = Executors.newVirtualThreadPerTaskExecutor()
 
-            val initialStates = getInitialStates(root, search, errorTolerance, matchingStrategy)
+            val initialStates = FuzzySubstringSearchState.getInitialStates(root, search, errorTolerance, matchingStrategy)
             val results = mutableMapOf<String, TrieSearchResult<T>>()
 
             // Parallelizes only top-level of the Trie:
@@ -64,37 +64,6 @@ class FuzzySubstringSearcher {
 
                 queue.addAll(state.nextStates())
             }
-        }
-
-        private fun <T> getInitialStates(
-            root: TrieNode<T>,
-            search: String,
-            errorTolerance: Int,
-            matchingStrategy: FuzzySubstringMatchingStrategy
-        ): Collection<FuzzySubstringSearchState<T>> {
-
-            val initialStates = mutableListOf<FuzzySubstringSearchState<T>>()
-
-            val defaultInitialState = FuzzySubstringSearchState(
-                root, search, 0, errorTolerance, matchingStrategy)
-
-            initialStates.add(defaultInitialState)
-
-            // efficient way to match with errors in beginning
-            if (matchingStrategy == FuzzySubstringMatchingStrategy.LIBERAL) {
-                for (i in 1..errorTolerance) {
-                    val stateWithPredeterminedError = FuzzySubstringSearchState(
-                        root,
-                        search.substring(i, search.length),
-                        numberOfPredeterminedErrors = i,
-                        errorTolerance - i,
-                        matchingStrategy
-                    )
-                    initialStates.add(stateWithPredeterminedError)
-                }
-            }
-
-            return initialStates
         }
 
         private fun <T> MutableMap<String, TrieSearchResult<T>>.putOnlyNewOrBetter(newMatch: TrieSearchResult<T>) {
