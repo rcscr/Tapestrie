@@ -494,19 +494,26 @@ class FuzzySearchState<T> private constructor(
             }
 
             return FuzzySearchState(
-                searchRequest = SearchRequest(
-                    matchingStrategy = matchingStrategy,
-                    keyword = keyword,
-                    numberOfPredeterminedErrors = numberOfPredeterminedErrors,
-                    errorTolerance = errorTolerance,
-                    caseInsensitive = caseInsensitive
+                SearchRequest(
+                    matchingStrategy,
+                    keyword,
+                    numberOfPredeterminedErrors,
+                    errorTolerance,
+                    caseInsensitive
                 ),
-                searchVariables = SearchVariables(
+                SearchVariables(
                     node = root,
                     sequence = "",
                     isGatherState = false,
                 ),
-                searchCoordinates = SearchCoordinates(0, 0, 0, null, null, null)
+                SearchCoordinates(
+                    keywordIndex = 0,
+                    numberOfMatches= 0,
+                    numberOfErrors = 0,
+                    startMatchIndex = null,
+                    endMatchIndex = null,
+                    swapChar = null
+                )
             )
         }
     }
