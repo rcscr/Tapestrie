@@ -31,7 +31,7 @@ private data class SearchCoordinates(
     val numberOfErrors: Int,
     val startMatchIndex: Int?,
     val endMatchIndex: Int?,
-    val swapChar: List<SwapChars>?
+    val swapChars: List<SwapChars>?
 )
 
 /**
@@ -122,7 +122,7 @@ class FuzzySearchState<T> private constructor(
                 && searchCoordinates.endMatchIndex != null
                 && hasMinimumNumberOfMatches()
                 && getNumberOfErrorsIncludingMissingCharacters() <= searchRequest.errorTolerance
-                && searchCoordinates.swapChar?.isEmpty() ?: true
+                && searchCoordinates.swapChars?.isEmpty() ?: true
     }
 
     private fun hasMinimumNumberOfMatches(): Boolean {
@@ -170,7 +170,7 @@ class FuzzySearchState<T> private constructor(
                             keywordIndex = searchCoordinates.keywordIndex + 1,
                             numberOfMatches = searchCoordinates.numberOfMatches + 1,
                             numberOfErrors = searchCoordinates.numberOfErrors,
-                            swapChar = searchCoordinates.swapChar
+                            swapChars = searchCoordinates.swapChars
                         )
                     )
                 )
@@ -204,7 +204,7 @@ class FuzzySearchState<T> private constructor(
             return null
         }
 
-        val swapSatisfied = searchCoordinates.swapChar.getMatching(nextNode)
+        val swapSatisfied = searchCoordinates.swapChars.getMatching(nextNode)
 
         return when {
             swapSatisfied != null -> {
@@ -222,7 +222,7 @@ class FuzzySearchState<T> private constructor(
                             keywordIndex = searchCoordinates.keywordIndex + 1,
                             numberOfMatches = searchCoordinates.numberOfMatches,
                             numberOfErrors = searchCoordinates.numberOfErrors + 1,
-                            swapChar = searchCoordinates.swapChar!!.filter { it != swapSatisfied }
+                            swapChars = searchCoordinates.swapChars!!.filter { it != swapSatisfied }
                         )
                     )
                 )
@@ -242,8 +242,8 @@ class FuzzySearchState<T> private constructor(
                             keywordIndex = it.searchIndex,
                             numberOfMatches = searchCoordinates.numberOfMatches,
                             numberOfErrors = searchCoordinates.numberOfErrors + 1,
-                            swapChar = it.swapChar?.let { swapChar ->
-                                (searchCoordinates.swapChar ?: mutableListOf()) + swapChar
+                            swapChars = it.swapChar?.let { swapChar ->
+                                (searchCoordinates.swapChars ?: mutableListOf()) + swapChar
                             }
                         )
                     )
@@ -254,7 +254,7 @@ class FuzzySearchState<T> private constructor(
     }
 
     private fun shouldProduceErrorStates(): Boolean {
-        val isNotInMiddleOfSwap = searchCoordinates.swapChar?.isEmpty() ?: true
+        val isNotInMiddleOfSwap = searchCoordinates.swapChars?.isEmpty() ?: true
         val wasMatchingBefore = searchCoordinates.numberOfMatches > 0
         val hasSearchCharacters = searchCoordinates.keywordIndex + 1 < searchRequest.keyword.length
         val hasErrorAllowance = searchCoordinates.numberOfErrors < searchRequest.errorTolerance
@@ -342,7 +342,7 @@ class FuzzySearchState<T> private constructor(
                             keywordIndex = 0,
                             numberOfMatches = 0,
                             numberOfErrors = 0,
-                            swapChar = null
+                            swapChars = null
                         )
                     )
                 )
@@ -512,7 +512,7 @@ class FuzzySearchState<T> private constructor(
                     numberOfErrors = 0,
                     startMatchIndex = null,
                     endMatchIndex = null,
-                    swapChar = null
+                    swapChars = null
                 )
             )
         }
