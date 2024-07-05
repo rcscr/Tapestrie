@@ -416,7 +416,7 @@ class FuzzySearchState<T> private constructor(
     }
 
     private fun CharSequence.indexOfFirstWordSeparator(startIndex: Int = 0): Int? {
-        return (startIndex..<this.length).firstOrNull {
+        return (startIndex until this.length).firstOrNull {
             this[it].toString().matches(wordSeparatorRegex)
         }
     }
