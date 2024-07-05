@@ -120,7 +120,7 @@ class Trie<T>: Iterable<TrieEntry<T>> {
                 val charToUnlink = inputString[j].toString()
                 last.removeNextNode(charToUnlink)
 
-                // update sizes to reflect the change in depth
+                // update depths to reflect the change
                 updateDepths(last, last.next.maxByOrNull { it.depth })
 
                 _size--
