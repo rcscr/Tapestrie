@@ -31,6 +31,23 @@ class TrieFuzzySearchTest {
     }
 
     @Test
+    fun `all matching strategies are case insensitive by default`() {
+        arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX, FUZZY_POSTFIX, ADJACENT_SWAP, SYMMETRICAL_SWAP, WILDCARD)
+            .map {
+                FuzzySearchScenario(
+                    setOf("RAPHAEL"),
+                    "raphael",
+                    0,
+                    it,
+                    listOf(
+                        TrieSearchResult("RAPHAEL", Unit, "RAPHAEL", "RAPHAEL", 7, 0, 0, true, true)
+                    )
+                )
+            }
+            .forEach { runTestScenario(it) }
+    }
+
+    @Test
     fun `matching strategies LIBERAL, FUZZY_PREFIX, and EXACT_PREFIX matches with or without a space`() {
         arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX)
             .map { listOf(

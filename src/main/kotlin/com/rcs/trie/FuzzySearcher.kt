@@ -19,7 +19,8 @@ class FuzzySearcher {
                 throw IllegalArgumentException()
             }
 
-            val initialStates = FuzzySearchState.getInitialStates(root, search, errorTolerance, matchingStrategy)
+            val initialStates = FuzzySearchState.getInitialStates(
+                root, search, errorTolerance, matchingStrategy, true)
             val results = mutableMapOf<String, TrieSearchResult<T>>()
 
             // Parallelizes only top-level of the Trie:
