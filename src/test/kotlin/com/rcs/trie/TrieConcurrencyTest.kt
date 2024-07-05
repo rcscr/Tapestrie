@@ -13,24 +13,27 @@ class TrieConcurrencyTest {
         // Arrange
         val trie = Trie<Unit>()
         val executorService = Executors.newVirtualThreadPerTaskExecutor()
-        val randomStrings = (0..10_000).map { getRandomString() }.distinct()
+        val originalRandomStrings = (0..10_000).map { getRandomString() }.distinct()
 
         // Act
-        randomStrings
+        originalRandomStrings
             .map { executorService.submit { trie.put(it, Unit) } }
             .forEach { it.get() }
 
         // Assert
-        assertThat(trie.matchByPrefix("").size).isEqualTo(randomStrings.size)
+        assertThat(trie.matchByPrefix("").size).isEqualTo(originalRandomStrings.size)
 
         // we will add new strings as we remove the old ones
-        val randomStringsAgain = (0..10_000).map { getRandomString() }.distinct()
+        val randomStringsAgain = (0..10_000)
+            .map { getRandomString() }
+            .distinct()
+            .filter { !originalRandomStrings.contains(it) }
 
         // run both add and remove operations concurrently
         val addFutures = randomStringsAgain
             .map { executorService.submit { trie.put(it, Unit) } }
 
-        val removeFutures = randomStrings
+        val removeFutures = originalRandomStrings
             .map {
                 executorService.submit {
                     assertThat(trie.getExactly(it)).isNotNull()
