@@ -1,5 +1,6 @@
 package com.rcs.trie
 
+import kotlinx.coroutines.runBlocking
 import kotlin.math.max
 
 class Trie<T>: Iterable<TrieEntry<T>> {
@@ -152,8 +153,8 @@ class Trie<T>: Iterable<TrieEntry<T>> {
         search: String,
         errorTolerance: Int,
         matchingStrategy: FuzzyMatchingStrategy
-    ): List<TrieSearchResult<T>> {
-        return FuzzySearcher.search(root, search, errorTolerance, matchingStrategy)
+    ): List<TrieSearchResult<T>> = runBlocking {
+        FuzzySearcher.search(root, search, errorTolerance, matchingStrategy)
     }
 
     private fun prefixMatchUpTo(string: String): TrieNode<T>? {

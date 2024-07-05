@@ -1,6 +1,6 @@
 package com.rcs.trie
 
-import java.util.concurrent.Executors
+import kotlinx.coroutines.*
 
 class FuzzySearcher {
 
@@ -8,43 +8,38 @@ class FuzzySearcher {
 
         private val updateLock = Any()
 
-        fun <T> search(
+        suspend fun <T> search(
             root: TrieNode<T>,
             search: String,
             errorTolerance: Int,
             matchingStrategy: FuzzyMatchingStrategy
-        ): List<TrieSearchResult<T>> {
+        ): List<TrieSearchResult<T>> = coroutineScope {
 
             if (search.isEmpty() || errorTolerance < 0 || errorTolerance > search.length) {
                 throw IllegalArgumentException()
             }
 
-            val executorService = Executors.newVirtualThreadPerTaskExecutor()
-
             val initialStates = FuzzySearchState.getInitialStates(root, search, errorTolerance, matchingStrategy)
             val results = mutableMapOf<String, TrieSearchResult<T>>()
 
             // Parallelizes only top-level of the Trie:
-            // one (virtual) thread for each state derived from each node directly beneath the root
+            // one coroutine for each state derived from each node directly beneath the root
             val topLevelStates = initialStates
                 .map { it.nextStates() }
                 .flatten()
 
-            val futures = topLevelStates.map {
-                executorService.submit {
+            val jobs = topLevelStates.map {
+                launch(Dispatchers.Default) {
                     searchJob(it, results)
                 }
             }
 
-            futures.map { it.get() }
+            jobs.forEach { it.join() }
 
-            // clean up resources to prevent memory leak
-            executorService.submit {
-                System.gc()
-                executorService.shutdown()
-            }
+            // clean up resources to prevent memory hoarding
+            System.gc()
 
-            return results.values.sortedWith(TrieSearchResultComparator.byBestMatchFirst)
+            results.values.sortedWith(TrieSearchResultComparator.byBestMatchFirst)
         }
 
         private fun <T> searchJob(
