@@ -22,5 +22,10 @@ enum class FuzzyMatchingStrategy {
     SYMMETRICAL_SWAP,
 
     // matches a * to any character, without considering it as an error
-    WILDCARD
+    WILDCARD,
+
+    // matches strings containing words that form the acronym provided
+    // each unmatched letter in the acronym counts as an error
+    // TODO
+    ACRONYM
 }
