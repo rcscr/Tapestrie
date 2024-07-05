@@ -2,6 +2,7 @@ package com.rcs.trie
 
 import kotlinx.coroutines.runBlocking
 import kotlin.math.max
+import kotlin.properties.Delegates
 
 class Trie<T>: Iterable<TrieEntry<T>> {
 
@@ -9,7 +10,7 @@ class Trie<T>: Iterable<TrieEntry<T>> {
 
     private lateinit var root: TrieNode<T>
 
-    private var _size = 0
+    private var _size: Int by Delegates.vetoable(0) { _, _, newValue -> newValue >= 0 }
 
     val size: Int get() = _size
 
@@ -81,10 +82,10 @@ class Trie<T>: Iterable<TrieEntry<T>> {
             }
 
             updateDepths(current, current.next.maxByOrNull { it.depth })
-        }
 
-        if (previousValue == null) { // = is update
-            _size++
+            if (previousValue == null) { // = is update
+                _size++
+            }
         }
 
         return previousValue
