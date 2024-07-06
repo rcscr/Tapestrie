@@ -210,8 +210,7 @@ class FuzzySearchState<T> private constructor(
     }
 
     private fun nextNodeMatches(nextNode: TrieNode<T>): Boolean {
-        if (searchRequest.matchingStrategy == WILDCARD
-            && currentSearchCharacter() == "*") {
+        if (searchRequest.matchingStrategy == WILDCARD && currentSearchCharacter() == "*") {
             return true
         }
 
