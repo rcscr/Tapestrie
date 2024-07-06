@@ -164,13 +164,13 @@ class FuzzySearchState<T> private constructor(
 
             listOf(
                 FuzzySearchState(
-                    searchRequest = searchRequest,
-                    searchVariables = SearchVariables(
+                    searchRequest,
+                    SearchVariables(
                         node = nextNode,
                         sequence = searchVariables.sequence + nextNode.string,
                         isGatherState = false
                     ),
-                    searchCoordinates = searchCoordinates
+                    searchCoordinates
                 )
             )
         } else {
@@ -187,13 +187,13 @@ class FuzzySearchState<T> private constructor(
             nextNodeMatches(nextNode) ->
                 listOf(
                     FuzzySearchState(
-                        searchRequest = searchRequest,
-                        searchVariables = SearchVariables(
+                        searchRequest,
+                        SearchVariables(
                             node = nextNode,
                             sequence = searchVariables.sequence + nextNode.string,
                             isGatherState = false
                         ),
-                        searchCoordinates = SearchCoordinates(
+                        SearchCoordinates(
                             startMatchIndex = searchCoordinates.startMatchIndex ?: searchVariables.sequence.length,
                             endMatchIndex = searchVariables.sequence.length,
                             keywordIndex = searchCoordinates.keywordIndex + 1,
@@ -241,13 +241,13 @@ class FuzzySearchState<T> private constructor(
             swapSatisfied != null -> {
                 listOf(
                     FuzzySearchState(
-                        searchRequest = searchRequest,
-                        searchVariables = SearchVariables(
+                        searchRequest,
+                        SearchVariables(
                             node = nextNode,
                             sequence = searchVariables.sequence + nextNode.string,
                             isGatherState = false
                         ),
-                        searchCoordinates = SearchCoordinates(
+                        SearchCoordinates(
                             startMatchIndex = searchCoordinates.startMatchIndex ?: searchVariables.sequence.length,
                             endMatchIndex = searchVariables.sequence.length,
                             keywordIndex = searchCoordinates.keywordIndex + 1,
@@ -261,13 +261,13 @@ class FuzzySearchState<T> private constructor(
             shouldProduceErrorStates() ->
                 getErrorStrategies(nextNode).map {
                     FuzzySearchState(
-                        searchRequest = searchRequest,
-                        searchVariables = SearchVariables(
+                        searchRequest,
+                        SearchVariables(
                             node = it.node,
                             sequence = it.sequence,
                             isGatherState = false
                         ),
-                        searchCoordinates = SearchCoordinates(
+                        SearchCoordinates(
                             startMatchIndex = it.startMatchIndex,
                             endMatchIndex = searchCoordinates.endMatchIndex,
                             keywordIndex = it.searchIndex,
@@ -361,8 +361,8 @@ class FuzzySearchState<T> private constructor(
             forceReturn || (!searchVariables.isGatherState && !matches()) ->
                 listOf(
                     FuzzySearchState(
-                        searchRequest = searchRequest,
-                        searchVariables = SearchVariables(
+                        searchRequest,
+                        SearchVariables(
                             node = nextNode,
                             sequence = searchVariables.sequence + nextNode.string,
                             isGatherState = false
@@ -386,13 +386,13 @@ class FuzzySearchState<T> private constructor(
         val gatherStates = mutableListOf<FuzzySearchState<T>>()
 
         val defaultGatherState = FuzzySearchState(
-            searchRequest = searchRequest,
-            searchVariables = SearchVariables(
+            searchRequest,
+            SearchVariables(
                 node = nextNode,
                 sequence = searchVariables.sequence + nextNode.string,
                 isGatherState = true,
             ),
-            searchCoordinates = searchCoordinates
+            searchCoordinates
         )
 
         gatherStates.add(defaultGatherState)
