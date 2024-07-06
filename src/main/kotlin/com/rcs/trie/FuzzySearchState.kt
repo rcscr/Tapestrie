@@ -110,7 +110,8 @@ class FuzzySearchState<T> private constructor(
         val matchedSubstring = searchVariables.sequence.substring(
             assertedStartMatchIndex, matchedSubstringEndIndex)
 
-        val matchedWord = searchVariables.sequence.substring(indexOfWordSeparatorBefore + 1, indexOfWordSeparatorAfter)
+        val matchedWord = searchVariables.sequence.substring(
+            indexOfWordSeparatorBefore + 1, indexOfWordSeparatorAfter)
 
         return TrieSearchResult(
             searchVariables.sequence,
