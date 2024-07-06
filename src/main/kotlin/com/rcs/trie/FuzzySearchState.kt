@@ -143,7 +143,7 @@ class FuzzySearchState<T> private constructor(
             return null
         }
 
-        return buildIgnoreState(nextNode)
+        return buildContinueState(nextNode)
             ?: buildMatchState(nextNode)
             ?: buildErrorState(nextNode)
             ?: buildResetState(nextNode)
@@ -158,7 +158,7 @@ class FuzzySearchState<T> private constructor(
         return nextNode.depth < numberOfMatchingCharactersNeeded
     }
 
-    private fun buildIgnoreState(nextNode: TrieNode<T>): Collection<FuzzySearchState<T>>? {
+    private fun buildContinueState(nextNode: TrieNode<T>): Collection<FuzzySearchState<T>>? {
         return if (searchRequest.matchingStrategy == ACRONYM
             && !searchVariables.sequence.last().isWordSeparator()) {
 
