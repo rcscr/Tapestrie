@@ -210,7 +210,7 @@ class FuzzySearchState<T> private constructor(
 
     private fun nextNodeMatches(nextNode: TrieNode<T>): Boolean {
         if (searchRequest.matchingStrategy == WILDCARD
-            && searchRequest.keyword[searchCoordinates.keywordIndex] == '*') {
+            && currentSearchCharacter() == "*") {
             return true
         }
 
@@ -227,7 +227,9 @@ class FuzzySearchState<T> private constructor(
                 true
         }
 
-        return matchingPreconditions && searchCoordinatesMatch(nextNode)
+        return matchingPreconditions
+                && searchCoordinates.keywordIndex < searchRequest.keyword.length
+                && nextNode.string.casedForMatching() == currentSearchCharacter().casedForMatching()
     }
 
     private fun buildErrorState(nextNode: TrieNode<T>): Collection<FuzzySearchState<T>>? {
@@ -285,7 +287,7 @@ class FuzzySearchState<T> private constructor(
     }
 
     private fun shouldProduceErrorStates(): Boolean {
-        val isNotInMiddleOfSwap = searchCoordinates.swapChars?.isEmpty() ?: true
+        val hasNoPendingSwaps = searchCoordinates.swapChars?.isEmpty() ?: true
         val wasMatchingBefore = searchCoordinates.numberOfMatches > 0
         val hasSearchCharacters = searchCoordinates.keywordIndex + 1 < searchRequest.keyword.length
         val hasErrorAllowance = searchCoordinates.numberOfErrors < searchRequest.errorTolerance
@@ -296,7 +298,7 @@ class FuzzySearchState<T> private constructor(
                     SYMMETRICAL_SWAP ->
                         true
                     ADJACENT_SWAP ->
-                        isNotInMiddleOfSwap
+                        hasNoPendingSwaps
                     FUZZY_POSTFIX ->
                         hasMinimumNumberOfMatches()
                     FUZZY_PREFIX ->
@@ -314,7 +316,7 @@ class FuzzySearchState<T> private constructor(
                 searchCoordinates.keywordIndex + 1,
                 searchVariables.sequence + nextNode.string,
                 SwapChars(
-                    searchRequest.keyword[searchCoordinates.keywordIndex].toString().casedForMatching(),
+                    currentSearchCharacter().casedForMatching(),
                     nextNode.string.casedForMatching()
                 ),
                 searchCoordinates.startMatchIndex ?: searchVariables.sequence.length
@@ -407,9 +409,8 @@ class FuzzySearchState<T> private constructor(
         return gatherStates
     }
 
-    private fun searchCoordinatesMatch(nextNode: TrieNode<T>): Boolean {
-        return searchCoordinates.keywordIndex < searchRequest.keyword.length
-                && nextNode.string.casedForMatching() == searchRequest.keyword[searchCoordinates.keywordIndex].toString().casedForMatching()
+    private fun currentSearchCharacter(): String {
+        return searchRequest.keyword[searchCoordinates.keywordIndex].toString()
     }
 
     private fun getNumberOfErrorsIncludingMissingCharacters(): Int {
@@ -463,7 +464,7 @@ class FuzzySearchState<T> private constructor(
     private fun List<SwapChars>?.getMatching(nextNode: TrieNode<T>): SwapChars? {
         return this?.firstOrNull {
             it.fromSource == nextNode.string.casedForMatching()
-                    && it.fromTarget == searchRequest.keyword[searchCoordinates.keywordIndex].toString().casedForMatching()
+                    && it.fromTarget == currentSearchCharacter().casedForMatching()
         }
     }
 
