@@ -99,8 +99,16 @@ class FuzzySearchState<T> private constructor(
 
         val prefixDistance = assertedStartMatchIndex - indexOfWordSeparatorBefore - 1
 
-        val matchedSubstring = searchVariables.sequence
-            .substring(assertedStartMatchIndex, assertedEndMatchIndex + 1)
+        val matchedSubstringEndIndex = when(searchRequest.matchingStrategy) {
+            ACRONYM ->
+                searchVariables.sequence.indexOfFirstWordSeparator(assertedEndMatchIndex + 1)
+                    ?: searchVariables.sequence.length
+            else ->
+                assertedEndMatchIndex + 1
+        }
+
+        val matchedSubstring = searchVariables.sequence.substring(
+            assertedStartMatchIndex, matchedSubstringEndIndex)
 
         val matchedWord = searchVariables.sequence.substring(indexOfWordSeparatorBefore + 1, indexOfWordSeparatorAfter)
 
@@ -135,7 +143,8 @@ class FuzzySearchState<T> private constructor(
             return null
         }
 
-        return buildMatchState(nextNode)
+        return buildIgnoreState(nextNode)
+            ?: buildMatchState(nextNode)
             ?: buildErrorState(nextNode)
             ?: buildResetState(nextNode)
             ?: buildGatherState(nextNode)
@@ -147,6 +156,26 @@ class FuzzySearchState<T> private constructor(
                 searchRequest.errorTolerance
 
         return nextNode.depth < numberOfMatchingCharactersNeeded
+    }
+
+    private fun buildIgnoreState(nextNode: TrieNode<T>): Collection<FuzzySearchState<T>>? {
+        return if (searchRequest.matchingStrategy == ACRONYM
+            && !searchVariables.sequence.isWordSeparatorAt(searchVariables.sequence.length - 1)) {
+
+            listOf(
+                FuzzySearchState(
+                    searchRequest = searchRequest,
+                    searchVariables = SearchVariables(
+                        node = nextNode,
+                        sequence = searchVariables.sequence + nextNode.string,
+                        isGatherState = false
+                    ),
+                    searchCoordinates = searchCoordinates
+                )
+            )
+        } else {
+            null
+        }
     }
 
     private fun buildMatchState(nextNode: TrieNode<T>): Collection<FuzzySearchState<T>>? {
@@ -188,6 +217,8 @@ class FuzzySearchState<T> private constructor(
         val wasMatchingBefore = searchCoordinates.numberOfMatches > 0
 
         val matchingPreconditions = when (searchRequest.matchingStrategy) {
+            ACRONYM ->
+                searchVariables.sequence.isWordSeparatorAt(searchVariables.sequence.length - 1)
             FUZZY_PREFIX ->
                 wasMatchingBefore || distanceToStartWordSeparatorIsPermissible()
             EXACT_PREFIX, FUZZY_POSTFIX ->

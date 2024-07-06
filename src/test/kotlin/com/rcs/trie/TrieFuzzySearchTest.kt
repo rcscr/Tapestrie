@@ -439,4 +439,53 @@ class TrieFuzzySearchTest {
             )
         ).forEach { runTestScenario(it) }
     }
+
+    @Test
+    fun `matching strategy ACRONYM will match strings containing the provided acronym`() {
+        listOf(
+            FuzzySearchScenario(
+                setOf("I want to work at National Aeronautics and Space Administration"),
+                "nasa",
+                1,
+                ACRONYM,
+                listOf(
+                    TrieSearchResult(
+                        "I want to work at National Aeronautics and Space Administration",
+                        Unit,
+                        "National Aeronautics and Space Administration",
+                        "National Aeronautics and Space Administration",
+                        4,
+                        1, // one error for the 'and'
+                        0,
+                        false,
+                        false),
+                )
+            ),
+            FuzzySearchScenario(
+                setOf("I DON'T want to work at National Security Agency"),
+                "nasa",
+                1,
+                ACRONYM,
+                listOf(
+                    TrieSearchResult(
+                        "I DON'T want to work at National Security Agency",
+                        Unit,
+                        "National Security Agency",
+                        "National Security Agency",
+                        3,
+                        1, // one error for the missing 'a'
+                        0,
+                        false,
+                        false),
+                )
+            ),
+            FuzzySearchScenario(
+                setOf("I DON'T want to work at National Security Agency"),
+                "nasa",
+                0,
+                ACRONYM,
+                listOf()
+            )
+        ).forEach { runTestScenario(it) }
+    }
 }

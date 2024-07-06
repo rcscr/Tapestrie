@@ -26,6 +26,5 @@ enum class FuzzyMatchingStrategy {
 
     // matches strings containing words that form the acronym provided
     // each unmatched letter in the acronym counts as an error
-    // TODO
     ACRONYM
 }
