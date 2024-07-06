@@ -13,7 +13,9 @@ class TrieConcurrencyTest {
         // Arrange
         val trie = Trie<Unit>()
         val executorService = Executors.newVirtualThreadPerTaskExecutor()
-        val originalRandomStrings = (0..10_000).map { getRandomString() }.distinct()
+        val originalRandomStrings = (0..10_000)
+            .map { getRandomString() }
+            .toSet()
 
         // Act
         originalRandomStrings
@@ -26,8 +28,8 @@ class TrieConcurrencyTest {
         // we will add new strings as we remove the old ones
         val randomStringsAgain = (0..10_000)
             .map { getRandomString() }
-            .distinct()
             .filter { !originalRandomStrings.contains(it) }
+            .toSet()
 
         // run both add and remove operations concurrently
         val addFutures = randomStringsAgain
