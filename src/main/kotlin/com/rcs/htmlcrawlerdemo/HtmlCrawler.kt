@@ -21,13 +21,7 @@ class HtmlCrawler(
 
         val trie: Trie<ConcurrentLinkedDeque<HtmlIndexEntry>> = Trie()
 
-        // crawl
-        val pagesIndexed = crawl(baseUrl, ConcurrentHashMap())
-
-        // index
-        htmlClient.forEachFileInCacheDir { filename, content ->
-            indexPage(filename, content, trie)
-        }
+        val pagesIndexed = crawl(baseUrl, ConcurrentHashMap(), trie)
 
         val durationMillis = System.currentTimeMillis() - currentTimeMillis
 
@@ -38,7 +32,11 @@ class HtmlCrawler(
         return trie
     }
 
-    private fun crawl(url: String, visited: ConcurrentHashMap<String, Boolean?>): Int {
+    private fun crawl(
+        url: String,
+        visited: ConcurrentHashMap<String, Boolean?>,
+        trie: Trie<ConcurrentLinkedDeque<HtmlIndexEntry>>
+    ): Int {
         // Use putIfAbsent to check and mark the URL atomically
         if (visited.putIfAbsent(url, true) != null) {
             return 0 // URL already visited
@@ -53,8 +51,10 @@ class HtmlCrawler(
             return 0
         }
 
+        indexPage(url, htmlContent, trie)
+
         val newCounts = htmlUrlFinder.findRelativeUrls(url, htmlContent)
-            .map { u -> executorService.submit<Int> { crawl(u, visited) } }
+            .map { u -> executorService.submit<Int> { crawl(u, visited, trie) } }
             .sumOf { it.get() }
 
         return 1 + newCounts

@@ -24,18 +24,6 @@ class HtmlClient(private val executorService: ExecutorService) {
             ?: fetch(url).also { writeToCache(url, it) }
     }
 
-    fun forEachFileInCacheDir(consumer: BiConsumer<String, String>) {
-        val directory = File(cacheDirPath)
-        if (directory.isDirectory) {
-            val files = directory.listFiles()!!
-            files.forEach { file ->
-                val reader = FileReader(file)
-                consumer.accept(decodeFromFilename(file.name), inputStreamToString(reader))
-                reader.close()
-            }
-        }
-    }
-
     private fun readFromCache(url: String): String? {
         return try {
             val fileReader = FileReader(cacheDirPath + encodeToFilename(url))
@@ -98,9 +86,5 @@ class HtmlClient(private val executorService: ExecutorService) {
 
     private fun encodeToFilename(url: String): String {
         return Base64.getUrlEncoder().encodeToString(url.toByteArray())
-    }
-
-    private fun decodeFromFilename(filename: String): String {
-        return String(Base64.getUrlDecoder().decode(filename))
     }
 }
