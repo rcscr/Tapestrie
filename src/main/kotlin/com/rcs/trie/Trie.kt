@@ -10,7 +10,13 @@ class Trie<T>: Iterable<TrieEntry<T>> {
 
     private lateinit var root: TrieNode<T>
 
-    private var _size: Int by Delegates.vetoable(0) { _, _, newValue -> newValue >= 0 }
+    private var _size: Int by Delegates.vetoable(0) { _, _, newValue ->
+        if (newValue < 0) {
+            throw IllegalStateException("Size should never be < 0")
+        } else {
+            true
+        }
+    }
 
     val size: Int get() = _size
 
