@@ -1,13 +1,14 @@
 package com.rcs.htmlcrawlerdemo
 
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.io.*
 import java.net.HttpURLConnection
 import java.net.URI
 import java.util.*
-import java.util.concurrent.ExecutorService
-import java.util.function.BiConsumer
 
-class HtmlClient(private val executorService: ExecutorService) {
+class HtmlClient {
 
     private val cacheDirPath = System.getProperty("user.dir") + "/data/"
 
@@ -19,8 +20,8 @@ class HtmlClient(private val executorService: ExecutorService) {
     }
 
     @Throws(IOException::class)
-    fun getAsString(url: String): String {
-        return readFromCache(url)
+    fun getAsString(url: String): String = runBlocking {
+        readFromCache(url)
             ?: fetch(url).also { writeToCache(url, it) }
     }
 
@@ -77,8 +78,8 @@ class HtmlClient(private val executorService: ExecutorService) {
         return content.toString()
     }
 
-    private fun writeToCache(url: String, content: String) {
-        executorService.submit {
+    private suspend fun writeToCache(url: String, content: String): Unit = coroutineScope {
+        launch {
             FileWriter(cacheDirPath + encodeToFilename(url))
                 .use { writer -> writer.write(content) }
         }

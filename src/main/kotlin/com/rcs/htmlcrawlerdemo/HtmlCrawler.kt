@@ -1,21 +1,20 @@
 package com.rcs.htmlcrawlerdemo
 
 import com.rcs.trie.Trie
+import kotlinx.coroutines.*
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.ExecutorService
 
 class HtmlCrawler(
     private val baseUrl: String,
     private val htmlTokenizer: HtmlTokenizer,
     private val htmlUrlFinder: HtmlUrlFinder,
-    private val htmlClient: HtmlClient,
-    private val executorService: ExecutorService
+    private val htmlClient: HtmlClient
 ) {
 
-    fun crawlAndIndex(): Trie<ConcurrentLinkedDeque<HtmlIndexEntry>> {
-        println("Initializing crawler with baseURL=${this.baseUrl}")
+    fun crawlAndIndex(): Trie<ConcurrentLinkedDeque<HtmlIndexEntry>> = runBlocking {
+        println("Initializing crawler with baseURL=${baseUrl}")
 
         val currentTimeMillis = System.currentTimeMillis()
 
@@ -29,17 +28,17 @@ class HtmlCrawler(
                 "indexed $pagesIndexed HTML pages and ${trie.size} unique tokens; " +
                 "took ${durationMillis}ms")
 
-        return trie
+        trie
     }
 
-    private fun crawl(
+    private suspend fun crawl(
         url: String,
         visited: ConcurrentHashMap<String, Boolean?>,
         trie: Trie<ConcurrentLinkedDeque<HtmlIndexEntry>>
-    ): Int {
+    ): Int = coroutineScope {
         // Use putIfAbsent to check and mark the URL atomically
         if (visited.putIfAbsent(url, true) != null) {
-            return 0 // URL already visited
+            return@coroutineScope 0 // URL already visited
         }
 
         val htmlContent: String
@@ -48,16 +47,16 @@ class HtmlCrawler(
         } catch (e: IOException) {
             e.printStackTrace()
             println("Error fetching $url - not indexing page")
-            return 0
+            return@coroutineScope 0
         }
 
         indexPage(url, htmlContent, trie)
 
         val newCounts = htmlUrlFinder.findRelativeUrls(url, htmlContent)
-            .map { u -> executorService.submit<Int> { crawl(u, visited, trie) } }
-            .sumOf { it.get() }
+            .map { u -> async(Dispatchers.IO) { crawl(u, visited, trie) } }
+            .sumOf { it.await() }
 
-        return 1 + newCounts
+        1 + newCounts
     }
 
     private fun indexPage(url: String, htmlContent: String, trie: Trie<ConcurrentLinkedDeque<HtmlIndexEntry>>) {

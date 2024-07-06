@@ -4,7 +4,6 @@ import com.google.gson.Gson
 import spark.Request
 import spark.Response
 import spark.Spark.post
-import java.util.concurrent.Executors
 
 fun main() {
     val gson = Gson()
@@ -12,14 +11,12 @@ fun main() {
     // linux manual pages
     val baseUrl = "https://docs.huihoo.com/linux/man/20100621/"
 
-    val executorService = Executors.newVirtualThreadPerTaskExecutor()
-
     val htmlCrawler = HtmlCrawler(
         baseUrl,
         HtmlTokenizer(),
         HtmlUrlFinder(),
-        HtmlClient(executorService),
-        executorService)
+        HtmlClient()
+    )
 
     val htmlSearcher = HtmlSearcher(baseUrl, htmlCrawler)
 
