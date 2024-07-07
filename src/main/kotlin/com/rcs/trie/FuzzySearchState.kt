@@ -315,10 +315,7 @@ class FuzzySearchState<T> private constructor(
                 nextNode,
                 searchCoordinates.keywordIndex + 1,
                 searchVariables.sequence + nextNode.string,
-                SwapChars(
-                    currentSearchCharacter().casedForMatching(),
-                    nextNode.string.casedForMatching()
-                ),
+                SwapChars(currentSearchCharacter(), nextNode.string),
                 searchCoordinates.startMatchIndex ?: searchVariables.sequence.length
             )
             return listOf(typoSwapStrategy)
@@ -463,8 +460,8 @@ class FuzzySearchState<T> private constructor(
 
     private fun List<SwapChars>?.getMatching(nextNode: TrieNode<T>): SwapChars? {
         return this?.firstOrNull {
-            it.fromSource == nextNode.string.casedForMatching()
-                    && it.fromTarget == currentSearchCharacter().casedForMatching()
+            it.fromSource.casedForMatching() == nextNode.string.casedForMatching()
+                    && it.fromTarget.casedForMatching() == currentSearchCharacter().casedForMatching()
         }
     }
 
