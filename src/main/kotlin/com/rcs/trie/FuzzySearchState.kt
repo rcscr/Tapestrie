@@ -161,7 +161,7 @@ class FuzzySearchState<T> private constructor(
 
     private fun buildContinueState(nextNode: TrieNode<T>): Collection<FuzzySearchState<T>>? {
         return if (searchRequest.matchingStrategy == ACRONYM
-            && !searchVariables.sequence.endsWithWordSeparator()) {
+            && !searchVariables.node.string.isWordSeparator()) {
 
             listOf(
                 FuzzySearchState(
@@ -218,7 +218,7 @@ class FuzzySearchState<T> private constructor(
 
         val matchingPreconditions = when (searchRequest.matchingStrategy) {
             ACRONYM ->
-                searchVariables.sequence.endsWithWordSeparator()
+                searchVariables.node.string.isWordSeparator()
             FUZZY_PREFIX ->
                 wasMatchingBefore || distanceToStartWordSeparatorIsPermissible()
             EXACT_PREFIX, FUZZY_POSTFIX ->
@@ -440,10 +440,6 @@ class FuzzySearchState<T> private constructor(
 
     private fun String.isWordSeparator(): Boolean {
         return this == "" /* == root */ || this.matches(wordSeparatorRegex)
-    }
-
-    private fun String.endsWithWordSeparator(): Boolean {
-        return this.isWordSeparatorAt(this.length - 1)
     }
 
     private fun CharSequence.indexOfLastWordSeparator(endIndex: Int = this.length - 1): Int? {
