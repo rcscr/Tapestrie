@@ -426,7 +426,7 @@ class FuzzySearchState<T> private constructor(
     }
 
     private fun matchedWholeSequence(startMatchIndex: Int, endMatchIndex: Int): Boolean {
-        return startMatchIndex == 0 && endMatchIndex >= searchVariables.sequence.length - 1
+        return startMatchIndex == 0 && endMatchIndex == searchVariables.sequence.length - 1
     }
 
     private fun matchedWholeWord(startMatchIndex: Int, endMatchIndex: Int): Boolean {
