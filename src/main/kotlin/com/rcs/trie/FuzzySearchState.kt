@@ -292,20 +292,22 @@ class FuzzySearchState<T> private constructor(
         val hasSearchCharacters = searchCoordinates.keywordIndex + 1 < searchRequest.keyword.length
         val hasErrorAllowance = searchCoordinates.numberOfErrors < searchRequest.errorTolerance
 
-        return hasSearchCharacters
+        val errorPreconditions = when (searchRequest.matchingStrategy) {
+            SYMMETRICAL_SWAP ->
+                true
+            ADJACENT_SWAP ->
+                hasNoPendingSwaps
+            FUZZY_POSTFIX ->
+                hasMinimumNumberOfMatches()
+            FUZZY_PREFIX ->
+                wasMatchingBefore || distanceToStartWordSeparatorIsPermissible()
+            else ->
+                wasMatchingBefore
+        }
+
+        return errorPreconditions
+                && hasSearchCharacters
                 && hasErrorAllowance
-                && when (searchRequest.matchingStrategy) {
-                    SYMMETRICAL_SWAP ->
-                        true
-                    ADJACENT_SWAP ->
-                        hasNoPendingSwaps
-                    FUZZY_POSTFIX ->
-                        hasMinimumNumberOfMatches()
-                    FUZZY_PREFIX ->
-                        wasMatchingBefore || distanceToStartWordSeparatorIsPermissible()
-                    else ->
-                        wasMatchingBefore
-                }
     }
 
     private fun getErrorStrategies(nextNode: TrieNode<T>): List<ErrorStrategy<T>> {
