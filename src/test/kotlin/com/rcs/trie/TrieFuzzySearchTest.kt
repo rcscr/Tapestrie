@@ -11,6 +11,7 @@ class TrieFuzzySearchTest {
         val search: String,
         val errorTolerance: Int,
         val matchingStrategy: FuzzyMatchingStrategy,
+        val matchingOptions: MatchingOptions,
         val expectedResults: List<TrieSearchResult<Unit>>
     )
 
@@ -23,7 +24,7 @@ class TrieFuzzySearchTest {
 
         // Act
         val result = trie.matchBySubstringFuzzy(
-            scenario.search, scenario.errorTolerance, scenario.matchingStrategy)
+            scenario.search, scenario.errorTolerance, scenario.matchingStrategy, scenario.matchingOptions)
 
         // Assert
         assertThat(result)
@@ -31,7 +32,7 @@ class TrieFuzzySearchTest {
     }
 
     @Test
-    fun `all matching strategies are case insensitive by default`() {
+    fun `all matching strategies work as expected when caseInsensitive = true`() {
         arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX, FUZZY_POSTFIX, ADJACENT_SWAP, SYMMETRICAL_SWAP, WILDCARD)
             .map {
                 FuzzySearchScenario(
@@ -39,9 +40,60 @@ class TrieFuzzySearchTest {
                     "raphael",
                     0,
                     it,
+                    MatchingOptions(caseInsensitive = true, diacriticInsensitive = false),
                     listOf(
                         TrieSearchResult("RAPHAEL", Unit, "RAPHAEL", "RAPHAEL", 7, 0, 0, true, true)
                     )
+                )
+            }
+            .forEach { runTestScenario(it) }
+    }
+
+    @Test
+    fun `all matching strategies work as expected when caseInsensitive = false`() {
+        arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX, FUZZY_POSTFIX, ADJACENT_SWAP, SYMMETRICAL_SWAP, WILDCARD)
+            .map {
+                FuzzySearchScenario(
+                    setOf("RAPHAEL"),
+                    "raphael",
+                    0,
+                    it,
+                    MatchingOptions(caseInsensitive = false, diacriticInsensitive = false),
+                    listOf()
+                )
+            }
+            .forEach { runTestScenario(it) }
+    }
+
+    @Test
+    fun `all matching strategies work as expected when diacriticInsensitive = true`() {
+        arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX, FUZZY_POSTFIX, ADJACENT_SWAP, SYMMETRICAL_SWAP, WILDCARD)
+            .map {
+                FuzzySearchScenario(
+                    setOf("raphaël"),
+                    "raphael",
+                    0,
+                    it,
+                    MatchingOptions(caseInsensitive = false, diacriticInsensitive = true),
+                    listOf(
+                        TrieSearchResult("raphaël", Unit, "raphaël", "raphaël", 7, 0, 0, true, true)
+                    )
+                )
+            }
+            .forEach { runTestScenario(it) }
+    }
+
+    @Test
+    fun `all matching strategies work as expected when diacriticInsensitive = false`() {
+        arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX, FUZZY_POSTFIX, ADJACENT_SWAP, SYMMETRICAL_SWAP, WILDCARD)
+            .map {
+                FuzzySearchScenario(
+                    setOf("raphaël"),
+                    "raphael",
+                    0,
+                    it,
+                    MatchingOptions(caseInsensitive = false, diacriticInsensitive = false),
+                    listOf()
                 )
             }
             .forEach { runTestScenario(it) }
@@ -56,6 +108,7 @@ class TrieFuzzySearchTest {
                     "fullstack",
                     1,
                     it,
+                    MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                     listOf(
                         TrieSearchResult("fullstack", Unit, "fullstack", "fullstack", 9, 0, 0, true, true),
                         TrieSearchResult("full stack", Unit, "full stack", "full stack", 9, 1, 0, false, false)
@@ -66,6 +119,7 @@ class TrieFuzzySearchTest {
                     "full stack",
                     1,
                     it,
+                    MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                     listOf(
                         TrieSearchResult("full stack", Unit, "full stack", "full stack", 10, 0, 0, true, true),
                         TrieSearchResult("fullstack", Unit, "fullstack", "fullstack", 9, 1, 0, false, false)
@@ -85,6 +139,7 @@ class TrieFuzzySearchTest {
                     "indices",
                     2,
                     it,
+                    MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                     listOf()
                 )
             }
@@ -100,6 +155,7 @@ class TrieFuzzySearchTest {
                     "raphael",
                     2,
                     it,
+                    MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                     listOf(
                         TrieSearchResult("this is rafael", Unit, "rafael", "rafael", 5, 2, 0, false, false)
                     )
@@ -117,6 +173,7 @@ class TrieFuzzySearchTest {
                     "rafael",
                     2,
                     it,
+                    MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                     listOf(
                         TrieSearchResult("this is raphael", Unit, "raphael", "raphael", 5, 2, 0, false, false)
                     )
@@ -134,6 +191,7 @@ class TrieFuzzySearchTest {
                     "manual",
                     3,
                     it,
+                    MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                     listOf(
                         TrieSearchResult("manu", Unit, "manu", "manu", 4, 2, 0, false, false),
                         TrieSearchResult("man", Unit, "man", "man", 3, 3, 0, false, false),
@@ -153,6 +211,7 @@ class TrieFuzzySearchTest {
                     "manual",
                     3,
                     it,
+                    MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                     listOf(
                         TrieSearchResult("manXuXal", Unit, "manXuXal", "manXuXal", 6, 2, 0, false, false),
                         TrieSearchResult("man", Unit, "man", "man", 3, 3, 0, false, false),
@@ -171,6 +230,7 @@ class TrieFuzzySearchTest {
                     "indic",
                     1,
                     it,
+                    MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                     listOf(TrieSearchResult("blah blah indistinguishable blah blah", Unit, "indi", "indistinguishable", 4, 1, 0, false, false))
                 )
             }
@@ -186,6 +246,7 @@ class TrieFuzzySearchTest {
                     "lalala2",
                     2,
                     it,
+                    MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                     listOf(TrieSearchResult("lalala0 lalala1 lalala2 lalala3", Unit, "lalala2", "lalala2", 7, 0, 0, false, true))
                 )
             }
@@ -202,6 +263,7 @@ class TrieFuzzySearchTest {
                         "indices",
                         2,
                         it,
+                        MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                         listOf(
                             TrieSearchResult("indices", Unit, "indices", "indices", 7, 0, 0, true, true),
                             TrieSearchResult("indexes", Unit, "indexes", "indexes", 5, 2, 0, false, false),
@@ -215,6 +277,7 @@ class TrieFuzzySearchTest {
                         "indexes",
                         2,
                         it,
+                        MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                         listOf(
                             TrieSearchResult("indexes", Unit, "indexes", "indexes", 7, 0, 0, true, true),
                             TrieSearchResult("indices", Unit, "indices", "indices", 5, 2, 0, false, false)
@@ -233,6 +296,7 @@ class TrieFuzzySearchTest {
                 "123456789",
                 0,
                 LIBERAL,
+                MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(TrieSearchResult("lala 000123456789000 hehe", Unit, "123456789", "000123456789000", 9, 0, 3, false, false))
             ),
             FuzzySearchScenario(
@@ -240,6 +304,7 @@ class TrieFuzzySearchTest {
                 "123456789",
                 1,
                 LIBERAL,
+                MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(TrieSearchResult("lala 000x23456789000 hehe", Unit, "23456789", "000x23456789000", 8, 1, 4, false, false))
             ),
             FuzzySearchScenario(
@@ -247,6 +312,7 @@ class TrieFuzzySearchTest {
                 "123456789",
                 2,
                 LIBERAL,
+                MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(
                     TrieSearchResult("lala 000x23456789000 hehe", Unit, "23456789", "000x23456789000", 8, 1, 4, false, false),
                     TrieSearchResult("lala 000xx3456789000 hehe", Unit, "3456789", "000xx3456789000", 7, 2, 5, false, false)
@@ -262,6 +328,7 @@ class TrieFuzzySearchTest {
             "index",
             1,
             EXACT_PREFIX,
+            MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
             listOf(
                 TrieSearchResult("lalala index", Unit, "index", "index", 5, 0, 0, false, true),
                 TrieSearchResult("lalala indix", Unit, "indix", "indix", 4, 1, 0, false, false)
@@ -278,6 +345,7 @@ class TrieFuzzySearchTest {
                 "index",
                 1,
                 FUZZY_PREFIX,
+                MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(
                     TrieSearchResult("index", Unit, "index", "index", 5, 0, 0, true, true),
                     TrieSearchResult("lalala index", Unit, "index", "index", 5, 0, 0, false, true),
@@ -290,6 +358,7 @@ class TrieFuzzySearchTest {
                 "index",
                 2,
                 FUZZY_PREFIX,
+                MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(
                     TrieSearchResult("index", Unit, "index", "index", 5, 0, 0, true, true),
                     TrieSearchResult("lalala index", Unit, "index", "index", 5, 0, 0, false, true),
@@ -309,6 +378,7 @@ class TrieFuzzySearchTest {
             "manual",
             3,
             LIBERAL,
+            MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
             listOf(
                 // matches whole sequence is highest ranking
                 TrieSearchResult("manual", Unit, "manual", "manual", 6, 0, 0, true, true),
@@ -340,6 +410,7 @@ class TrieFuzzySearchTest {
             "raffaello",
             2,
             FUZZY_POSTFIX,
+            MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
             listOf(
                 TrieSearchResult("raffaello", Unit, "raffaello", "raffaello", 9, 0, 0, true, true),
                 TrieSearchResult("raffaell", Unit, "raffaell", "raffaell", 8, 1, 0, false, false),
@@ -358,6 +429,7 @@ class TrieFuzzySearchTest {
                 "rahpael",
                 2,
                 ADJACENT_SWAP,
+                MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(
                     TrieSearchResult("raphael", Unit, "raphael", "raphael", 5, 2, 0, false, false),
                 )
@@ -367,6 +439,7 @@ class TrieFuzzySearchTest {
                 "rahpael",
                 4,
                 ADJACENT_SWAP,
+                MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(
                     TrieSearchResult("raphael", Unit, "raphael", "raphael", 5, 2, 0, false, false),
                     TrieSearchResult("rapheal", Unit, "rapheal", "rapheal", 3, 4, 0, false, false),
@@ -383,6 +456,7 @@ class TrieFuzzySearchTest {
                 "Jelly Beans",
                 2,
                 SYMMETRICAL_SWAP,
+                MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(
                     TrieSearchResult("i need Belly Jeans now", Unit, "Belly Jeans", "Belly Jeans", 9, 2, 0, false, false),
                 )
@@ -392,6 +466,7 @@ class TrieFuzzySearchTest {
                 "Buenas Noches",
                 2,
                 SYMMETRICAL_SWAP,
+                MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(
                     TrieSearchResult("Nuenas Boches", Unit, "Nuenas Boches", "Nuenas Boches", 11, 2, 0, false, false),
                 )
@@ -401,6 +476,7 @@ class TrieFuzzySearchTest {
                 "Fried Churros",
                 4,
                 SYMMETRICAL_SWAP,
+                MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(
                     TrieSearchResult("Chied Frurros", Unit, "Chied Frurros", "Chied Frurros", 9, 4, 0, false, false),
                 )
@@ -410,6 +486,7 @@ class TrieFuzzySearchTest {
                 "Good Fight",
                 2,
                 SYMMETRICAL_SWAP,
+                MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf()
             )
         ).forEach { runTestScenario(it) }
@@ -423,6 +500,7 @@ class TrieFuzzySearchTest {
                 "ra*ael",
                 0,
                 WILDCARD,
+                MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(
                     TrieSearchResult("rafael", Unit, "rafael", "rafael", 6, 0, 0, true, true),
                 )
@@ -432,6 +510,7 @@ class TrieFuzzySearchTest {
                 "ra*ael",
                 1,
                 WILDCARD,
+                MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(
                     TrieSearchResult("rafael", Unit, "rafael", "rafael", 6, 0, 0, true, true),
                     TrieSearchResult("raphael", Unit, "raphael", "raphael", 6, 1, 0, false, false),
@@ -448,6 +527,7 @@ class TrieFuzzySearchTest {
                 "nasa",
                 1,
                 ACRONYM,
+                MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(
                     TrieSearchResult(
                         "I want to work at National Aeronautics and Space Administration",
@@ -466,6 +546,7 @@ class TrieFuzzySearchTest {
                 "nasa",
                 1,
                 ACRONYM,
+                MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(
                     TrieSearchResult(
                         "I DON'T want to work at National Security Agency",
@@ -484,6 +565,7 @@ class TrieFuzzySearchTest {
                 "nasa",
                 0,
                 ACRONYM,
+                MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf()
             )
         ).forEach { runTestScenario(it) }

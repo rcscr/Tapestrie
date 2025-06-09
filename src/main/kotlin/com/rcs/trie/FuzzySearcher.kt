@@ -12,7 +12,8 @@ class FuzzySearcher {
             root: TrieNode<T>,
             search: String,
             errorTolerance: Int,
-            matchingStrategy: FuzzyMatchingStrategy
+            matchingStrategy: FuzzyMatchingStrategy,
+            matchingOptions: MatchingOptions,
         ): List<TrieSearchResult<T>> = coroutineScope {
 
             if (search.isEmpty() || errorTolerance < 0 || errorTolerance > search.length) {
@@ -20,7 +21,7 @@ class FuzzySearcher {
             }
 
             val initialStates = FuzzySearchState.getInitialStates(
-                root, search, errorTolerance, matchingStrategy, true)
+                root, search, errorTolerance, matchingStrategy, matchingOptions)
             val results = mutableMapOf<String, TrieSearchResult<T>>()
 
             // Parallelizes only top-level of the Trie:

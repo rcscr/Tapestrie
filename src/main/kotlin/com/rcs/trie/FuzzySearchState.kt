@@ -1,16 +1,17 @@
 package com.rcs.trie
 
 import com.rcs.trie.FuzzyMatchingStrategy.*
+import java.text.Normalizer
 
 /**
  * Invariable properties of the search request - these never change.
  */
 private data class SearchRequest(
     val matchingStrategy: FuzzyMatchingStrategy,
+    val matchingOptions: MatchingOptions,
     val keyword: String,
     val numberOfPredeterminedErrors: Int,
     val errorTolerance: Int,
-    val caseInsensitive: Boolean
 )
 
 /**
@@ -53,7 +54,8 @@ private data class ErrorStrategy<T>(
     val startMatchIndex: Int?
 )
 
-private val wordSeparatorRegex = "[\\s\\p{P}]".toRegex()
+private val wordSeparatorRegex = Regex("[\\s\\p{P}]")
+private val diacriticalMarksRegex = Regex("\\p{InCOMBINING_DIACRITICAL_MARKS}+")
 
 class FuzzySearchState<T> private constructor(
     private val searchRequest: SearchRequest,
@@ -229,7 +231,7 @@ class FuzzySearchState<T> private constructor(
 
         return matchingPreconditions
                 && searchCoordinates.keywordIndex < searchRequest.keyword.length
-                && nextNode.string.casedForMatching() == currentSearchCharacter().casedForMatching()
+                && nextNode.string.normalizedForMatching() == currentSearchCharacter().normalizedForMatching()
     }
 
     private fun buildErrorState(nextNode: TrieNode<T>): Collection<FuzzySearchState<T>>? {
@@ -458,17 +460,21 @@ class FuzzySearchState<T> private constructor(
 
     private fun List<SwapChars>?.getMatching(nextNode: TrieNode<T>): SwapChars? {
         return this?.firstOrNull {
-            it.fromSource.casedForMatching() == nextNode.string.casedForMatching()
-                    && it.fromTarget.casedForMatching() == currentSearchCharacter().casedForMatching()
+            it.fromSource.normalizedForMatching() == nextNode.string.normalizedForMatching()
+                    && it.fromTarget.normalizedForMatching() == currentSearchCharacter().normalizedForMatching()
         }
     }
 
-    private fun String.casedForMatching(): String {
-        return if (searchRequest.caseInsensitive) {
-            this.lowercase()
-        } else {
-            this
+    private fun String.normalizedForMatching(): String {
+        var normalized = this
+        if (searchRequest.matchingOptions.caseInsensitive) {
+            normalized = normalized.lowercase()
         }
+        if (searchRequest.matchingOptions.diacriticInsensitive) {
+            normalized = Normalizer.normalize(normalized, Normalizer.Form.NFD)
+                .replace(diacriticalMarksRegex, "")
+        }
+        return normalized
     }
 
     companion object {
@@ -478,13 +484,13 @@ class FuzzySearchState<T> private constructor(
             keyword: String,
             errorTolerance: Int,
             matchingStrategy: FuzzyMatchingStrategy,
-            caseInsensitive: Boolean
+            matchingOptions: MatchingOptions,
         ): Collection<FuzzySearchState<T>> {
 
             val initialStates = mutableListOf<FuzzySearchState<T>>()
 
             val defaultInitialState = FuzzySearchState(
-                root, keyword, 0, errorTolerance, matchingStrategy, caseInsensitive)
+                root, keyword, 0, errorTolerance, matchingStrategy, matchingOptions)
 
             initialStates.add(defaultInitialState)
 
@@ -497,7 +503,7 @@ class FuzzySearchState<T> private constructor(
                         numberOfPredeterminedErrors = i,
                         errorTolerance - i,
                         matchingStrategy,
-                        caseInsensitive
+                        matchingOptions,
                     )
                     initialStates.add(stateWithPredeterminedError)
                 }
@@ -516,7 +522,7 @@ class FuzzySearchState<T> private constructor(
             numberOfPredeterminedErrors: Int,
             errorTolerance: Int,
             matchingStrategy: FuzzyMatchingStrategy,
-            caseInsensitive: Boolean
+            matchingOptions: MatchingOptions,
         ): FuzzySearchState<T> {
 
             // this class only work works when beginning with the root node
@@ -527,10 +533,10 @@ class FuzzySearchState<T> private constructor(
             return FuzzySearchState(
                 SearchRequest(
                     matchingStrategy,
+                    matchingOptions,
                     keyword,
                     numberOfPredeterminedErrors,
                     errorTolerance,
-                    caseInsensitive
                 ),
                 SearchVariables(
                     node = root,
