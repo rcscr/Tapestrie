@@ -9,6 +9,7 @@ The `Trie` implemented here is thread-safe, unit-tested, and able to efficiently
   - prefix match
   - substring match
   - "fuzzy" substring match with configurable error tolerance: Brasil will match Brazil; Raphael will match Rafael; etc
+  - several fuzzy search strategies, e.g. ACRONYM: NASA will match "National Aeronautics and Space Administration"
   - configurable case- and diacritic-insensitivity
 
 ### Demo
