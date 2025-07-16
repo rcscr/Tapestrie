@@ -87,5 +87,3 @@ Or just run `com.rcs.htmlcrawlerdemo.HtmlCrawlerDemo.kt`
 POST http://localhost:4567/search
 Body: {"keyword": "computer", "strategy": "FUZZY", "errorTolerance": 2 }
 </pre>
-
-Copyright Raphael Corrêa e Silva 2025
