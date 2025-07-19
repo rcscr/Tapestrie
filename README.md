@@ -30,6 +30,8 @@ As you might have noticed, these results are sorted by best match, considering t
 - matchedWord (String): *the whole word where the match was found*
 - numberOfMatches (Int): *number of characters that matched*
 - numberOfErrors (Int): *number of errors due to misspelling or letters missing*
+- numberOfCaseMismatches (Int) *if case-insensitive search, number of case mismatches*
+- numberOfDiacriticMismatches (Int) *if diacritic-insensitive search, number of diacritic mismatches*
 - prefixDistance (Int): *the distance from the start of the match to the beginning of the word*
 - matchedWholeString (Boolean): *whether the keyword perfectly matched the entire string stored in the Trie*
 - matchedWholeWord (Boolean): *whether the keyword perfectly matched a whole word within the string*

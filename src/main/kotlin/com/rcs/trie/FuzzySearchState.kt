@@ -1,7 +1,11 @@
 package com.rcs.trie
 
 import com.rcs.trie.FuzzyMatchingStrategy.*
-import java.text.Normalizer
+import com.rcs.trie.FuzzySearchUtils.Companion.compare
+import com.rcs.trie.FuzzySearchUtils.Companion.indexOfFirstWordSeparator
+import com.rcs.trie.FuzzySearchUtils.Companion.indexOfLastWordSeparator
+import com.rcs.trie.FuzzySearchUtils.Companion.isWordSeparator
+import com.rcs.trie.FuzzySearchUtils.Companion.isWordSeparatorAt
 
 /**
  * Invariable properties of the search request - these never change.
@@ -30,6 +34,8 @@ private data class SearchCoordinates(
     val keywordIndex: Int,
     val numberOfMatches: Int,
     val numberOfErrors: Int,
+    val numberOfCaseMismatches: Int,
+    val numberOfDiacriticMismatches: Int,
     val startMatchIndex: Int?,
     val endMatchIndex: Int?,
     val swapChars: List<SwapChars>?
@@ -54,9 +60,6 @@ private data class ErrorStrategy<T>(
     val startMatchIndex: Int?
 )
 
-private val wordSeparatorRegex = Regex("[\\s\\p{P}]")
-private val diacriticalMarksRegex = Regex("\\p{InCOMBINING_DIACRITICAL_MARKS}+")
-
 class FuzzySearchState<T> private constructor(
     private val searchRequest: SearchRequest,
     private val searchVariables: SearchVariables<T>,
@@ -80,17 +83,17 @@ class FuzzySearchState<T> private constructor(
             throw IllegalStateException("State does not have a search result")
         }
 
-        val actualErrors = getNumberOfErrorsIncludingMissingCharacters() +
+        val numberOfErrors = getNumberOfErrorsIncludingMissingCharacters() +
                 searchRequest.numberOfPredeterminedErrors
 
         val assertedStartMatchIndex = searchCoordinates.startMatchIndex!!
 
         val assertedEndMatchIndex = searchCoordinates.endMatchIndex!!
 
-        val matchedWholeSequence = actualErrors == 0
+        val matchedWholeSequence = numberOfErrors == 0
                 && matchedWholeSequence(assertedStartMatchIndex, assertedEndMatchIndex)
 
-        val matchedWholeWord = actualErrors == 0
+        val matchedWholeWord = numberOfErrors == 0
                 && matchedWholeWord(assertedStartMatchIndex, assertedEndMatchIndex)
 
         val indexOfWordSeparatorBefore = searchVariables.sequence
@@ -116,15 +119,17 @@ class FuzzySearchState<T> private constructor(
             indexOfWordSeparatorBefore + 1, indexOfWordSeparatorAfter)
 
         return TrieSearchResult(
-            searchVariables.sequence,
-            searchVariables.node.value!!,
-            matchedSubstring,
-            matchedWord,
-            searchCoordinates.numberOfMatches,
-            actualErrors,
-            prefixDistance,
-            matchedWholeSequence,
-            matchedWholeWord
+            string = searchVariables.sequence,
+            value = searchVariables.node.value!!,
+            matchedSubstring = matchedSubstring,
+            matchedWord = matchedWord,
+            numberOfMatches = searchCoordinates.numberOfMatches,
+            numberOfErrors = numberOfErrors,
+            numberOfCaseMismatches = searchCoordinates.numberOfCaseMismatches,
+            numberOfDiacriticMismatches = searchCoordinates.numberOfDiacriticMismatches,
+            prefixDistance = prefixDistance,
+            matchedWholeString = matchedWholeSequence,
+            matchedWholeWord = matchedWholeWord,
         )
     }
 
@@ -186,8 +191,10 @@ class FuzzySearchState<T> private constructor(
             return null
         }
 
-        return when {
-            nextNodeMatches(nextNode) ->
+        return nextNodeMatches(nextNode)
+            ?.let {
+                val newCaseMismatch = if (!it.exactMatch && it.caseInsensitiveMatch == true) 1 else 0
+                val newDiacriticMismatch = if (!it.exactMatch && it.diacriticInsensitiveMatch == true) 1 else 0
                 listOf(
                     FuzzySearchState(
                         searchRequest,
@@ -202,18 +209,19 @@ class FuzzySearchState<T> private constructor(
                             keywordIndex = searchCoordinates.keywordIndex + 1,
                             numberOfMatches = searchCoordinates.numberOfMatches + 1,
                             numberOfErrors = searchCoordinates.numberOfErrors,
+                            numberOfCaseMismatches = searchCoordinates.numberOfCaseMismatches + newCaseMismatch,
+                            numberOfDiacriticMismatches = searchCoordinates.numberOfDiacriticMismatches + newDiacriticMismatch,
                             swapChars = searchCoordinates.swapChars
                         )
                     )
                 )
-            else ->
-                null
-        }
+            }
     }
 
-    private fun nextNodeMatches(nextNode: TrieNode<T>): Boolean {
+    private fun nextNodeMatches(nextNode: TrieNode<T>): TrieNodeMatchResult? {
         if (searchRequest.matchingStrategy == WILDCARD && currentSearchCharacter() == "*") {
-            return true
+            // todo: create a field called `wildcardMatch`in TrieNodeMatchResult
+            return TrieNodeMatchResult(exactMatch = true)
         }
 
         val wasMatchingBefore = searchCoordinates.numberOfMatches > 0
@@ -229,9 +237,18 @@ class FuzzySearchState<T> private constructor(
                 true
         }
 
-        return matchingPreconditions
-                && searchCoordinates.keywordIndex < searchRequest.keyword.length
-                && nextNode.string.normalizedForMatching() == currentSearchCharacter().normalizedForMatching()
+        val searchOutOfBounds = searchCoordinates.keywordIndex >= searchRequest.keyword.length
+
+        if (!matchingPreconditions || searchOutOfBounds) {
+            return null
+        }
+
+        return nextNode.string
+            .compare(currentSearchCharacter(), searchRequest.matchingOptions)
+            .let {
+                if (it.anyMatch) it
+                else null
+            }
     }
 
     private fun buildErrorState(nextNode: TrieNode<T>): Collection<FuzzySearchState<T>>? {
@@ -257,6 +274,8 @@ class FuzzySearchState<T> private constructor(
                             keywordIndex = searchCoordinates.keywordIndex + 1,
                             numberOfMatches = searchCoordinates.numberOfMatches,
                             numberOfErrors = searchCoordinates.numberOfErrors + 1,
+                            numberOfCaseMismatches = searchCoordinates.numberOfCaseMismatches,
+                            numberOfDiacriticMismatches = searchCoordinates.numberOfDiacriticMismatches,
                             swapChars = searchCoordinates.swapChars!!.filter { it != swapSatisfied }
                         )
                     )
@@ -277,6 +296,8 @@ class FuzzySearchState<T> private constructor(
                             keywordIndex = it.searchIndex,
                             numberOfMatches = searchCoordinates.numberOfMatches,
                             numberOfErrors = searchCoordinates.numberOfErrors + 1,
+                            numberOfCaseMismatches = searchCoordinates.numberOfCaseMismatches,
+                            numberOfDiacriticMismatches = searchCoordinates.numberOfDiacriticMismatches,
                             swapChars = it.swapChar?.let { swapChar ->
                                 (searchCoordinates.swapChars ?: mutableListOf()) + swapChar
                             }
@@ -376,6 +397,8 @@ class FuzzySearchState<T> private constructor(
                             keywordIndex = 0,
                             numberOfMatches = 0,
                             numberOfErrors = 0,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
                             swapChars = null
                         )
                     )
@@ -438,43 +461,11 @@ class FuzzySearchState<T> private constructor(
                 && searchVariables.sequence.isWordSeparatorAt(endMatchIndex + 1)
     }
 
-    private fun String.isWordSeparatorAt(index: Int): Boolean {
-        return index < 0 || index >= this.length || this[index].toString().isWordSeparator()
-    }
-
-    private fun String.isWordSeparator(): Boolean {
-        return this == "" /* == root */ || this.matches(wordSeparatorRegex)
-    }
-
-    private fun CharSequence.indexOfLastWordSeparator(endIndex: Int = this.length - 1): Int? {
-        return (0..endIndex).reversed().firstOrNull {
-            this[it].toString().matches(wordSeparatorRegex)
-        }
-    }
-
-    private fun CharSequence.indexOfFirstWordSeparator(startIndex: Int = 0): Int? {
-        return (startIndex until this.length).firstOrNull {
-            this[it].toString().matches(wordSeparatorRegex)
-        }
-    }
-
     private fun List<SwapChars>?.getMatching(nextNode: TrieNode<T>): SwapChars? {
         return this?.firstOrNull {
-            it.fromSource.normalizedForMatching() == nextNode.string.normalizedForMatching()
-                    && it.fromTarget.normalizedForMatching() == currentSearchCharacter().normalizedForMatching()
+            it.fromSource.compare(nextNode.string, searchRequest.matchingOptions).anyMatch
+                    && it.fromTarget.compare(currentSearchCharacter(), searchRequest.matchingOptions).anyMatch
         }
-    }
-
-    private fun String.normalizedForMatching(): String {
-        var normalized = this
-        if (searchRequest.matchingOptions.caseInsensitive) {
-            normalized = normalized.lowercase()
-        }
-        if (searchRequest.matchingOptions.diacriticInsensitive) {
-            normalized = Normalizer.normalize(normalized, Normalizer.Form.NFD)
-                .replace(diacriticalMarksRegex, "")
-        }
-        return normalized
     }
 
     companion object {
@@ -547,6 +538,8 @@ class FuzzySearchState<T> private constructor(
                     keywordIndex = 0,
                     numberOfMatches= 0,
                     numberOfErrors = 0,
+                    numberOfCaseMismatches = 0,
+                    numberOfDiacriticMismatches = 0,
                     startMatchIndex = null,
                     endMatchIndex = null,
                     swapChars = null

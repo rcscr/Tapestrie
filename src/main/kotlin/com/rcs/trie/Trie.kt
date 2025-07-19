@@ -154,7 +154,7 @@ class Trie<T>: Iterable<TrieEntry<T>> {
 
     fun matchBySubstring(search: String): List<TrieSearchResult<T>> {
         return matchBySubstringFuzzy(
-            search, 0, FuzzyMatchingStrategy.LIBERAL, MatchingOptions.default)
+            search, 0, FuzzyMatchingStrategy.LIBERAL, MatchingOptions.allDisabled)
     }
 
     fun matchBySubstringFuzzy(

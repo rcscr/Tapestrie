@@ -7,6 +7,11 @@ data class TrieSearchResult<T>(
     // the value associated with the data
     val value: T,
 
+    /**
+     * For all fields below, there should be a corresponding
+     * comparator in TrieSearchResultComparator.
+     */
+
     // the minimum portion of the string that matched the keyword,
     // including errors in between (but not errors before or after)
     val matchedSubstring: String,
@@ -20,6 +25,12 @@ data class TrieSearchResult<T>(
 
     // number of errors
     val numberOfErrors: Int,
+
+    // if caseInsensitive, number of case mismatches (which are not counted as errors)
+    val numberOfCaseMismatches: Int,
+
+    // if diacriticInsensitive, number of diacritic mismatches (which are not counted as errors)
+    val numberOfDiacriticMismatches: Int,
 
     // the distance from the start of the match to the beginning of the word
     val prefixDistance: Int,

@@ -1,0 +1,98 @@
+package com.rcs.trie
+
+import com.rcs.trie.FuzzySearchUtils.Companion.compare
+import org.junit.jupiter.api.Test
+import org.assertj.core.api.Assertions.*
+
+class FuzzySearchUtilsTest {
+
+    @Test
+    fun testSimpleMatch() {
+        // Arrange
+        val source = "a"
+        val target = "a"
+        val options = MatchingOptions.allDisabled
+
+        // Act
+        val result = source.compare(target, options)
+
+        // Assert
+        assertThat(result.exactMatch).isTrue()
+        assertThat(result.anyMatch).isTrue()
+        assertThat(result.caseInsensitiveMatch).isNull()
+        assertThat(result.diacriticInsensitiveMatch).isNull()
+        assertThat(result.caseAndDiacriticInsensitiveMatch).isNull()
+    }
+
+    @Test
+    fun testSimpleNoMatch() {
+        // Arrange
+        val source = "a"
+        val target = "b"
+        val options = MatchingOptions.allDisabled
+
+        // Act
+        val result = source.compare(target, options)
+
+        // Assert
+        assertThat(result.exactMatch).isFalse()
+        assertThat(result.anyMatch).isFalse()
+        assertThat(result.caseInsensitiveMatch).isNull()
+        assertThat(result.diacriticInsensitiveMatch).isNull()
+        assertThat(result.caseAndDiacriticInsensitiveMatch).isNull()
+    }
+
+    @Test
+    fun testCaseInsensitiveMatch() {
+        // Arrange
+        val source = "a"
+        val target = "A"
+        val options = MatchingOptions(caseInsensitive = true, diacriticInsensitive = false)
+
+        // Act
+        val result = source.compare(target, options)
+
+        // Assert
+        assertThat(result.exactMatch).isFalse()
+        assertThat(result.anyMatch).isTrue()
+        assertThat(result.caseInsensitiveMatch).isTrue()
+        assertThat(result.diacriticInsensitiveMatch).isNull()
+        assertThat(result.caseAndDiacriticInsensitiveMatch).isNull()
+    }
+
+    @Test
+    fun testDiacriticInsensitiveMatch() {
+        // Arrange
+        val source = "a"
+        val target = "ã"
+        val options = MatchingOptions(caseInsensitive = false, diacriticInsensitive = true)
+
+        // Act
+        val result = source.compare(target, options)
+
+        // Assert
+        assertThat(result.exactMatch).isFalse()
+        assertThat(result.anyMatch).isTrue()
+        assertThat(result.caseInsensitiveMatch).isNull()
+        assertThat(result.diacriticInsensitiveMatch).isTrue()
+        assertThat(result.caseAndDiacriticInsensitiveMatch).isNull()
+    }
+
+    @Test
+    fun testCaseAndDiacriticInsensitiveMatch() {
+        // Arrange
+        val source = "a"
+        val target = "Á"
+        val options = MatchingOptions(caseInsensitive = true, diacriticInsensitive = true)
+
+        // Act
+        val result = source.compare(target, options)
+
+        // Assert
+        assertThat(result.exactMatch).isFalse()
+        assertThat(result.anyMatch).isTrue()
+        assertThat(result.caseInsensitiveMatch).isFalse()
+        assertThat(result.diacriticInsensitiveMatch).isFalse()
+        assertThat(result.caseAndDiacriticInsensitiveMatch).isTrue()
+    }
+}

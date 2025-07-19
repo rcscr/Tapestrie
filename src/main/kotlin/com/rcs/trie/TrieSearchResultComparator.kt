@@ -25,6 +25,12 @@ class TrieSearchResultComparator {
         private val byNumberOfErrorsLessFirst: Comparator<TrieSearchResult<*>> =
             compareBy { it.numberOfErrors }
 
+        private val byNumberOfCaseMismatchesLessFirst: Comparator<TrieSearchResult<*>> =
+            compareBy { it.numberOfCaseMismatches }
+
+        private val byNumberOfDiacriticMismatchesLessFirst: Comparator<TrieSearchResult<*>> =
+            compareBy { it.numberOfDiacriticMismatches }
+
         val byBestMatchFirst: Comparator<TrieSearchResult<*>> =
             byPrefixDistanceShortestFirst
                 .thenComparing(byNumberOfMatchesMoreFirst)
@@ -33,5 +39,7 @@ class TrieSearchResultComparator {
                 .thenComparing(byMatchedWholeWordTrueFirst)
                 .thenComparing(byLengthOfStringShortestFirst)
                 .thenComparing(byNumberOfErrorsLessFirst)
+                .thenComparing(byNumberOfCaseMismatchesLessFirst)
+                .thenComparing(byNumberOfDiacriticMismatchesLessFirst)
     }
 }

@@ -63,7 +63,7 @@ class HtmlSearcher(private val baseUrl: String, private val htmlCrawler: HtmlCra
         string: String,
         value: ConcurrentLinkedDeque<HtmlIndexEntry>
     ): TrieSearchResult<ConcurrentLinkedDeque<HtmlIndexEntry>> {
-        return TrieSearchResult(string, value, string, string, string.length, 0, 0, true, true)
+        return TrieSearchResult(string, value, string, string, string.length, 0, 0, 0, 0, true, true)
     }
 
     private fun enrichWithBaseUrl(
@@ -76,6 +76,8 @@ class HtmlSearcher(private val baseUrl: String, private val htmlCrawler: HtmlCra
             result.matchedWord,
             result.numberOfMatches,
             result.numberOfErrors,
+            result.numberOfCaseMismatches,
+            result.numberOfDiacriticMismatches,
             result.prefixDistance,
             result.matchedWholeString,
             result.matchedWholeWord

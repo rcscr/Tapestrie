@@ -31,7 +31,7 @@ class TrieSubstringMatchTest {
         val scenario = SubstringMatchScenario(
             setOf("abcdef", "hijklm"),
             "a",
-            listOf(TrieSearchResult("abcdef", Unit, "a", "abcdef", 1, 0, 0, false, false))
+            listOf(TrieSearchResult("abcdef", Unit, "a", "abcdef", 1, 0, 0, 0, 0, false, false))
         )
         runTestScenario(scenario)
     }
@@ -42,8 +42,8 @@ class TrieSubstringMatchTest {
             setOf("abcdef", "defghi"),
             "def",
             listOf(
-                TrieSearchResult("defghi", Unit, "def", "defghi", 3, 0, 0, false, false),
-                TrieSearchResult("abcdef", Unit, "def", "abcdef", 3, 0, 3, false, false)
+                TrieSearchResult("defghi", Unit, "def", "defghi", 3, 0, 0, 0, 0, false, false),
+                TrieSearchResult("abcdef", Unit, "def", "abcdef", 3, 0, 0, 0, 3, false, false)
             )
         )
         runTestScenario(scenario)
@@ -54,7 +54,7 @@ class TrieSubstringMatchTest {
         val scenario = SubstringMatchScenario(
             setOf("defghi", "jklmno"),
             "ghi",
-            listOf(TrieSearchResult("defghi", Unit, "ghi", "defghi", 3, 0, 3, false, false))
+            listOf(TrieSearchResult("defghi", Unit, "ghi", "defghi", 3, 0, 0, 0, 3, false, false))
         )
         runTestScenario(scenario)
     }
@@ -64,7 +64,7 @@ class TrieSubstringMatchTest {
         val scenario = SubstringMatchScenario(
             setOf("deghij", "jklmno"),
             "ghi",
-            listOf(TrieSearchResult("deghij", Unit, "ghi", "deghij", 3, 0, 2, false, false))
+            listOf(TrieSearchResult("deghij", Unit, "ghi", "deghij", 3, 0, 0, 0, 2, false, false))
         )
         runTestScenario(scenario)
     }
@@ -74,7 +74,7 @@ class TrieSubstringMatchTest {
         val scenario = SubstringMatchScenario(
             setOf("jklmno", "jklmnp"),
             "jklmno",
-            listOf(TrieSearchResult("jklmno", Unit, "jklmno", "jklmno", 6, 0, 0, true, true))
+            listOf(TrieSearchResult("jklmno", Unit, "jklmno", "jklmno", 6, 0, 0, 0, 0, true, true))
         )
         runTestScenario(scenario)
     }
@@ -84,7 +84,7 @@ class TrieSubstringMatchTest {
         val scenario = SubstringMatchScenario(
             setOf("pqrpqs"),
             "pqs",
-            listOf(TrieSearchResult("pqrpqs", Unit, "pqs", "pqrpqs", 3, 0, 3, false, false))
+            listOf(TrieSearchResult("pqrpqs", Unit, "pqs", "pqrpqs", 3, 0, 0, 0, 3, false, false))
         )
         runTestScenario(scenario)
     }
@@ -94,7 +94,7 @@ class TrieSubstringMatchTest {
         val scenario = SubstringMatchScenario(
             setOf("tu vw, xyz"),
             "vw",
-            listOf(TrieSearchResult("tu vw, xyz", Unit, "vw", "vw", 2, 0, 0, false, true))
+            listOf(TrieSearchResult("tu vw, xyz", Unit, "vw", "vw", 2, 0, 0, 0, 0, false, true))
         )
         runTestScenario(scenario)
     }
