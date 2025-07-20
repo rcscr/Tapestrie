@@ -47,7 +47,11 @@ class FuzzySearchUtilsTest {
         // Arrange
         val source = "a"
         val target = "A"
-        val options = MatchingOptions(caseInsensitive = true, diacriticInsensitive = false)
+        val options = MatchingOptions(
+            caseInsensitive = true,
+            diacriticInsensitive = false,
+            wildcard = false,
+        )
 
         // Act
         val result = source.compare(target, options)
@@ -65,7 +69,11 @@ class FuzzySearchUtilsTest {
         // Arrange
         val source = "a"
         val target = "ã"
-        val options = MatchingOptions(caseInsensitive = false, diacriticInsensitive = true)
+        val options = MatchingOptions(
+            caseInsensitive = false,
+            diacriticInsensitive = true,
+            wildcard = false,
+        )
 
         // Act
         val result = source.compare(target, options)
@@ -83,7 +91,11 @@ class FuzzySearchUtilsTest {
         // Arrange
         val source = "a"
         val target = "Á"
-        val options = MatchingOptions(caseInsensitive = true, diacriticInsensitive = true)
+        val options = MatchingOptions(
+            caseInsensitive = true,
+            diacriticInsensitive = true,
+            wildcard = false,
+        )
 
         // Act
         val result = source.compare(target, options)

@@ -45,7 +45,7 @@ class HtmlSearcher(private val baseUrl: String, private val htmlCrawler: HtmlCra
                         normalizedKeyword,
                         searchRequest.errorTolerance!!,
                         FuzzyMatchingStrategy.LIBERAL,
-                        MatchingOptions(caseInsensitive = true, diacriticInsensitive = true)
+                        MatchingOptions(caseInsensitive = true, diacriticInsensitive = true, wildcard = false)
                     )
                 }
             }

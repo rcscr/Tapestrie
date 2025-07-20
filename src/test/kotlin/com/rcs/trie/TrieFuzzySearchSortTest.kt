@@ -24,7 +24,7 @@ class TrieFuzzySearchSortTest {
             "manual",
             3,
             LIBERAL,
-            MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
+            MatchingOptions.allDisabled, // todo: test sort based on these options
             listOf(
                 // matches whole sequence is highest ranking
                 TrieSearchResult(
