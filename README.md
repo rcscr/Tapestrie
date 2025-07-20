@@ -8,9 +8,18 @@ The `Trie` implemented here is thread-safe, unit-tested, and able to efficiently
   - exact match (like a `Map`)
   - prefix match
   - substring match
-  - fuzzy substring match with configurable error tolerance: Brasil will match Brazil; Raphael will match Rafael; etc
-  - several different fuzzy search strategies, e.g. ACRONYM: searching for NASA will match "National Aeronautics and Space Administration"
   - configurable case- and diacritic-insensitivity
+  - fuzzy substring match with configurable error tolerance: Brasil will match Brazil; Raphael will match Rafael; etc
+
+For fuzzy search, there are several different strategies:
+
+- LIBERAL: matches everywhere in the string, and allows errors in the beginning, middle, and end
+- EXACT_PREFIX: matches only words that start with the first letter of the keyword, regardless of error tolerance
+- FUZZY_PREFIX: similar to EXACT_PREFIX, but allows the error tolerance to be applies at the beginning (not in the middle and end)
+- FUZZY_POSTFIX: similar to EXACT_PREFIX, but allows the error tolerance only at the end (not in the beginning or middle)
+- ADJACENT_SWAP: accepts only errors due to adjacent letter swaps (i.e. typos)
+- SYMMETRICAL_SWAP: accepts only errors due to letter swaps anywhere in the string
+- ACRONYM: matches strings containing words that form the acronym provided
 
 ### Demo
 
