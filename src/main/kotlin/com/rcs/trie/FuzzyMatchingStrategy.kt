@@ -13,7 +13,7 @@ enum class FuzzyMatchingStrategy {
     // similar to EXACT_PREFIX, but allows errors in the beginning, middle, and end
     FUZZY_PREFIX,
 
-    // similar to EXACT_PREFIX, but allows errors only at the end
+    // similar to EXACT_PREFIX, but allows errors only at the end - not in the middle
     FUZZY_POSTFIX,
 
     // accepts only errors due to adjacent letter swaps (i.e. typos)
