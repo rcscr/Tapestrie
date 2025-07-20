@@ -222,7 +222,6 @@ class FuzzySearchState<T> private constructor(
 
     private fun nextNodeMatches(nextNode: TrieNode<T>): TrieNodeMatchResult? {
         if (searchRequest.matchingStrategy == WILDCARD && currentSearchCharacter() == "*") {
-            // todo: create a field called `wildcardMatch`in TrieNodeMatchResult
             return TrieNodeMatchResult(exactMatch = true)
         }
 
