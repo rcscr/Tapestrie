@@ -2,34 +2,10 @@ package com.rcs.trie
 
 import kotlin.test.Test
 import com.rcs.trie.FuzzyMatchingStrategy.*
-import org.assertj.core.api.Assertions.assertThat
+import com.rcs.trie.utils.TestUtils.FuzzySearchScenario
+import com.rcs.trie.utils.TestUtils.Companion.runTestScenario
 
 class TrieFuzzySearchTest {
-
-    data class FuzzySearchScenario(
-        val entries: Set<String>,
-        val search: String,
-        val errorTolerance: Int,
-        val matchingStrategy: FuzzyMatchingStrategy,
-        val matchingOptions: MatchingOptions,
-        val expectedResults: List<TrieSearchResult<Unit>>
-    )
-
-    private fun runTestScenario(scenario: FuzzySearchScenario) {
-        // Arrange
-        val trie = Trie<Unit>()
-        scenario.entries.forEach {
-            trie.put(it, Unit)
-        }
-
-        // Act
-        val result = trie.matchBySubstringFuzzy(
-            scenario.search, scenario.errorTolerance, scenario.matchingStrategy, scenario.matchingOptions)
-
-        // Assert
-        assertThat(result)
-            .isEqualTo(scenario.expectedResults)
-    }
 
     @Test
     fun `all matching strategies work as expected when caseInsensitive = true`() {
@@ -42,7 +18,21 @@ class TrieFuzzySearchTest {
                     it,
                     MatchingOptions(caseInsensitive = true, diacriticInsensitive = false),
                     listOf(
-                        TrieSearchResult("RAPHAEL", Unit, "RAPHAEL", "RAPHAEL", 7, 0, 7, 0, 0, true, true)
+                        TrieSearchResult(
+                            "RAPHAEL",
+                            Unit,
+                            TrieSearchResultStats(
+                                matchedSubstring = "RAPHAEL",
+                                matchedWord = "RAPHAEL",
+                                numberOfMatches = 7,
+                                numberOfErrors = 0,
+                                numberOfCaseMismatches = 7,
+                                numberOfDiacriticMismatches = 0,
+                                prefixDistance = 0,
+                                matchedWholeString = true,
+                                matchedWholeWord = true
+                            )
+                        )
                     )
                 )
             }
@@ -76,7 +66,21 @@ class TrieFuzzySearchTest {
                     it,
                     MatchingOptions(caseInsensitive = false, diacriticInsensitive = true),
                     listOf(
-                        TrieSearchResult("raphaël", Unit, "raphaël", "raphaël", 7, 0, 0, 1, 0, true, true)
+                        TrieSearchResult(
+                            "raphaël",
+                            Unit,
+                            TrieSearchResultStats(
+                                matchedSubstring = "raphaël",
+                                matchedWord = "raphaël",
+                                numberOfMatches = 7,
+                                numberOfErrors = 0,
+                                numberOfCaseMismatches = 0,
+                                numberOfDiacriticMismatches = 1,
+                                prefixDistance = 0,
+                                matchedWholeString = true,
+                                matchedWholeWord = true,
+                            )
+                        )
                     )
                 )
             }
@@ -110,8 +114,36 @@ class TrieFuzzySearchTest {
                     it,
                     MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                     listOf(
-                        TrieSearchResult("fullstack", Unit, "fullstack", "fullstack", 9, 0, 0, 0, 0, true, true),
-                        TrieSearchResult("full stack", Unit, "full stack", "full stack", 9, 1, 0, 0, 0, false, false)
+                        TrieSearchResult(
+                            "fullstack",
+                            Unit,
+                            TrieSearchResultStats(
+                                matchedSubstring = "fullstack",
+                                matchedWord = "fullstack",
+                                numberOfMatches = 9,
+                                numberOfErrors = 0,
+                                numberOfCaseMismatches = 0,
+                                numberOfDiacriticMismatches = 0,
+                                prefixDistance = 0,
+                                matchedWholeString = true,
+                                matchedWholeWord = true,
+                            )
+                        ),
+                        TrieSearchResult(
+                            "full stack",
+                            Unit,
+                            TrieSearchResultStats(
+                                matchedSubstring = "full stack",
+                                matchedWord = "full stack",
+                                numberOfMatches = 9,
+                                numberOfErrors = 1,
+                                numberOfCaseMismatches = 0,
+                                numberOfDiacriticMismatches = 0,
+                                prefixDistance = 0,
+                                matchedWholeString = false,
+                                matchedWholeWord = false,
+                            )
+                        )
                     )
                 ),
                 FuzzySearchScenario(
@@ -121,8 +153,36 @@ class TrieFuzzySearchTest {
                     it,
                     MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                     listOf(
-                        TrieSearchResult("full stack", Unit, "full stack", "full stack", 10, 0, 0, 0, 0, true, true),
-                        TrieSearchResult("fullstack", Unit, "fullstack", "fullstack", 9, 1, 0, 0, 0, false, false)
+                        TrieSearchResult(
+                            "full stack",
+                            Unit,
+                            TrieSearchResultStats(
+                                matchedSubstring = "full stack",
+                                matchedWord = "full stack",
+                                numberOfMatches = 10,
+                                numberOfErrors = 0,
+                                numberOfCaseMismatches = 0,
+                                numberOfDiacriticMismatches = 0,
+                                prefixDistance = 0,
+                                matchedWholeString = true,
+                                matchedWholeWord = true,
+                            )
+                        ),
+                        TrieSearchResult(
+                            "fullstack",
+                            Unit,
+                            TrieSearchResultStats(
+                                matchedSubstring = "fullstack",
+                                matchedWord = "fullstack",
+                                numberOfMatches = 9,
+                                numberOfErrors = 1,
+                                numberOfCaseMismatches = 0,
+                                numberOfDiacriticMismatches = 0,
+                                prefixDistance = 0,
+                                matchedWholeString = false,
+                                matchedWholeWord = false,
+                            )
+                        )
                     )
                 )
             )
@@ -157,7 +217,21 @@ class TrieFuzzySearchTest {
                     it,
                     MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                     listOf(
-                        TrieSearchResult("this is rafael", Unit, "rafael", "rafael", 5, 2, 0, 0, 0, false, false)
+                        TrieSearchResult(
+                            "this is rafael",
+                            Unit,
+                            TrieSearchResultStats(
+                                matchedSubstring = "rafael",
+                                matchedWord = "rafael",
+                                numberOfMatches = 5,
+                                numberOfErrors = 2,
+                                numberOfCaseMismatches = 0,
+                                numberOfDiacriticMismatches = 0,
+                                prefixDistance = 0,
+                                matchedWholeString = false,
+                                matchedWholeWord = false,
+                            )
+                        )
                     )
                 )
             }
@@ -175,7 +249,21 @@ class TrieFuzzySearchTest {
                     it,
                     MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                     listOf(
-                        TrieSearchResult("this is raphael", Unit, "raphael", "raphael", 5, 2, 0, 0, 0, false, false)
+                        TrieSearchResult(
+                            "this is raphael",
+                            Unit,
+                            TrieSearchResultStats(
+                                matchedSubstring = "raphael",
+                                matchedWord = "raphael",
+                                numberOfMatches = 5,
+                                numberOfErrors = 2,
+                                numberOfCaseMismatches = 0,
+                                numberOfDiacriticMismatches = 0,
+                                prefixDistance = 0,
+                                matchedWholeString = false,
+                                matchedWholeWord = false,
+                            )
+                        )
                     )
                 )
             }
@@ -193,9 +281,51 @@ class TrieFuzzySearchTest {
                     it,
                     MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                     listOf(
-                        TrieSearchResult("manu", Unit, "manu", "manu", 4, 2, 0, 0, 0, false, false),
-                        TrieSearchResult("man", Unit, "man", "man", 3, 3, 0, 0, 0, false, false),
-                        TrieSearchResult("many", Unit, "man", "many", 3, 3, 0, 0, 0, false, false),
+                        TrieSearchResult(
+                            "manu",
+                            Unit,
+                            TrieSearchResultStats(
+                                matchedSubstring = "manu",
+                                matchedWord = "manu",
+                                numberOfMatches = 4,
+                                numberOfErrors = 2,
+                                numberOfCaseMismatches = 0,
+                                numberOfDiacriticMismatches = 0,
+                                prefixDistance = 0,
+                                matchedWholeString = false,
+                                matchedWholeWord = false,
+                            )
+                        ),
+                        TrieSearchResult(
+                            "man",
+                            Unit,
+                            TrieSearchResultStats(
+                                matchedSubstring = "man",
+                                matchedWord = "man",
+                                numberOfMatches = 3,
+                                numberOfErrors = 3,
+                                numberOfCaseMismatches = 0,
+                                numberOfDiacriticMismatches = 0,
+                                prefixDistance = 0,
+                                matchedWholeString = false,
+                                matchedWholeWord = false,
+                            )
+                        ),
+                        TrieSearchResult(
+                            "many",
+                            Unit,
+                            TrieSearchResultStats(
+                                matchedSubstring = "man",
+                                matchedWord = "many",
+                                numberOfMatches = 3,
+                                numberOfErrors = 3,
+                                numberOfCaseMismatches = 0,
+                                numberOfDiacriticMismatches = 0,
+                                prefixDistance = 0,
+                                matchedWholeString = false,
+                                matchedWholeWord = false,
+                            )
+                        )
                     )
                 )
             }
@@ -213,8 +343,36 @@ class TrieFuzzySearchTest {
                     it,
                     MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                     listOf(
-                        TrieSearchResult("manXuXal", Unit, "manXuXal", "manXuXal", 6, 2, 0, 0, 0, false, false),
-                        TrieSearchResult("man", Unit, "man", "man", 3, 3, 0, 0, 0, false, false),
+                        TrieSearchResult(
+                            "manXuXal",
+                            Unit,
+                            TrieSearchResultStats(
+                                matchedSubstring = "manXuXal",
+                                matchedWord = "manXuXal",
+                                numberOfMatches = 6,
+                                numberOfErrors = 2,
+                                numberOfCaseMismatches = 0,
+                                numberOfDiacriticMismatches = 0,
+                                prefixDistance = 0,
+                                matchedWholeString = false,
+                                matchedWholeWord = false,
+                            )
+                        ),
+                        TrieSearchResult(
+                            "man",
+                            Unit,
+                            TrieSearchResultStats(
+                                matchedSubstring = "man",
+                                matchedWord = "man",
+                                numberOfMatches = 3,
+                                numberOfErrors = 3,
+                                numberOfCaseMismatches = 0,
+                                numberOfDiacriticMismatches = 0,
+                                prefixDistance = 0,
+                                matchedWholeString = false,
+                                matchedWholeWord = false,
+                            )
+                        )
                     )
                 )
             }
@@ -231,7 +389,23 @@ class TrieFuzzySearchTest {
                     1,
                     it,
                     MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
-                    listOf(TrieSearchResult("blah blah indistinguishable blah blah", Unit, "indi", "indistinguishable", 4, 1, 0, 0, 0, false, false))
+                    listOf(
+                        TrieSearchResult(
+                            "blah blah indistinguishable blah blah",
+                            Unit,
+                            TrieSearchResultStats(
+                                matchedSubstring = "indi",
+                                matchedWord = "indistinguishable",
+                                numberOfMatches = 4,
+                                numberOfErrors = 1,
+                                numberOfCaseMismatches = 0,
+                                numberOfDiacriticMismatches = 0,
+                                prefixDistance = 0,
+                                matchedWholeString = false,
+                                matchedWholeWord = false,
+                            )
+                        )
+                    )
                 )
             }
             .forEach { runTestScenario(it) }
@@ -247,7 +421,23 @@ class TrieFuzzySearchTest {
                     2,
                     it,
                     MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
-                    listOf(TrieSearchResult("lalala0 lalala1 lalala2 lalala3", Unit, "lalala2", "lalala2", 7, 0, 0, 0, 0, false, true))
+                    listOf(
+                        TrieSearchResult(
+                            "lalala0 lalala1 lalala2 lalala3",
+                            Unit,
+                            TrieSearchResultStats(
+                                matchedSubstring = "lalala2",
+                                matchedWord = "lalala2",
+                                numberOfMatches = 7,
+                                numberOfErrors = 0,
+                                numberOfCaseMismatches = 0,
+                                numberOfDiacriticMismatches = 0,
+                                prefixDistance = 0,
+                                matchedWholeString = false,
+                                matchedWholeWord = true,
+                            )
+                        )
+                    )
                 )
             }
             .forEach { runTestScenario(it) }
@@ -265,8 +455,36 @@ class TrieFuzzySearchTest {
                         it,
                         MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                         listOf(
-                            TrieSearchResult("indices", Unit, "indices", "indices", 7, 0, 0, 0, 0, true, true),
-                            TrieSearchResult("indexes", Unit, "indexes", "indexes", 5, 2, 0, 0, 0, false, false),
+                            TrieSearchResult(
+                                "indices",
+                                Unit,
+                                TrieSearchResultStats(
+                                    matchedSubstring = "indices",
+                                    matchedWord = "indices",
+                                    numberOfMatches = 7,
+                                    numberOfErrors = 0,
+                                    numberOfCaseMismatches = 0,
+                                    numberOfDiacriticMismatches = 0,
+                                    prefixDistance = 0,
+                                    matchedWholeString = true,
+                                    matchedWholeWord = true,
+                                )
+                            ),
+                            TrieSearchResult(
+                                "indexes",
+                                Unit,
+                                TrieSearchResultStats(
+                                    matchedSubstring = "indexes",
+                                    matchedWord = "indexes",
+                                    numberOfMatches = 5,
+                                    numberOfErrors = 2,
+                                    numberOfCaseMismatches = 0,
+                                    numberOfDiacriticMismatches = 0,
+                                    prefixDistance = 0,
+                                    matchedWholeString = false,
+                                    matchedWholeWord = false,
+                                )
+                            )
                         )
                     )
                 },
@@ -279,8 +497,36 @@ class TrieFuzzySearchTest {
                         it,
                         MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                         listOf(
-                            TrieSearchResult("indexes", Unit, "indexes", "indexes", 7, 0, 0, 0, 0, true, true),
-                            TrieSearchResult("indices", Unit, "indices", "indices", 5, 2, 0, 0, 0, false, false)
+                            TrieSearchResult(
+                                "indexes",
+                                Unit,
+                                TrieSearchResultStats(
+                                    matchedSubstring = "indexes",
+                                    matchedWord = "indexes",
+                                    numberOfMatches = 7,
+                                    numberOfErrors = 0,
+                                    numberOfCaseMismatches = 0,
+                                    numberOfDiacriticMismatches = 0,
+                                    prefixDistance = 0,
+                                    matchedWholeString = true,
+                                    matchedWholeWord = true,
+                                )
+                            ),
+                            TrieSearchResult(
+                                "indices",
+                                Unit,
+                                TrieSearchResultStats(
+                                    matchedSubstring = "indices",
+                                    matchedWord = "indices",
+                                    numberOfMatches = 5,
+                                    numberOfErrors = 2,
+                                    numberOfCaseMismatches = 0,
+                                    numberOfDiacriticMismatches = 0,
+                                    prefixDistance = 0,
+                                    matchedWholeString = false,
+                                    matchedWholeWord = false,
+                                )
+                            )
                         )
                     )
                 }
@@ -297,7 +543,23 @@ class TrieFuzzySearchTest {
                 0,
                 LIBERAL,
                 MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
-                listOf(TrieSearchResult("lala 000123456789000 hehe", Unit, "123456789", "000123456789000", 9, 0, 0, 0, 3, false, false))
+                listOf(
+                    TrieSearchResult(
+                        "lala 000123456789000 hehe",
+                        Unit,
+                        TrieSearchResultStats(
+                            matchedSubstring = "123456789",
+                            matchedWord = "000123456789000",
+                            numberOfMatches = 9,
+                            numberOfErrors = 0,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 3,
+                            matchedWholeString = false,
+                            matchedWholeWord = false,
+                        )
+                    )
+                )
             ),
             FuzzySearchScenario(
                 setOf("lala 000x23456789000 hehe", "lala 000x23456789000 hehe", "lala 000xx3456789000 hehe", "lala 000xxx456789000 hehe"),
@@ -305,7 +567,23 @@ class TrieFuzzySearchTest {
                 1,
                 LIBERAL,
                 MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
-                listOf(TrieSearchResult("lala 000x23456789000 hehe", Unit, "23456789", "000x23456789000", 8, 1, 0, 0, 4, false, false))
+                listOf(
+                    TrieSearchResult(
+                        "lala 000x23456789000 hehe",
+                        Unit,
+                        TrieSearchResultStats(
+                            matchedSubstring =  "23456789",
+                            matchedWord = "000x23456789000",
+                            numberOfMatches = 8,
+                            numberOfErrors = 1,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 4,
+                            matchedWholeString = false,
+                            matchedWholeWord = false,
+                        )
+                    )
+                )
             ),
             FuzzySearchScenario(
                 setOf("lala 000x23456789000 hehe", "lala 000x23456789000 hehe", "lala 000xx3456789000 hehe", "lala 000xxx456789000 hehe"),
@@ -314,8 +592,36 @@ class TrieFuzzySearchTest {
                 LIBERAL,
                 MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(
-                    TrieSearchResult("lala 000x23456789000 hehe", Unit, "23456789", "000x23456789000", 8, 1, 0, 0, 4, false, false),
-                    TrieSearchResult("lala 000xx3456789000 hehe", Unit, "3456789", "000xx3456789000", 7, 2, 0, 0, 5, false, false)
+                    TrieSearchResult(
+                        "lala 000x23456789000 hehe",
+                        Unit,
+                        TrieSearchResultStats(
+                            matchedSubstring = "23456789",
+                            matchedWord = "000x23456789000",
+                            numberOfMatches = 8,
+                            numberOfErrors = 1,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 4,
+                            matchedWholeString = false,
+                            matchedWholeWord = false,
+                        )
+                    ),
+                    TrieSearchResult(
+                        "lala 000xx3456789000 hehe",
+                        Unit,
+                        TrieSearchResultStats(
+                            matchedSubstring = "3456789",
+                            matchedWord = "000xx3456789000",
+                            numberOfMatches = 7,
+                            numberOfErrors = 2,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 5,
+                            matchedWholeString = false,
+                            matchedWholeWord = false,
+                        )
+                    )
                 )
             )
         ).forEach { runTestScenario(it) }
@@ -330,8 +636,36 @@ class TrieFuzzySearchTest {
             EXACT_PREFIX,
             MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
             listOf(
-                TrieSearchResult("lalala index", Unit, "index", "index", 5, 0, 0, 0, 0, false, true),
-                TrieSearchResult("lalala indix", Unit, "indix", "indix", 4, 1, 0, 0, 0, false, false)
+                TrieSearchResult(
+                    "lalala index",
+                    Unit,
+                    TrieSearchResultStats(
+                        matchedSubstring = "index",
+                        matchedWord = "index",
+                        numberOfMatches = 5,
+                        numberOfErrors = 0,
+                        numberOfCaseMismatches = 0,
+                        numberOfDiacriticMismatches = 0,
+                        prefixDistance = 0,
+                        matchedWholeString = false,
+                        matchedWholeWord = true,
+                    )
+                ),
+                TrieSearchResult(
+                    "lalala indix",
+                    Unit,
+                    TrieSearchResultStats(
+                        matchedSubstring = "indix",
+                        matchedWord = "indix",
+                        numberOfMatches = 4,
+                        numberOfErrors = 1,
+                        numberOfCaseMismatches = 0,
+                        numberOfDiacriticMismatches = 0,
+                        prefixDistance = 0,
+                        matchedWholeString = false,
+                        matchedWholeWord = false,
+                    )
+                )
             )
         )
         runTestScenario(scenario)
@@ -347,10 +681,66 @@ class TrieFuzzySearchTest {
                 FUZZY_PREFIX,
                 MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(
-                    TrieSearchResult("index", Unit, "index", "index", 5, 0, 0, 0, 0, true, true),
-                    TrieSearchResult("lalala index", Unit, "index", "index", 5, 0, 0, 0, 0, false, true),
-                    TrieSearchResult("ondex", Unit, "ndex", "ondex", 4, 1, 0, 0, 1, false, false),
-                    TrieSearchResult("lalala ondex", Unit, "ndex", "ondex", 4, 1, 0, 0, 1, false, false),
+                    TrieSearchResult(
+                        "index",
+                        Unit,
+                        TrieSearchResultStats(
+                            matchedSubstring = "index",
+                            matchedWord = "index",
+                            numberOfMatches = 5,
+                            numberOfErrors = 0,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 0,
+                            matchedWholeString = true,
+                            matchedWholeWord = true,
+                        )
+                    ),
+                    TrieSearchResult(
+                        "lalala index",
+                        Unit,
+                        TrieSearchResultStats(
+                            matchedSubstring = "index",
+                            matchedWord = "index",
+                            numberOfMatches = 5,
+                            numberOfErrors = 0,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 0,
+                            matchedWholeString = false,
+                            matchedWholeWord = true,
+                        )
+                    ),
+                    TrieSearchResult(
+                        "ondex",
+                        Unit,
+                        TrieSearchResultStats(
+                            matchedSubstring = "ndex",
+                            matchedWord = "ondex",
+                            numberOfMatches = 4,
+                            numberOfErrors = 1,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 1,
+                            matchedWholeString = false,
+                            matchedWholeWord = false,
+                        )
+                    ),
+                    TrieSearchResult(
+                        "lalala ondex",
+                        Unit,
+                        TrieSearchResultStats(
+                            matchedSubstring = "ndex",
+                            matchedWord = "ondex",
+                            numberOfMatches = 4,
+                            numberOfErrors = 1,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 1,
+                            matchedWholeString = false,
+                            matchedWholeWord = false,
+                        )
+                    )
                 )
             ),
             FuzzySearchScenario(
@@ -360,47 +750,99 @@ class TrieFuzzySearchTest {
                 FUZZY_PREFIX,
                 MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(
-                    TrieSearchResult("index", Unit, "index", "index", 5, 0, 0, 0, 0, true, true),
-                    TrieSearchResult("lalala index", Unit, "index", "index", 5, 0, 0, 0, 0, false, true),
-                    TrieSearchResult("ondex", Unit, "ndex", "ondex", 4, 1, 0, 0, 1, false, false),
-                    TrieSearchResult("lalala ondex", Unit, "ndex", "ondex", 4, 1, 0, 0, 1, false, false),
-                    TrieSearchResult("oldex", Unit, "dex", "oldex", 3, 2, 0, 0, 2, false, false),
-                    TrieSearchResult("lalala oldex", Unit, "dex", "oldex", 3, 2, 0, 0, 2, false, false)
+                    TrieSearchResult(
+                        "index",
+                        Unit,
+                        TrieSearchResultStats(
+                            matchedSubstring = "index",
+                            matchedWord = "index",
+                            numberOfMatches = 5,
+                            numberOfErrors = 0,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 0,
+                            matchedWholeString = true,
+                            matchedWholeWord = true,
+                        )
+                    ),
+                    TrieSearchResult(
+                        "lalala index",
+                        Unit,
+                        TrieSearchResultStats(
+                            matchedSubstring = "index",
+                            matchedWord = "index",
+                            numberOfMatches = 5,
+                            numberOfErrors = 0,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 0,
+                            matchedWholeString = false,
+                            matchedWholeWord = true,
+                        )
+                    ),
+                    TrieSearchResult(
+                        "ondex",
+                        Unit,
+                        TrieSearchResultStats(
+                            matchedSubstring = "ndex",
+                            matchedWord = "ondex",
+                            numberOfMatches = 4,
+                            numberOfErrors = 1,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 1,
+                            matchedWholeString = false,
+                            matchedWholeWord = false,
+                        )
+                    ),
+                    TrieSearchResult(
+                        "lalala ondex",
+                        Unit,
+                        TrieSearchResultStats(
+                            matchedSubstring = "ndex",
+                            matchedWord = "ondex",
+                            numberOfMatches = 4,
+                            numberOfErrors = 1,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 1,
+                            matchedWholeString = false,
+                            matchedWholeWord = false,
+                        )
+                    ),
+                    TrieSearchResult(
+                        "oldex",
+                        Unit,
+                        TrieSearchResultStats(
+                            matchedSubstring = "dex",
+                            matchedWord = "oldex",
+                            numberOfMatches = 3,
+                            numberOfErrors = 2,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 2,
+                            matchedWholeString = false,
+                            matchedWholeWord = false,
+                        )
+                    ),
+                    TrieSearchResult(
+                        "lalala oldex",
+                        Unit,
+                        TrieSearchResultStats(
+                            matchedSubstring = "dex",
+                            matchedWord = "oldex",
+                            numberOfMatches = 3,
+                            numberOfErrors = 2,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 2,
+                            matchedWholeString = false,
+                            matchedWholeWord = false,
+                        )
+                    )
                 )
             )
         ).forEach { runTestScenario(it) }
-    }
-
-    @Test
-    fun `returns results sorted by best match`() {
-        val scenario = FuzzySearchScenario(
-            setOf("manual", "manuel", "manuem", "emanuel", "lemanuel", "lemanuell", "manually", "manuals", "linux manual"),
-            "manual",
-            3,
-            LIBERAL,
-            MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
-            listOf(
-                // matches whole sequence is highest ranking
-                TrieSearchResult("manual", Unit, "manual", "manual", 6, 0, 0, 0, 0, true, true),
-                // matches a whole word is second-highest ranking
-                TrieSearchResult("linux manual", Unit, "manual", "manual", 6, 0, 0, 0, 0, false, true),
-                // matches the highest possible number of characters, but it's neither the whole sequence nor a whole word
-                TrieSearchResult("manuals", Unit, "manual", "manuals", 6, 0, 0, 0, 0, false, false),
-                // same as above, but the string is longer, so is ranked lower
-                TrieSearchResult("manually", Unit, "manual", "manually", 6, 0, 0, 0, 0, false, false),
-                // partial match, with one error
-                TrieSearchResult("manuel", Unit, "manuel", "manuel", 5, 1, 0, 0, 0, false, false),
-                // partial match, with two errors
-                TrieSearchResult("manuem", Unit, "manu", "manuem", 4, 2, 0, 0, 0, false, false),
-                // prefix match = 1
-                TrieSearchResult("emanuel", Unit, "manuel", "emanuel", 5, 1, 0, 0, 1, false, false),
-                // prefix match = 2
-                TrieSearchResult("lemanuel", Unit, "manuel", "lemanuel", 5, 1, 0, 0, 2, false, false),
-                // prefix match = 2 but word is longer, so ranked lower
-                TrieSearchResult("lemanuell", Unit, "manuel", "lemanuell", 5, 1, 0, 0, 2, false, false)
-            )
-        )
-        runTestScenario(scenario)
     }
 
     @Test
@@ -412,10 +854,66 @@ class TrieFuzzySearchTest {
             FUZZY_POSTFIX,
             MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
             listOf(
-                TrieSearchResult("raffaello", Unit, "raffaello", "raffaello", 9, 0, 0, 0, 0, true, true),
-                TrieSearchResult("raffaell", Unit, "raffaell", "raffaell", 8, 1, 0, 0, 0, false, false),
-                TrieSearchResult("raffaella", Unit, "raffaell", "raffaella", 8, 1, 0, 0, 0, false, false),
-                TrieSearchResult("raffael", Unit, "raffael", "raffael", 7, 2, 0, 0, 0, false, false),
+                TrieSearchResult(
+                    "raffaello",
+                    Unit,
+                    TrieSearchResultStats(
+                        matchedSubstring = "raffaello",
+                        matchedWord = "raffaello",
+                        numberOfMatches = 9,
+                        numberOfErrors = 0,
+                        numberOfCaseMismatches = 0,
+                        numberOfDiacriticMismatches = 0,
+                        prefixDistance = 0,
+                        matchedWholeString = true,
+                        matchedWholeWord = true,
+                    )
+                ),
+                TrieSearchResult(
+                    "raffaell",
+                    Unit,
+                    TrieSearchResultStats(
+                        matchedSubstring = "raffaell",
+                        matchedWord = "raffaell",
+                        numberOfMatches = 8,
+                        numberOfErrors = 1,
+                        numberOfCaseMismatches = 0,
+                        numberOfDiacriticMismatches = 0,
+                        prefixDistance = 0,
+                        matchedWholeString = false,
+                        matchedWholeWord = false,
+                    )
+                ),
+                TrieSearchResult(
+                    "raffaella",
+                    Unit,
+                    TrieSearchResultStats(
+                        matchedSubstring = "raffaell",
+                        matchedWord = "raffaella",
+                        numberOfMatches = 8,
+                        numberOfErrors = 1,
+                        numberOfCaseMismatches = 0,
+                        numberOfDiacriticMismatches = 0,
+                        prefixDistance = 0,
+                        matchedWholeString = false,
+                        matchedWholeWord = false,
+                    )
+                ),
+                TrieSearchResult(
+                    "raffael",
+                    Unit,
+                    TrieSearchResultStats(
+                        matchedSubstring = "raffael",
+                        matchedWord = "raffael",
+                        numberOfMatches = 7,
+                        numberOfErrors = 2,
+                        numberOfCaseMismatches = 0,
+                        numberOfDiacriticMismatches = 0,
+                        prefixDistance = 0,
+                        matchedWholeString = false,
+                        matchedWholeWord = false,
+                    )
+                )
             )
         )
         runTestScenario(scenario)
@@ -431,7 +929,21 @@ class TrieFuzzySearchTest {
                 ADJACENT_SWAP,
                 MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(
-                    TrieSearchResult("raphael", Unit, "raphael", "raphael", 5, 2, 0, 0, 0, false, false),
+                    TrieSearchResult(
+                        "raphael",
+                        Unit,
+                        TrieSearchResultStats(
+                            matchedSubstring = "raphael",
+                            matchedWord = "raphael",
+                            numberOfMatches = 5,
+                            numberOfErrors = 2,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 0,
+                            matchedWholeString = false,
+                            matchedWholeWord = false,
+                        )
+                    )
                 )
             ),
             FuzzySearchScenario(
@@ -441,8 +953,36 @@ class TrieFuzzySearchTest {
                 ADJACENT_SWAP,
                 MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(
-                    TrieSearchResult("raphael", Unit, "raphael", "raphael", 5, 2, 0, 0, 0, false, false),
-                    TrieSearchResult("rapheal", Unit, "rapheal", "rapheal", 3, 4, 0, 0, 0, false, false),
+                    TrieSearchResult(
+                        "raphael",
+                        Unit,
+                        TrieSearchResultStats(
+                            matchedSubstring = "raphael",
+                            matchedWord = "raphael",
+                            numberOfMatches = 5,
+                            numberOfErrors = 2,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 0,
+                            matchedWholeString = false,
+                            matchedWholeWord = false,
+                        )
+                    ),
+                    TrieSearchResult(
+                        "rapheal",
+                        Unit,
+                        TrieSearchResultStats(
+                            matchedSubstring = "rapheal",
+                            matchedWord = "rapheal",
+                            numberOfMatches = 3,
+                            numberOfErrors = 4,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 0,
+                            matchedWholeString = false,
+                            matchedWholeWord = false,
+                        )
+                    )
                 )
             )
         ).forEach { runTestScenario(it) }
@@ -458,7 +998,21 @@ class TrieFuzzySearchTest {
                 SYMMETRICAL_SWAP,
                 MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(
-                    TrieSearchResult("i need Belly Jeans now", Unit, "Belly Jeans", "Belly Jeans", 9, 2, 0, 0, 0, false, false),
+                    TrieSearchResult(
+                        "i need Belly Jeans now",
+                        Unit,
+                        TrieSearchResultStats(
+                            matchedSubstring = "Belly Jeans",
+                            matchedWord = "Belly Jeans",
+                            numberOfMatches = 9,
+                            numberOfErrors = 2,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 0,
+                            matchedWholeString = false,
+                            matchedWholeWord = false,
+                        )
+                    )
                 )
             ),
             FuzzySearchScenario(
@@ -468,7 +1022,21 @@ class TrieFuzzySearchTest {
                 SYMMETRICAL_SWAP,
                 MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(
-                    TrieSearchResult("Nuenas Boches", Unit, "Nuenas Boches", "Nuenas Boches", 11, 2, 0, 0, 0, false, false),
+                    TrieSearchResult(
+                        "Nuenas Boches",
+                        Unit,
+                        TrieSearchResultStats(
+                            matchedSubstring = "Nuenas Boches",
+                            matchedWord = "Nuenas Boches",
+                            numberOfMatches = 11,
+                            numberOfErrors = 2,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 0,
+                            matchedWholeString = false,
+                            matchedWholeWord = false,
+                        )
+                    )
                 )
             ),
             FuzzySearchScenario(
@@ -478,7 +1046,21 @@ class TrieFuzzySearchTest {
                 SYMMETRICAL_SWAP,
                 MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(
-                    TrieSearchResult("Chied Frurros", Unit, "Chied Frurros", "Chied Frurros", 9, 4, 0, 0, 0, false, false),
+                    TrieSearchResult(
+                        "Chied Frurros",
+                        Unit,
+                        TrieSearchResultStats(
+                            matchedSubstring = "Chied Frurros",
+                            matchedWord = "Chied Frurros",
+                            numberOfMatches = 9,
+                            numberOfErrors = 4,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 0,
+                            matchedWholeString = false,
+                            matchedWholeWord = false,
+                        )
+                    )
                 )
             ),
             FuzzySearchScenario(
@@ -502,7 +1084,21 @@ class TrieFuzzySearchTest {
                 WILDCARD,
                 MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(
-                    TrieSearchResult("rafael", Unit, "rafael", "rafael", 6, 0, 0, 0, 0, true, true),
+                    TrieSearchResult(
+                        "rafael",
+                        Unit,
+                        TrieSearchResultStats(
+                            matchedSubstring = "rafael",
+                            matchedWord = "rafael",
+                            numberOfMatches = 6,
+                            numberOfErrors = 0,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 0,
+                            matchedWholeString = true,
+                            matchedWholeWord = true,
+                        )
+                    )
                 )
             ),
             FuzzySearchScenario(
@@ -512,8 +1108,36 @@ class TrieFuzzySearchTest {
                 WILDCARD,
                 MatchingOptions(caseInsensitive = true, diacriticInsensitive = true),
                 listOf(
-                    TrieSearchResult("rafael", Unit, "rafael", "rafael", 6, 0, 0, 0, 0, true, true),
-                    TrieSearchResult("raphael", Unit, "raphael", "raphael", 6, 1, 0, 0, 0, false, false),
+                    TrieSearchResult(
+                        "rafael",
+                        Unit,
+                        TrieSearchResultStats(
+                            matchedSubstring = "rafael",
+                            matchedWord = "rafael",
+                            numberOfMatches = 6,
+                            numberOfErrors = 0,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 0,
+                            matchedWholeString = true,
+                            matchedWholeWord = true,
+                        )
+                    ),
+                    TrieSearchResult(
+                        "raphael",
+                        Unit,
+                        TrieSearchResultStats(
+                            matchedSubstring = "raphael",
+                            matchedWord = "raphael",
+                            numberOfMatches = 6,
+                            numberOfErrors = 1,
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 0,
+                            matchedWholeString = false,
+                            matchedWholeWord = false,
+                        )
+                    )
                 )
             )
         ).forEach { runTestScenario(it) }
@@ -532,15 +1156,18 @@ class TrieFuzzySearchTest {
                     TrieSearchResult(
                         "I want to work at National Aeronautics and Space Administration",
                         Unit,
-                        "National Aeronautics and Space Administration",
-                        "National Aeronautics and Space Administration",
-                        4,
-                        1, // one error for the 'and'
-                        0,
-                        0,
-                        0,
-                        false,
-                        false),
+                        TrieSearchResultStats(
+                            matchedSubstring = "National Aeronautics and Space Administration",
+                            matchedWord = "National Aeronautics and Space Administration",
+                            numberOfMatches = 4,
+                            numberOfErrors = 1,  // one error for the 'and'
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 0,
+                            matchedWholeString = false,
+                            matchedWholeWord = false,
+                        )
+                    )
                 )
             ),
             FuzzySearchScenario(
@@ -553,15 +1180,18 @@ class TrieFuzzySearchTest {
                     TrieSearchResult(
                         "I DON'T want to work at National Security Agency",
                         Unit,
-                        "National Security Agency",
-                        "National Security Agency",
-                        3,
-                        1, // one error for the missing 'a'
-                        0,
-                        0,
-                        0,
-                        false,
-                        false),
+                        TrieSearchResultStats(
+                            matchedSubstring = "National Security Agency",
+                            matchedWord = "National Security Agency",
+                            numberOfMatches = 3,
+                            numberOfErrors = 1, // one error for the missing 'a'
+                            numberOfCaseMismatches = 0,
+                            numberOfDiacriticMismatches = 0,
+                            prefixDistance = 0,
+                            matchedWholeString = false,
+                            matchedWholeWord = false,
+                        )
+                    )
                 )
             ),
             FuzzySearchScenario(

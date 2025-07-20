@@ -31,7 +31,23 @@ class TrieSubstringMatchTest {
         val scenario = SubstringMatchScenario(
             setOf("abcdef", "hijklm"),
             "a",
-            listOf(TrieSearchResult("abcdef", Unit, "a", "abcdef", 1, 0, 0, 0, 0, false, false))
+            listOf(
+                TrieSearchResult(
+                    "abcdef",
+                    Unit,
+                    TrieSearchResultStats(
+                        matchedSubstring = "a",
+                        matchedWord = "abcdef",
+                        numberOfMatches = 1,
+                        numberOfErrors = 0,
+                        numberOfCaseMismatches = 0,
+                        numberOfDiacriticMismatches = 0,
+                        prefixDistance = 0,
+                        matchedWholeString = false,
+                        matchedWholeWord = false,
+                    )
+                )
+            )
         )
         runTestScenario(scenario)
     }
@@ -42,8 +58,36 @@ class TrieSubstringMatchTest {
             setOf("abcdef", "defghi"),
             "def",
             listOf(
-                TrieSearchResult("defghi", Unit, "def", "defghi", 3, 0, 0, 0, 0, false, false),
-                TrieSearchResult("abcdef", Unit, "def", "abcdef", 3, 0, 0, 0, 3, false, false)
+                TrieSearchResult(
+                    "defghi",
+                    Unit,
+                    TrieSearchResultStats(
+                        matchedSubstring = "def",
+                        matchedWord = "defghi",
+                        numberOfMatches = 3,
+                        numberOfErrors = 0,
+                        numberOfCaseMismatches = 0,
+                        numberOfDiacriticMismatches = 0,
+                        prefixDistance = 0,
+                        matchedWholeString = false,
+                        matchedWholeWord = false,
+                    )
+                ),
+                TrieSearchResult(
+                    "abcdef",
+                    Unit,
+                    TrieSearchResultStats(
+                        matchedSubstring = "def",
+                        matchedWord = "abcdef",
+                        numberOfMatches = 3,
+                        numberOfErrors = 0,
+                        numberOfCaseMismatches = 0,
+                        numberOfDiacriticMismatches = 0,
+                        prefixDistance = 3,
+                        matchedWholeString = false,
+                        matchedWholeWord = false,
+                    )
+                )
             )
         )
         runTestScenario(scenario)
@@ -54,7 +98,23 @@ class TrieSubstringMatchTest {
         val scenario = SubstringMatchScenario(
             setOf("defghi", "jklmno"),
             "ghi",
-            listOf(TrieSearchResult("defghi", Unit, "ghi", "defghi", 3, 0, 0, 0, 3, false, false))
+            listOf(
+                TrieSearchResult(
+                    "defghi",
+                    Unit,
+                    TrieSearchResultStats(
+                        matchedSubstring = "ghi",
+                        matchedWord = "defghi",
+                        numberOfMatches = 3,
+                        numberOfErrors = 0,
+                        numberOfCaseMismatches = 0,
+                        numberOfDiacriticMismatches = 0,
+                        prefixDistance = 3,
+                        matchedWholeString = false,
+                        matchedWholeWord = false,
+                    )
+                )
+            )
         )
         runTestScenario(scenario)
     }
@@ -64,7 +124,23 @@ class TrieSubstringMatchTest {
         val scenario = SubstringMatchScenario(
             setOf("deghij", "jklmno"),
             "ghi",
-            listOf(TrieSearchResult("deghij", Unit, "ghi", "deghij", 3, 0, 0, 0, 2, false, false))
+            listOf(
+                TrieSearchResult(
+                    "deghij",
+                    Unit,
+                    TrieSearchResultStats(
+                        matchedSubstring = "ghi",
+                        matchedWord = "deghij",
+                        numberOfMatches = 3,
+                        numberOfErrors = 0,
+                        numberOfCaseMismatches = 0,
+                        numberOfDiacriticMismatches = 0,
+                        prefixDistance = 2,
+                        matchedWholeString = false,
+                        matchedWholeWord = false,
+                    )
+                )
+            )
         )
         runTestScenario(scenario)
     }
@@ -74,7 +150,23 @@ class TrieSubstringMatchTest {
         val scenario = SubstringMatchScenario(
             setOf("jklmno", "jklmnp"),
             "jklmno",
-            listOf(TrieSearchResult("jklmno", Unit, "jklmno", "jklmno", 6, 0, 0, 0, 0, true, true))
+            listOf(
+                TrieSearchResult(
+                    "jklmno",
+                    Unit,
+                    TrieSearchResultStats(
+                        matchedSubstring = "jklmno",
+                        matchedWord = "jklmno",
+                        numberOfMatches = 6,
+                        numberOfErrors = 0,
+                        numberOfCaseMismatches = 0,
+                        numberOfDiacriticMismatches = 0,
+                        prefixDistance = 0,
+                        matchedWholeString = true,
+                        matchedWholeWord = true,
+                    )
+                )
+            )
         )
         runTestScenario(scenario)
     }
@@ -84,7 +176,23 @@ class TrieSubstringMatchTest {
         val scenario = SubstringMatchScenario(
             setOf("pqrpqs"),
             "pqs",
-            listOf(TrieSearchResult("pqrpqs", Unit, "pqs", "pqrpqs", 3, 0, 0, 0, 3, false, false))
+            listOf(
+                TrieSearchResult(
+                    "pqrpqs",
+                    Unit,
+                    TrieSearchResultStats(
+                        matchedSubstring = "pqs",
+                        matchedWord = "pqrpqs",
+                        numberOfMatches = 3,
+                        numberOfErrors = 0,
+                        numberOfCaseMismatches = 0,
+                        numberOfDiacriticMismatches = 0,
+                        prefixDistance = 3,
+                        matchedWholeString = false,
+                        matchedWholeWord = false,
+                    )
+                )
+            )
         )
         runTestScenario(scenario)
     }
@@ -94,7 +202,23 @@ class TrieSubstringMatchTest {
         val scenario = SubstringMatchScenario(
             setOf("tu vw, xyz"),
             "vw",
-            listOf(TrieSearchResult("tu vw, xyz", Unit, "vw", "vw", 2, 0, 0, 0, 0, false, true))
+            listOf(
+                TrieSearchResult(
+                    "tu vw, xyz",
+                    Unit,
+                    TrieSearchResultStats(
+                        matchedSubstring = "vw",
+                        matchedWord = "vw",
+                        numberOfMatches = 2,
+                        numberOfErrors = 0,
+                        numberOfCaseMismatches = 0,
+                        numberOfDiacriticMismatches = 0,
+                        prefixDistance = 0,
+                        matchedWholeString = false,
+                        matchedWholeWord = true,
+                    )
+                )
+            )
         )
         runTestScenario(scenario)
     }

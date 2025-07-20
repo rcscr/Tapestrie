@@ -121,15 +121,17 @@ class FuzzySearchState<T> private constructor(
         return TrieSearchResult(
             string = searchVariables.sequence,
             value = searchVariables.node.value!!,
-            matchedSubstring = matchedSubstring,
-            matchedWord = matchedWord,
-            numberOfMatches = searchCoordinates.numberOfMatches,
-            numberOfErrors = numberOfErrors,
-            numberOfCaseMismatches = searchCoordinates.numberOfCaseMismatches,
-            numberOfDiacriticMismatches = searchCoordinates.numberOfDiacriticMismatches,
-            prefixDistance = prefixDistance,
-            matchedWholeString = matchedWholeSequence,
-            matchedWholeWord = matchedWholeWord,
+            stats = TrieSearchResultStats(
+                matchedSubstring = matchedSubstring,
+                matchedWord = matchedWord,
+                numberOfMatches = searchCoordinates.numberOfMatches,
+                numberOfErrors = numberOfErrors,
+                numberOfCaseMismatches = searchCoordinates.numberOfCaseMismatches,
+                numberOfDiacriticMismatches = searchCoordinates.numberOfDiacriticMismatches,
+                prefixDistance = prefixDistance,
+                matchedWholeString = matchedWholeSequence,
+                matchedWholeWord = matchedWholeWord,
+            )
         )
     }
 

@@ -5,31 +5,31 @@ class TrieSearchResultComparator {
     companion object {
 
         private val byNumberOfMatchesMoreFirst: Comparator<TrieSearchResult<*>> =
-            compareBy(TrieSearchResult<*>::numberOfMatches).reversed()
+            compareBy<TrieSearchResult<*>> { it.stats.numberOfMatches }.reversed()
 
         private val byLengthOfStringShortestFirst: Comparator<TrieSearchResult<*>> =
             compareBy { it.string.length }
 
         private val byMatchedSequenceTrueFirst: Comparator<TrieSearchResult<*>> =
-            compareBy(TrieSearchResult<*>::matchedWholeWord).reversed()
+            compareBy<TrieSearchResult<*>> { it.stats.matchedWholeWord }.reversed()
 
         private val byPrefixDistanceShortestFirst: Comparator<TrieSearchResult<*>> =
-            compareBy(TrieSearchResult<*>::prefixDistance)
+            compareBy { it.stats.prefixDistance }
 
         private val byWordLengthShortestFirst: Comparator<TrieSearchResult<*>> =
-            compareBy { it.matchedWord.length }
+            compareBy { it.stats.matchedWord.length }
 
         private val byMatchedWholeWordTrueFirst: Comparator<TrieSearchResult<*>> =
-            compareBy(TrieSearchResult<*>::matchedWholeWord).reversed()
+            compareBy<TrieSearchResult<*>> { it.stats.matchedWholeWord }.reversed()
 
         private val byNumberOfErrorsLessFirst: Comparator<TrieSearchResult<*>> =
-            compareBy { it.numberOfErrors }
+            compareBy { it.stats.numberOfErrors }
 
         private val byNumberOfCaseMismatchesLessFirst: Comparator<TrieSearchResult<*>> =
-            compareBy { it.numberOfCaseMismatches }
+            compareBy { it.stats.numberOfCaseMismatches }
 
         private val byNumberOfDiacriticMismatchesLessFirst: Comparator<TrieSearchResult<*>> =
-            compareBy { it.numberOfDiacriticMismatches }
+            compareBy { it.stats.numberOfDiacriticMismatches }
 
         val byBestMatchFirst: Comparator<TrieSearchResult<*>> =
             byPrefixDistanceShortestFirst

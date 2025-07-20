@@ -1,9 +1,6 @@
 package com.rcs.htmlcrawlerdemo
 
-import com.rcs.trie.FuzzyMatchingStrategy
-import com.rcs.trie.MatchingOptions
-import com.rcs.trie.Trie
-import com.rcs.trie.TrieSearchResult
+import com.rcs.trie.*
 import java.util.concurrent.ConcurrentLinkedDeque
 
 class HtmlSearcher(private val baseUrl: String, private val htmlCrawler: HtmlCrawler) {
@@ -63,7 +60,11 @@ class HtmlSearcher(private val baseUrl: String, private val htmlCrawler: HtmlCra
         string: String,
         value: ConcurrentLinkedDeque<HtmlIndexEntry>
     ): TrieSearchResult<ConcurrentLinkedDeque<HtmlIndexEntry>> {
-        return TrieSearchResult(string, value, string, string, string.length, 0, 0, 0, 0, true, true)
+        return TrieSearchResult(
+            string,
+            value,
+            TrieSearchResultStats(string, string, string.length, 0, 0, 0, 0, true, true)
+        )
     }
 
     private fun enrichWithBaseUrl(
@@ -72,15 +73,7 @@ class HtmlSearcher(private val baseUrl: String, private val htmlCrawler: HtmlCra
         return TrieSearchResult(
             result.string,
             result.value.map { HtmlIndexEntry(baseUrl + it.url, it.occurrences) },
-            result.matchedSubstring,
-            result.matchedWord,
-            result.numberOfMatches,
-            result.numberOfErrors,
-            result.numberOfCaseMismatches,
-            result.numberOfDiacriticMismatches,
-            result.prefixDistance,
-            result.matchedWholeString,
-            result.matchedWholeWord
+            result.stats,
         )
     }
 }
