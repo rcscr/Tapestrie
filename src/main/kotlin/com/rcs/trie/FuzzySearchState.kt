@@ -195,8 +195,6 @@ class FuzzySearchState<T> private constructor(
 
         return nextNodeMatches(nextNode)
             ?.let {
-                val newCaseMismatch = if (!it.exactMatch && it.caseInsensitiveMatch == true) 1 else 0
-                val newDiacriticMismatch = if (!it.exactMatch && it.diacriticInsensitiveMatch == true) 1 else 0
                 listOf(
                     FuzzySearchState(
                         searchRequest,
@@ -211,8 +209,8 @@ class FuzzySearchState<T> private constructor(
                             keywordIndex = searchCoordinates.keywordIndex + 1,
                             numberOfMatches = searchCoordinates.numberOfMatches + 1,
                             numberOfErrors = searchCoordinates.numberOfErrors,
-                            numberOfCaseMismatches = searchCoordinates.numberOfCaseMismatches + newCaseMismatch,
-                            numberOfDiacriticMismatches = searchCoordinates.numberOfDiacriticMismatches + newDiacriticMismatch,
+                            numberOfCaseMismatches = searchCoordinates.numberOfCaseMismatches + it.caseInsensitiveCount,
+                            numberOfDiacriticMismatches = searchCoordinates.numberOfDiacriticMismatches + it.diacriticInsensitiveCount,
                             swapChars = searchCoordinates.swapChars
                         )
                     )

@@ -10,4 +10,18 @@ data class TrieNodeMatchResult(
             || caseInsensitiveMatch == true
             || diacriticInsensitiveMatch == true
             || caseAndDiacriticInsensitiveMatch == true
+
+    val caseInsensitiveCount: Int = when(
+        !exactMatch && (caseInsensitiveMatch == true || (diacriticInsensitiveMatch == false && caseAndDiacriticInsensitiveMatch == true))
+    ) {
+        true -> 1
+        else -> 0
+    }
+
+    val diacriticInsensitiveCount: Int = when(
+        !exactMatch && (diacriticInsensitiveMatch == true || (caseInsensitiveMatch == false && caseAndDiacriticInsensitiveMatch == true))
+    ) {
+        true -> 1
+        else -> 0
+    }
 }
