@@ -57,17 +57,18 @@ As an example, let's examine the best and worst search hits above:
             "tokenInfo": {
                 "occurrences": 2,
                 "context": [
-                    "makes modem computer dcd track",
-                    "mathematics and computer science den"
+                    "codes, makes modem/computer DCD track modem/modem",
+                    "of Mathematics and Computer Science Den Dolech 2"
                 ]
             }
         },
         {
-            "url": "https://docs.huihoo.com/linux/man/20100621/htmlman7/unicode.7.html",
+            "url": "https://docs.huihoo.com/linux/man/20100621/htmlman3/rtime.3.html",
             "tokenInfo": {
-                "occurrences": 1,
+                "occurrences": 2,
                 "context": [
-                    "them for computer usage is"
+                    "program connects to a computer called \"linux\". Using",
+                    "the localtime of the computer \"linux\". #include &lt"
                 ]
             }
         },
@@ -97,7 +98,7 @@ As an example, let's examine the best and worst search hits above:
             "tokenInfo": {
                 "occurrences": 1,
                 "context": [
-                    "es projects deepcomputing linuxoncell for"
+                    "www.bsc.es/projects/deepcomputing/linuxoncell/ for the"
                 ]
             }
         },
@@ -106,7 +107,7 @@ As an example, let's examine the best and worst search hits above:
             "tokenInfo": {
                 "occurrences": 1,
                 "context": [
-                    "es projects deepcomputing linuxoncell for"
+                    "www.bsc.es/projects/deepcomputing/linuxoncell/ for the"
                 ]
             }
         }

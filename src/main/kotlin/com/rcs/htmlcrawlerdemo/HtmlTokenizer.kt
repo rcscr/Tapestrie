@@ -1,5 +1,7 @@
 package com.rcs.htmlcrawlerdemo
 
+import com.rcs.trie.FuzzySearchUtils.Companion.indexOfFirstWordSeparator
+import com.rcs.trie.FuzzySearchUtils.Companion.indexOfLastWordSeparator
 import java.util.*
 
 class HtmlTokenizer {
@@ -8,38 +10,43 @@ class HtmlTokenizer {
      * returns a map of a token to its number of occurrences
      */
     fun tokenize(htmlContent: String): Map<String, HtmlTokenInfo> {
-        // Remove HTML tags using a regular expression
-        val noHtml = htmlContent.replace("<[^>]*>".toRegex(), " ")
+        val normalized = htmlContent
+            .trim()
+            // Remove HTML tags
+            .replace("<[^>]*>".toRegex(), " ")
+            // Remove new line characters and similar useless stuff
+            .replace("[\\r\\n\\f\\v\\u2028\\u2029\\u00A0]+".toRegex(), " ")
+            // Normalize multiple spaces to a single space
+            .replace("\\s+".toRegex(), " ")
 
-        // Remove non-alphanumeric characters and extra space
-        val cleaned = noHtml.replace("[^a-zA-Z0-9\\s]".toRegex(), " ")
+        val map = mutableMapOf<String, HtmlTokenInfo>()
 
-        // Normalize multiple spaces to a single space
-        val singleSpace = cleaned.replace("\\s+".toRegex(), " ")
+        var index = 0
 
-        // Convert to lowercase
-        val lowerCase = singleSpace.lowercase(Locale.getDefault())
+        while (index < normalized.length) {
+            val nextWordSeparatorIndex = normalized.indexOfFirstWordSeparator(index) ?: normalized.length
 
-        // Split
-        val tokens = lowerCase.split(" ").toTypedArray()
+            val token = normalized
+                .substring(index, nextWordSeparatorIndex)
+                .lowercase(Locale.getDefault())
 
-        // Remove blanks, and collect as a histogram
-        return tokens
-            .filter { it.isNotBlank() }
-            .foldIndexed(mutableMapOf()) { index, map, next ->
-                val indexOfNext = index + 1
-                val existingInfo = map[next]
-                map[next] = HtmlTokenInfo(
-                    occurrences = (existingInfo?.occurrences ?: 0) + 1,
-                    context = (existingInfo?.context ?: mutableListOf()) + getContext(tokens, indexOfNext)
+            if (token.isNotBlank()) {
+                map[token] = HtmlTokenInfo(
+                    occurrences = (map[token]?.occurrences ?: 0) + 1,
+                    context = (map[token]?.context ?: mutableListOf()) + getContext(normalized, index, nextWordSeparatorIndex)
                 )
-                map
             }
+
+            index = nextWordSeparatorIndex + 1
+        }
+
+        return map
     }
 
-    private fun getContext(tokens: Array<String>, index: Int): String {
-        val startInclusive = Math.max(0, index - 2)
-        val endExclusive = Math.min(tokens.size, index + 3)
-        return tokens.copyOfRange(startInclusive, endExclusive).joinToString(" ")
+    private fun getContext(content: String, index: Int, nextWordSeparatorIndex: Int): String {
+        return content.substring(
+            content.indexOfLastWordSeparator(index - 20)?.let { it + 1 } ?: 0,
+            content.indexOfFirstWordSeparator(nextWordSeparatorIndex + 20) ?: content.length
+        )
     }
 }

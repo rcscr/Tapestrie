@@ -69,12 +69,13 @@ class HtmlCrawler(
         htmlTokenizer.tokenize(htmlContent)
             .forEach { entry ->
                 val token = entry.key
-                val occurrences = entry.value
+                val tokenInfo = entry.value
                 val indexEntries = trie.getExactly(token) ?: ConcurrentLinkedDeque()
-                val newEntry = HtmlIndexEntry(relativeUrl, occurrences)
-                indexEntries.add(newEntry)
-                indexEntries.sortedBy { it.tokenInfo.occurrences }
-                trie.put(token, indexEntries)
+                val newEntry = HtmlIndexEntry(relativeUrl, tokenInfo)
+                val indexEntriesSorted = ConcurrentLinkedDeque(
+                    (indexEntries + newEntry).sortedByDescending { it.tokenInfo.occurrences }
+                )
+                trie.put(token, indexEntriesSorted)
             }
     }
 }
