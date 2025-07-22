@@ -7,7 +7,7 @@ enum class FuzzyMatchingStrategy {
     // matches only words that start with the first letter of the keyword, regardless of error tolerance
     EXACT_PREFIX,
 
-    // similar to EXACT_PREFIX, but allows the error tolerance to be applies at the beginning (not in the middle or end)
+    // similar to EXACT_PREFIX, but allows the error tolerance at the beginning (not in the middle or end)
     FUZZY_PREFIX,
 
     // similar to EXACT_PREFIX, but allows the error tolerance only at the end (not in the beginning or middle)

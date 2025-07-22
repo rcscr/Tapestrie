@@ -15,7 +15,7 @@ For fuzzy search, there are several different strategies:
 
 - LIBERAL: matches everywhere in the string, and allows errors in the beginning, middle, and end
 - EXACT_PREFIX: matches only words that start with the first letter of the keyword, regardless of error tolerance
-- FUZZY_PREFIX: similar to EXACT_PREFIX, but allows the error tolerance to be applies at the beginning (not in the middle and end)
+- FUZZY_PREFIX: similar to EXACT_PREFIX, but allows the error tolerance at the beginning (not in the middle and end)
 - FUZZY_POSTFIX: similar to EXACT_PREFIX, but allows the error tolerance only at the end (not in the beginning or middle)
 - ADJACENT_SWAP: accepts only errors due to adjacent letter swaps (i.e. typos)
 - SYMMETRICAL_SWAP: accepts only errors due to letter swaps anywhere in the string
