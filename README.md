@@ -54,13 +54,24 @@ As an example, let's examine the best and worst search hits above:
     "value": [
         {
             "url": "https://docs.huihoo.com/linux/man/20100621/htmlman8/agetty.8.html",
-            "occurrences": 1
+            "tokenInfo": {
+                "occurrences": 2,
+                "context": [
+                    "makes modem computer dcd track",
+                    "mathematics and computer science den"
+                ]
+            }
         },
         {
-            "url": "https://docs.huihoo.com/linux/man/20100621/htmlman7/uri.7.html",
-            "occurrences": 1
+            "url": "https://docs.huihoo.com/linux/man/20100621/htmlman7/unicode.7.html",
+            "tokenInfo": {
+                "occurrences": 1,
+                "context": [
+                    "them for computer usage is"
+                ]
+            }
         },
-        ... 17 more hits omitted
+        ... 19 additional hits omitted
     ],
     "stats": {
         "matchedSubstring": "computer",
@@ -83,11 +94,21 @@ As an example, let's examine the best and worst search hits above:
     "value": [
         {
             "url": "https://docs.huihoo.com/linux/man/20100621/htmlman2/spu_run.2.html",
-            "occurrences": 1
+            "tokenInfo": {
+                "occurrences": 1,
+                "context": [
+                    "es projects deepcomputing linuxoncell for"
+                ]
+            }
         },
         {
             "url": "https://docs.huihoo.com/linux/man/20100621/htmlman2/spu_create.2.html",
-            "occurrences": 1
+            "tokenInfo": {
+                "occurrences": 1,
+                "context": [
+                    "es projects deepcomputing linuxoncell for"
+                ]
+            }
         }
     ],
     "stats": {

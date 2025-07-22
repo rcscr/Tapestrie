@@ -76,7 +76,9 @@ class HtmlSearcher(private val baseUrl: String, private val htmlCrawler: HtmlCra
     ): TrieSearchResult<List<HtmlIndexEntry>> {
         return TrieSearchResult(
             result.string,
-            result.value.map { HtmlIndexEntry(baseUrl + it.url, it.occurrences) },
+            result.value.map {
+                HtmlIndexEntry(baseUrl + it.url, it.tokenInfo)
+            },
             result.stats,
         )
     }

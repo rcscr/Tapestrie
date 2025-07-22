@@ -73,7 +73,7 @@ class HtmlCrawler(
                 val indexEntries = trie.getExactly(token) ?: ConcurrentLinkedDeque()
                 val newEntry = HtmlIndexEntry(relativeUrl, occurrences)
                 indexEntries.add(newEntry)
-                indexEntries.sortedBy { it.occurrences }
+                indexEntries.sortedBy { it.tokenInfo.occurrences }
                 trie.put(token, indexEntries)
             }
     }
