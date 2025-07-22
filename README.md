@@ -49,32 +49,59 @@ As an example, let's examine the best and worst search hits above:
 
 #### Best
 <pre>
-TrieSearchResult(
-    string=computer, 
-    value=[HtmlIndexEntry(url=htmlman8/agetty.8.html, occurrences=2), HtmlIndexEntry(url=htmlman3/rtime.3.html, occurrences=2), HtmlIndexEntry(url=gfdl-3.html, occurrences=1), ...], 
-    matchedSubstring=computer, 
-    matchedWord=computer, 
-    numberOfMatches=8, 
-    numberOfErrors=0, 
-    prefixDistance=0, 
-    matchedWholeString=true, 
-    matchedWholeWord=true
-)
+{
+    "string": "computer",
+    "value": [
+        {
+            "url": "https://docs.huihoo.com/linux/man/20100621/htmlman8/agetty.8.html",
+            "occurrences": 1
+        },
+        {
+            "url": "https://docs.huihoo.com/linux/man/20100621/htmlman7/uri.7.html",
+            "occurrences": 1
+        },
+        ... 17 more hits omitted
+    ],
+    "stats": {
+        "matchedSubstring": "computer",
+        "matchedWord": "computer",
+        "numberOfMatches": 8,
+        "numberOfErrors": 0,
+        "numberOfCaseMismatches": 0,
+        "numberOfDiacriticMismatches": 0,
+        "prefixDistance": 0,
+        "matchedWholeString": true,
+        "matchedWholeWord": true
+    }
+}
 </pre>
 
 #### Worst
 <pre>
-TrieSearchResult(
-    string=deepcomputing, 
-    value=[HtmlIndexEntry(url=htmlman2/spu_run.2.html, occurrences=1), HtmlIndexEntry(url=htmlman2/spu_create.2.html, occurrences=1)], 
-    matchedSubstring=comput, 
-    matchedWord=deepcomputing, 
-    numberOfMatches=6, 
-    numberOfErrors=2, 
-    prefixDistance=4, 
-    matchedWholeString=false, 
-    matchedWholeWord=false
-)
+{
+    "string": "deepcomputing",
+    "value": [
+        {
+            "url": "https://docs.huihoo.com/linux/man/20100621/htmlman2/spu_run.2.html",
+            "occurrences": 1
+        },
+        {
+            "url": "https://docs.huihoo.com/linux/man/20100621/htmlman2/spu_create.2.html",
+            "occurrences": 1
+        }
+    ],
+    "stats": {
+        "matchedSubstring": "comput",
+        "matchedWord": "deepcomputing",
+        "numberOfMatches": 6,
+        "numberOfErrors": 2,
+        "numberOfCaseMismatches": 0,
+        "numberOfDiacriticMismatches": 0,
+        "prefixDistance": 4,
+        "matchedWholeString": false,
+        "matchedWholeWord": false
+    }
+}
 </pre>
 
 ### Other notes
