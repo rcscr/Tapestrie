@@ -2,30 +2,37 @@ package com.rcs.trie
 
 import java.text.Normalizer
 
-class FuzzySearchUtils {
+class Utils {
 
     companion object {
 
         private val wordSeparatorRegex = Regex("[\\s\\p{P}]")
         private val diacriticalMarksRegex = Regex("\\p{InCOMBINING_DIACRITICAL_MARKS}+")
 
-        fun String.compare(that: String, matchingOptions: MatchingOptions): TrieNodeMatchResult {
+        fun <T> TrieNode<T>.compare(
+            that: String,
+            matchingOptions: MatchingOptions
+        ): TrieNodeMatchResult {
+
             val (caseInsensitive, diacriticInsensitive) = matchingOptions
 
             val caseInsensitiveMatch = if (caseInsensitive) {
-                this.lowercase() == that.lowercase()
+                that.lowercase() ==
+                        (this.lowercaseString ?: this.string)
             } else null
 
             val diacriticInsensitiveMatch = if (diacriticInsensitive) {
-                this.removeDiacritics() == that.removeDiacritics()
+                that.removeDiacritics() ==
+                        (this.withoutDiacriticsString ?: this.string)
             } else null
 
             val caseAndDiacriticInsensitiveMatch = if (caseInsensitive && diacriticInsensitive) {
-                this.lowercase().removeDiacritics() == that.lowercase().removeDiacritics()
+                that.lowercase().removeDiacritics() ==
+                        (this.lowercaseAndWithoutDiacriticsString ?: this.string)
             } else null
 
             return TrieNodeMatchResult(
-                exactMatch = this == that,
+                exactMatch = this.string == that,
                 caseInsensitiveMatch = caseInsensitiveMatch,
                 diacriticInsensitiveMatch = diacriticInsensitiveMatch,
                 caseAndDiacriticInsensitiveMatch = caseAndDiacriticInsensitiveMatch
@@ -52,7 +59,7 @@ class FuzzySearchUtils {
             return index < 0 || index >= this.length || this[index].toString().isWordSeparator()
         }
 
-        private fun String.removeDiacritics(): String {
+        fun String.removeDiacritics(): String {
             return Normalizer.normalize(this, Normalizer.Form.NFD)
                 .replace(diacriticalMarksRegex, "")
         }

@@ -1,7 +1,7 @@
 package com.rcs.htmlcrawlerdemo
 
-import com.rcs.trie.FuzzySearchUtils.Companion.indexOfFirstWordSeparator
-import com.rcs.trie.FuzzySearchUtils.Companion.indexOfLastWordSeparator
+import com.rcs.trie.Utils.Companion.indexOfFirstWordSeparator
+import com.rcs.trie.Utils.Companion.indexOfLastWordSeparator
 import java.util.*
 
 class HtmlTokenizer {

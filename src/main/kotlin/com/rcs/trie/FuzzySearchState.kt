@@ -1,11 +1,11 @@
 package com.rcs.trie
 
 import com.rcs.trie.FuzzyMatchingStrategy.*
-import com.rcs.trie.FuzzySearchUtils.Companion.compare
-import com.rcs.trie.FuzzySearchUtils.Companion.indexOfFirstWordSeparator
-import com.rcs.trie.FuzzySearchUtils.Companion.indexOfLastWordSeparator
-import com.rcs.trie.FuzzySearchUtils.Companion.isWordSeparator
-import com.rcs.trie.FuzzySearchUtils.Companion.isWordSeparatorAt
+import com.rcs.trie.Utils.Companion.compare
+import com.rcs.trie.Utils.Companion.indexOfFirstWordSeparator
+import com.rcs.trie.Utils.Companion.indexOfLastWordSeparator
+import com.rcs.trie.Utils.Companion.isWordSeparator
+import com.rcs.trie.Utils.Companion.isWordSeparatorAt
 
 /**
  * Invariable properties of the search request - these never change.
@@ -30,7 +30,7 @@ private data class SearchVariables<T>(
 /**
  * The search coordinates, which may or may not lead to a successful match.
  */
-private data class SearchCoordinates(
+private data class SearchCoordinates<T>(
     val keywordIndex: Int,
     val numberOfMatches: Int,
     val numberOfErrors: Int,
@@ -38,15 +38,15 @@ private data class SearchCoordinates(
     val numberOfDiacriticMismatches: Int,
     val startMatchIndex: Int?,
     val endMatchIndex: Int?,
-    val swapChars: List<SwapChars>?
+    val swapChars: List<SwapChars<T>>?
 )
 
 /**
  * Holds swap characters for matching SWAP strategies
  */
-private data class SwapChars(
-    val fromSource: String,
-    val fromTarget: String
+private data class SwapChars<T>(
+    val fromSource: TrieNode<T>,
+    val fromTarget: String,
 )
 
 /**
@@ -56,14 +56,14 @@ private data class ErrorStrategy<T>(
     val node: TrieNode<T>,
     val searchIndex: Int,
     val sequence: String,
-    val swapChar: SwapChars?,
+    val swapChar: SwapChars<T>?,
     val startMatchIndex: Int?
 )
 
 class FuzzySearchState<T> private constructor(
     private val searchRequest: SearchRequest,
     private val searchVariables: SearchVariables<T>,
-    private val searchCoordinates: SearchCoordinates
+    private val searchCoordinates: SearchCoordinates<T>
 ) {
 
     fun nextStates(): Collection<FuzzySearchState<T>> {
@@ -242,7 +242,7 @@ class FuzzySearchState<T> private constructor(
             return null
         }
 
-        return nextNode.string
+        return nextNode
             .compare(currentSearchCharacter(), searchRequest.matchingOptions)
             .let {
                 if (it.anyMatch) it
@@ -339,7 +339,7 @@ class FuzzySearchState<T> private constructor(
                 nextNode,
                 searchCoordinates.keywordIndex + 1,
                 searchVariables.sequence + nextNode.string,
-                SwapChars(currentSearchCharacter(), nextNode.string),
+                SwapChars(nextNode, currentSearchCharacter()),
                 searchCoordinates.startMatchIndex ?: searchVariables.sequence.length
             )
             return listOf(typoSwapStrategy)
@@ -460,10 +460,10 @@ class FuzzySearchState<T> private constructor(
                 && searchVariables.sequence.isWordSeparatorAt(endMatchIndex + 1)
     }
 
-    private fun List<SwapChars>?.getMatching(nextNode: TrieNode<T>): SwapChars? {
+    private fun List<SwapChars<T>>?.getMatching(nextNode: TrieNode<T>): SwapChars<T>? {
         return this?.firstOrNull {
-            it.fromSource.compare(nextNode.string, searchRequest.matchingOptions).anyMatch
-                    && it.fromTarget.compare(currentSearchCharacter(), searchRequest.matchingOptions).anyMatch
+            nextNode.compare(it.fromTarget, searchRequest.matchingOptions).anyMatch
+                    && it.fromSource.compare(currentSearchCharacter(), searchRequest.matchingOptions).anyMatch
         }
     }
 
@@ -501,7 +501,6 @@ class FuzzySearchState<T> private constructor(
 
             return initialStates
         }
-
 
         /**
          * `invoke` emulates a public constructor

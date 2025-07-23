@@ -26,7 +26,7 @@ class Trie<T>: Iterable<TrieEntry<T>> {
 
     fun clear() {
         _size = 0
-        root = TrieNode("", null, 0, mutableSetOf(), null)
+        root = TrieNode.newRoot()
     }
 
     fun depth(): Int {
@@ -62,10 +62,14 @@ class Trie<T>: Iterable<TrieEntry<T>> {
                     null -> {
                         // we do not have a string going this far, so we create a new node,
                         // and then keep appending the remaining characters of the input to it
-                        val valueToInsert = if (reachedEndOfInput) value else null
-                        val depth = inputString.length - i - 1
                         val nextNode = TrieNode(
-                            currentCharacter, valueToInsert, depth, mutableSetOf(), previous = current)
+                            string = currentCharacter,
+                            value = value.takeIf { reachedEndOfInput },
+                            depth = inputString.length - i - 1,
+                            next = mutableSetOf(),
+                            previous = current,
+                        )
+
                         current.addNextNode(nextNode)
                         current = nextNode
                     }
@@ -140,6 +144,10 @@ class Trie<T>: Iterable<TrieEntry<T>> {
 
     fun getExactly(string: String): T? {
         return prefixMatchUpTo(string)?.value
+    }
+
+    internal fun getExactlyNode(string: String): TrieNode<T>? {
+        return prefixMatchUpTo(string)
     }
 
     fun containsExactly(string: String): Boolean {

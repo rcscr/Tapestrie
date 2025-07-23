@@ -1,15 +1,15 @@
 package com.rcs.trie
 
-import com.rcs.trie.FuzzySearchUtils.Companion.compare
+import com.rcs.trie.Utils.Companion.compare
 import org.junit.jupiter.api.Test
 import org.assertj.core.api.Assertions.*
 
-class FuzzySearchUtilsTest {
+class UtilsTest {
 
     @Test
     fun testSimpleMatch() {
         // Arrange
-        val source = "a"
+        val source = TrieNode("a", Unit, 0, mutableSetOf(), null)
         val target = "a"
         val options = MatchingOptions.allDisabled
 
@@ -27,7 +27,7 @@ class FuzzySearchUtilsTest {
     @Test
     fun testSimpleNoMatch() {
         // Arrange
-        val source = "a"
+        val source = TrieNode("a", Unit, 0, mutableSetOf(), null)
         val target = "b"
         val options = MatchingOptions.allDisabled
 
@@ -45,7 +45,7 @@ class FuzzySearchUtilsTest {
     @Test
     fun testCaseInsensitiveMatch() {
         // Arrange
-        val source = "a"
+        val source = TrieNode("a", Unit, 0, mutableSetOf(), null)
         val target = "A"
         val options = MatchingOptions(
             caseInsensitive = true,
@@ -67,7 +67,7 @@ class FuzzySearchUtilsTest {
     @Test
     fun testDiacriticInsensitiveMatch() {
         // Arrange
-        val source = "a"
+        val source = TrieNode("a", Unit, 0, mutableSetOf(), null)
         val target = "ã"
         val options = MatchingOptions(
             caseInsensitive = false,
@@ -89,7 +89,7 @@ class FuzzySearchUtilsTest {
     @Test
     fun testCaseAndDiacriticInsensitiveMatch() {
         // Arrange
-        val source = "a"
+        val source = TrieNode("a", Unit, 0, mutableSetOf(), null)
         val target = "Á"
         val options = MatchingOptions(
             caseInsensitive = true,

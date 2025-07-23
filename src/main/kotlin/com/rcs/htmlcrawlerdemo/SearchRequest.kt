@@ -7,6 +7,6 @@ data class SearchRequest(
 ) {
 
     fun normalizedKeyword(): String {
-        return keyword.trim().lowercase()
+        return keyword.trim()
     }
 }

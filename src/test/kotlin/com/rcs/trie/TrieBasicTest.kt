@@ -197,4 +197,82 @@ class TrieBasicTest {
         assertThat(removed).isNotNull()
         assertThat(result).isEqualTo(3)
     }
+
+    @Test
+    fun testStoresLowercaseIfDifferentThanInput() {
+        // Arrange
+        val trie = Trie<Unit>()
+
+        // Act
+        trie.put("A", Unit)
+
+        // Assert
+        val node = trie.getExactlyNode("A")!!
+        assertThat(node.lowercaseString).isEqualTo("a")
+    }
+
+    @Test
+    fun testDoesNotStoreLowercaseIfDifferentThanInput() {
+        // Arrange
+        val trie = Trie<Unit>()
+
+        // Act
+        trie.put("a", Unit)
+
+        // Assert
+        val node = trie.getExactlyNode("a")!!
+        assertThat(node.lowercaseString).isNull()
+    }
+
+    @Test
+    fun testStoresWithoutDiacriticsIfDifferentThanInput() {
+        // Arrange
+        val trie = Trie<Unit>()
+
+        // Act
+        trie.put("Á", Unit)
+
+        // Assert
+        val node = trie.getExactlyNode("Á")!!
+        assertThat(node.withoutDiacriticsString).isEqualTo("A")
+    }
+
+    @Test
+    fun testDoesNotStoreWithoutDiacriticsIfDifferentThanInput() {
+        // Arrange
+        val trie = Trie<Unit>()
+
+        // Act
+        trie.put("A", Unit)
+
+        // Assert
+        val node = trie.getExactlyNode("A")!!
+        assertThat(node.withoutDiacriticsString).isNull()
+    }
+
+    @Test
+    fun testStoresLowercaseAndWithoutDiacriticsIfDifferentThanInput() {
+        // Arrange
+        val trie = Trie<Unit>()
+
+        // Act
+        trie.put("Á", Unit)
+
+        // Assert
+        val node = trie.getExactlyNode("Á")!!
+        assertThat(node.lowercaseAndWithoutDiacriticsString).isEqualTo("a")
+    }
+
+    @Test
+    fun testDoesNotStoreLowercaseAndWithoutDiacriticsIfDifferentThanInput() {
+        // Arrange
+        val trie = Trie<Unit>()
+
+        // Act
+        trie.put("a", Unit)
+
+        // Assert
+        val node = trie.getExactlyNode("a")!!
+        assertThat(node.lowercaseAndWithoutDiacriticsString).isNull()
+    }
 }
