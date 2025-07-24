@@ -1,20 +1,20 @@
 package com.rcs.trie
 
-import com.rcs.trie.Utils.Companion.compare
+import com.rcs.trie.FuzzySearchState.Companion.compare
 import org.junit.jupiter.api.Test
 import org.assertj.core.api.Assertions.*
 
-class UtilsTest {
+class TrieFuzzySearchCompareTest {
 
     @Test
     fun testSimpleMatch() {
         // Arrange
-        val source = TrieNode("a", Unit, 0, mutableSetOf(), null)
-        val target = "a"
+        val trieNode = TrieNode("a", Unit, 0, mutableSetOf(), null)
+        val searchChar = "a"
         val options = MatchingOptions.allDisabled
 
         // Act
-        val result = source.compare(target, options)
+        val result = trieNode.compare(searchChar, options)
 
         // Assert
         assertThat(result.exactMatch).isTrue()
@@ -27,12 +27,12 @@ class UtilsTest {
     @Test
     fun testSimpleNoMatch() {
         // Arrange
-        val source = TrieNode("a", Unit, 0, mutableSetOf(), null)
-        val target = "b"
+        val trieNode = TrieNode("a", Unit, 0, mutableSetOf(), null)
+        val searchChar = "b"
         val options = MatchingOptions.allDisabled
 
         // Act
-        val result = source.compare(target, options)
+        val result = trieNode.compare(searchChar, options)
 
         // Assert
         assertThat(result.exactMatch).isFalse()
@@ -45,8 +45,8 @@ class UtilsTest {
     @Test
     fun testCaseInsensitiveMatch() {
         // Arrange
-        val source = TrieNode("a", Unit, 0, mutableSetOf(), null)
-        val target = "A"
+        val trieNode = TrieNode("a", Unit, 0, mutableSetOf(), null)
+        val searchChar = "A"
         val options = MatchingOptions(
             caseInsensitive = true,
             diacriticInsensitive = false,
@@ -54,7 +54,7 @@ class UtilsTest {
         )
 
         // Act
-        val result = source.compare(target, options)
+        val result = trieNode.compare(searchChar, options)
 
         // Assert
         assertThat(result.exactMatch).isFalse()
@@ -67,8 +67,8 @@ class UtilsTest {
     @Test
     fun testDiacriticInsensitiveMatch() {
         // Arrange
-        val source = TrieNode("a", Unit, 0, mutableSetOf(), null)
-        val target = "ã"
+        val trieNode = TrieNode("a", Unit, 0, mutableSetOf(), null)
+        val searchChar = "ã"
         val options = MatchingOptions(
             caseInsensitive = false,
             diacriticInsensitive = true,
@@ -76,7 +76,7 @@ class UtilsTest {
         )
 
         // Act
-        val result = source.compare(target, options)
+        val result = trieNode.compare(searchChar, options)
 
         // Assert
         assertThat(result.exactMatch).isFalse()
@@ -89,8 +89,8 @@ class UtilsTest {
     @Test
     fun testCaseAndDiacriticInsensitiveMatch() {
         // Arrange
-        val source = TrieNode("a", Unit, 0, mutableSetOf(), null)
-        val target = "Á"
+        val trieNode = TrieNode("a", Unit, 0, mutableSetOf(), null)
+        val searchChar = "Á"
         val options = MatchingOptions(
             caseInsensitive = true,
             diacriticInsensitive = true,
@@ -98,7 +98,7 @@ class UtilsTest {
         )
 
         // Act
-        val result = source.compare(target, options)
+        val result = trieNode.compare(searchChar, options)
 
         // Assert
         assertThat(result.exactMatch).isFalse()

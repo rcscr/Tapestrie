@@ -1,11 +1,11 @@
 package com.rcs.trie
 
 import com.rcs.trie.FuzzyMatchingStrategy.*
-import com.rcs.trie.Utils.Companion.compare
-import com.rcs.trie.Utils.Companion.indexOfFirstWordSeparator
-import com.rcs.trie.Utils.Companion.indexOfLastWordSeparator
-import com.rcs.trie.Utils.Companion.isWordSeparator
-import com.rcs.trie.Utils.Companion.isWordSeparatorAt
+import com.rcs.trie.RegexUtils.Companion.indexOfFirstWordSeparator
+import com.rcs.trie.RegexUtils.Companion.indexOfLastWordSeparator
+import com.rcs.trie.RegexUtils.Companion.isWordSeparator
+import com.rcs.trie.RegexUtils.Companion.isWordSeparatorAt
+import com.rcs.trie.RegexUtils.Companion.removeDiacritics
 
 /**
  * Invariable properties of the search request - these never change.
@@ -542,6 +542,39 @@ class FuzzySearchState<T> private constructor(
                     endMatchIndex = null,
                     swapChars = null
                 )
+            )
+        }
+
+        /**
+         * Visible for testing in isolation
+         */
+        internal fun <T> TrieNode<T>.compare(
+            that: String,
+            matchingOptions: MatchingOptions
+        ): TrieNodeMatchResult {
+
+            val (caseInsensitive, diacriticInsensitive) = matchingOptions
+
+            val caseInsensitiveMatch = if (caseInsensitive) {
+                that.lowercase() ==
+                        (this.lowercaseString ?: this.string)
+            } else null
+
+            val diacriticInsensitiveMatch = if (diacriticInsensitive) {
+                that.removeDiacritics() ==
+                        (this.withoutDiacriticsString ?: this.string)
+            } else null
+
+            val caseAndDiacriticInsensitiveMatch = if (caseInsensitive && diacriticInsensitive) {
+                that.lowercase().removeDiacritics() ==
+                        (this.lowercaseAndWithoutDiacriticsString ?: this.string)
+            } else null
+
+            return TrieNodeMatchResult(
+                exactMatch = this.string == that,
+                caseInsensitiveMatch = caseInsensitiveMatch,
+                diacriticInsensitiveMatch = diacriticInsensitiveMatch,
+                caseAndDiacriticInsensitiveMatch = caseAndDiacriticInsensitiveMatch
             )
         }
     }

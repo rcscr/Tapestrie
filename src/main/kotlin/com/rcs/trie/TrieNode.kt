@@ -1,6 +1,6 @@
 package com.rcs.trie
 
-import com.rcs.trie.Utils.Companion.removeDiacritics
+import com.rcs.trie.RegexUtils.Companion.removeDiacritics
 
 class TrieNode<T> private constructor(
     val string: String,
