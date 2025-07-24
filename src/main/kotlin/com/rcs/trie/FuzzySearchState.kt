@@ -42,11 +42,11 @@ private data class SearchCoordinates<T>(
 )
 
 /**
- * Holds swap characters for matching SWAP strategies
+ * Holds swap characters for matching ADJACENT_SWAP and SYMMETRICAL_SWAP strategies
  */
 private data class SwapChars<T>(
-    val fromSource: TrieNode<T>,
-    val fromTarget: String,
+    val trieNode: TrieNode<T>,
+    val searchChar: String,
 )
 
 /**
@@ -462,8 +462,8 @@ class FuzzySearchState<T> private constructor(
 
     private fun List<SwapChars<T>>?.getMatching(nextNode: TrieNode<T>): SwapChars<T>? {
         return this?.firstOrNull {
-            nextNode.compare(it.fromTarget, searchRequest.matchingOptions).anyMatch
-                    && it.fromSource.compare(currentSearchCharacter(), searchRequest.matchingOptions).anyMatch
+            nextNode.compare(it.searchChar, searchRequest.matchingOptions).anyMatch
+                    && it.trieNode.compare(currentSearchCharacter(), searchRequest.matchingOptions).anyMatch
         }
     }
 
