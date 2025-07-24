@@ -13,7 +13,7 @@ class TrieFuzzySearchTest {
             .map {
                 FuzzySearchScenario(
                     setOf("RAPHAEL"),
-                    "raphael",
+                    "Raphael",
                     0,
                     it,
                     MatchingOptions(caseInsensitive = true, diacriticInsensitive = false, wildcard = false),
@@ -26,7 +26,7 @@ class TrieFuzzySearchTest {
                                 matchedWord = "RAPHAEL",
                                 numberOfMatches = 7,
                                 numberOfErrors = 0,
-                                numberOfCaseMismatches = 7,
+                                numberOfCaseMismatches = 6,
                                 numberOfDiacriticMismatches = 0,
                                 prefixDistance = 0,
                                 matchedWholeString = true,
@@ -50,6 +50,39 @@ class TrieFuzzySearchTest {
                     it,
                     MatchingOptions(caseInsensitive = false, diacriticInsensitive = false, wildcard = false),
                     listOf()
+                )
+            }
+            .forEach { runTestScenario(it) }
+    }
+
+
+    @Test
+    fun `all matching strategies work as expected when diacriticInsensitive = true`() {
+        arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX, FUZZY_POSTFIX, ADJACENT_SWAP, SYMMETRICAL_SWAP)
+            .map {
+                FuzzySearchScenario(
+                    setOf("raphaël"),
+                    "raphael",
+                    0,
+                    it,
+                    MatchingOptions(caseInsensitive = true, diacriticInsensitive = true, wildcard = false),
+                    listOf(
+                        TrieSearchResult(
+                            "raphaël",
+                            Unit,
+                            TrieSearchResultStats(
+                                matchedSubstring = "raphaël",
+                                matchedWord = "raphaël",
+                                numberOfMatches = 7,
+                                numberOfErrors = 0,
+                                numberOfCaseMismatches = 0,
+                                numberOfDiacriticMismatches = 1,
+                                prefixDistance = 0,
+                                matchedWholeString = true,
+                                matchedWholeWord = true
+                            )
+                        )
+                    )
                 )
             }
             .forEach { runTestScenario(it) }
@@ -103,6 +136,21 @@ class TrieFuzzySearchTest {
             .forEach { runTestScenario(it) }
     }
 
+    @Test
+    fun `all matching strategies work as expected when wildcard = false`() {
+        arrayOf(LIBERAL, FUZZY_PREFIX, EXACT_PREFIX, FUZZY_POSTFIX, ADJACENT_SWAP, SYMMETRICAL_SWAP)
+            .map {
+                FuzzySearchScenario(
+                    setOf("raphael"),
+                    "*aphael",
+                    0,
+                    it,
+                    MatchingOptions(caseInsensitive = false, diacriticInsensitive = false, wildcard = false),
+                    listOf()
+                )
+            }
+            .forEach { runTestScenario(it) }
+    }
 
     @Test
     fun `all matching strategies work as expected when wildcard = true`() {
